@@ -58,14 +58,13 @@ export default function MyDrivePage() {
       <section className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My Drive</h1>
-
           <p className="mt-1 text-sm text-muted-foreground">Manage your files, folders, and shared content.</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button">
+          <Button type="button" className="cursor-pointer px-4 py-2">
             <Plus className="mr-2 size-4" />
-            New
+           <h3 className="text-sm font-semibold"> New</h3>
           </Button>
 
           <Button type="button" variant="outline">

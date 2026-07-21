@@ -60,7 +60,7 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
       <div className="p-4">
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 w-full justify-start rounded-2xl px-4 shadow-sm">
+            <Button type="button" variant="outline" className="h-12 w-full justify-start rounded-2xl border-border/80 bg-background px-4 shadow-sm hover:bg-accent hover:text-accent-foreground">
               <Plus className="mr-3 size-5" />
               New
             </Button>
@@ -100,7 +100,9 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
               className={({ isActive }) =>
                 cn(
                   "flex h-10 items-center gap-3 rounded-full px-4 text-sm font-medium transition-colors",
-                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  isActive
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )
               }
             >

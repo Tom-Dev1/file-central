@@ -71,45 +71,45 @@ function HomePage() {
             <div>
               <Badge variant="secondary" className="mb-6 rounded-full px-4 py-2">
                 <Cloud className="mr-2 size-4" />
-                Không gian lưu trữ hiện đại
+                Modern cloud storage
               </Badge>
 
               <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Quản lý mọi tập tin của bạn <span className="text-primary">tại một nơi</span>
+                Manage all your files <span className="text-primary">in one place</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                File Central giúp bạn lưu trữ, sắp xếp và chia sẻ tập tin một cách đơn giản, an toàn và thuận tiện trên
-                mọi thiết bị.
+                File Central helps you store, organize, and share files simply, securely, and conveniently across every
+                device.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" asChild>
                   <Link to="/auth/register">
-                    Bắt đầu miễn phí
+                    Get started for free
                     <ArrowRight className="ml-2 size-4" />
                   </Link>
                 </Button>
 
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/auth/login">Đăng nhập</Link>
+                  <Link to="/auth/login">Sign in</Link>
                 </Button>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Check className="size-4 text-primary" />
-                  Đăng ký nhanh
+                  Quick sign-up
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Check className="size-4 text-primary" />
-                  Không cần cài đặt
+                  No installation required
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Check className="size-4 text-primary" />
-                  Truy cập mọi nơi
+                  Access anywhere
                 </div>
               </div>
             </div>
@@ -121,35 +121,35 @@ function HomePage() {
                 <CardHeader className="border-b bg-muted/30">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-base">Tập tin của tôi</CardTitle>
+                      <CardTitle className="text-base">My files</CardTitle>
 
-                      <CardDescription>Quản lý dữ liệu gần đây</CardDescription>
+                      <CardDescription>Recently managed data</CardDescription>
                     </div>
 
                     <Button size="sm">
                       <Upload className="mr-2 size-4" />
-                      Tải lên
+                      Upload
                     </Button>
                   </div>
                 </CardHeader>
 
                 <CardContent className="p-5">
                   <div className="grid grid-cols-3 gap-3">
-                    <StorageSummary icon={HardDrive} label="Đã sử dụng" value="4.8 GB" />
+                    <StorageSummary icon={HardDrive} label="Used" value="4.8 GB" />
 
-                    <StorageSummary icon={FolderOpen} label="Thư mục" value="24" />
+                    <StorageSummary icon={FolderOpen} label="Folders" value="24" />
 
-                    <StorageSummary icon={Link2} label="Đã chia sẻ" value="12" />
+                    <StorageSummary icon={Link2} label="Shared" value="12" />
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <FileItem name="Tài liệu dự án" type="Thư mục" icon={FolderOpen} />
+                    <FileItem name="Project documents" type="Folder" icon={FolderOpen} />
 
-                    <FileItem name="Báo cáo tháng 07.pdf" type="PDF · 3.2 MB" icon={FileLock2} />
+                    <FileItem name="July report.pdf" type="PDF · 3.2 MB" icon={FileLock2} />
 
-                    <FileItem name="Thiết kế sản phẩm.fig" type="FIG · 18.5 MB" icon={Cloud} />
+                    <FileItem name="Product design.fig" type="FIG · 18.5 MB" icon={Cloud} />
 
-                    <FileItem name="Danh sách nhân sự.xlsx" type="XLSX · 1.8 MB" icon={Users} />
+                    <FileItem name="Staff list.xlsx" type="XLSX · 1.8 MB" icon={Users} />
                   </div>
                 </CardContent>
                 <BorderBeam duration={8} size={100} />
@@ -161,14 +161,14 @@ function HomePage() {
       <section id="features" className="border-y bg-muted/30 py-20 sm:py-24">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="outline">Tính năng</Badge>
+            <Badge variant="outline">Features</Badge>
 
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Mọi công cụ bạn cần để quản lý dữ liệu
+              Every tool you need to manage your data
             </h2>
 
             <p className="mt-4 leading-7 text-muted-foreground">
-              File Central cung cấp các tính năng cốt lõi giúp việc lưu trữ và chia sẻ dữ liệu trở nên thuận tiện.
+              File Central provides core features that make storing and sharing data effortless.
             </p>
           </div>
 
@@ -210,14 +210,14 @@ function HomePage() {
           </div>
 
           <div>
-            <Badge variant="outline">An toàn và bảo mật</Badge>
+            <Badge variant="outline">Safe and secure</Badge>
 
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Dữ liệu của bạn luôn nằm trong tầm kiểm soát
+              Your data always stays under your control
             </h2>
 
             <p className="mt-5 leading-7 text-muted-foreground">
-              Quản lý tài nguyên, người được chia sẻ và quyền truy cập trong một hệ thống thống nhất.
+              Manage resources, collaborators, and access permissions in one unified system.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -234,7 +234,7 @@ function HomePage() {
 
             <Button className="mt-8" asChild>
               <Link to="/auth/register">
-                Tạo tài khoản
+                Create an account
                 <ArrowRight className="ml-2 size-4" />
               </Link>
             </Button>
@@ -245,16 +245,16 @@ function HomePage() {
       <section className="px-4 pb-20 sm:px-6 sm:pb-24 lg:px-8">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-8 rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-10 lg:flex-row lg:text-left">
           <div>
-            <h2 className="text-3xl font-bold">Sẵn sàng quản lý dữ liệu tốt hơn?</h2>
+            <h2 className="text-3xl font-bold">Ready to manage your data better?</h2>
 
             <p className="mt-3 text-primary-foreground/80">
-              Tạo tài khoản và bắt đầu xây dựng không gian lưu trữ của riêng bạn.
+              Create an account and start building your own storage workspace.
             </p>
           </div>
 
           <Button size="lg" variant="secondary" asChild>
             <Link to="/auth/register">
-              Bắt đầu ngay
+              Get started now
               <ArrowRight className="ml-2 size-4" />
             </Link>
           </Button>

@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { tokenStorage } from "@/lib/token-storage";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
@@ -39,6 +40,7 @@ function PublicLayout() {
   const navigate = useNavigate();
 
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(() => authUserStorage.getUser());
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAuthenticated = Boolean(tokenStorage.getAccessToken());
 
@@ -68,12 +70,14 @@ function PublicLayout() {
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-3 font-semibold">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Link to="/" className="flex items-center gap-2.5">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Cloud className="size-5" />
             </span>
 
-            <span className="text-lg">File Central</span>
+            <span className="text-lg font-normal tracking-tight">
+              File <span className="font-medium text-muted-foreground">Central</span>
+            </span>
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
@@ -84,9 +88,9 @@ function PublicLayout() {
                 end={item.end}
                 className={({ isActive }) =>
                   cn(
-                    "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
                     "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    isActive && item.path === "/" && "bg-muted text-foreground"
+                    isActive && item.path === "/" && "bg-accent text-accent-foreground"
                   )
                 }
               >
@@ -118,9 +122,63 @@ function PublicLayout() {
 
             {isAuthenticated && <UserMenu user={currentUser} onSignOut={handleSignOut} compact />}
 
-            <Button type="button" size="icon" variant="ghost" aria-label="Open navigation menu">
-              <Menu className="size-5" />
-            </Button>
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button type="button" size="icon" variant="ghost" aria-label="Open navigation menu">
+                  <Menu className="size-5" />
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent side="right" className="flex w-full flex-col sm:max-w-sm">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+
+                <nav className="flex flex-col gap-1 px-4">
+                  {navigationItems.map((item) => (
+                    <NavLink
+                      key={item.label}
+                      to={item.path}
+                      end={item.end}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={({ isActive }) =>
+                        cn(
+                          "rounded-md px-4 py-3 text-sm font-medium transition-colors",
+                          "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          isActive && item.path === "/" && "bg-muted text-foreground"
+                        )
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </nav>
+
+                <div className="mt-auto flex flex-col gap-2 border-t p-4">
+                  {isAuthenticated ? (
+                    <>
+                      <Button variant="outline" asChild onClick={() => setMobileMenuOpen(false)}>
+                        <Link to="/dashboard">Dashboard</Link>
+                      </Button>
+
+                      <Button variant="ghost" className="text-destructive" onClick={handleSignOut}>
+                        Sign out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" asChild onClick={() => setMobileMenuOpen(false)}>
+                        <Link to="/auth/login">Sign in</Link>
+                      </Button>
+
+                      <Button asChild onClick={() => setMobileMenuOpen(false)}>
+                        <Link to="/auth/register">Get started</Link>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

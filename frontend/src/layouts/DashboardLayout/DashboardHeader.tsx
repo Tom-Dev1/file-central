@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
 import { tokenStorage } from "@/lib/token-storage";
 import { Cloud, HelpCircle, LogOut, Menu, MoreVertical, Search, Settings, User } from "lucide-react";
 
@@ -18,8 +20,27 @@ import { NavLink, useNavigate } from "react-router-dom";
 function DashboardHeader() {
   const navigate = useNavigate();
 
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(() => authUserStorage.getUser());
+
+  const displayName = currentUser?.name || currentUser?.username || currentUser?.email || "User";
+  const initials = getInitials(displayName);
+
+  useEffect(() => {
+    const synchronizeUser = () => {
+      setCurrentUser(authUserStorage.getUser());
+    };
+
+    window.addEventListener("storage", synchronizeUser);
+
+    return () => {
+      window.removeEventListener("storage", synchronizeUser);
+    };
+  }, []);
+
   const handleLogout = () => {
     tokenStorage.clear();
+    authUserStorage.clearUser();
+    setCurrentUser(null);
 
     navigate("/auth/login", {
       replace: true,
@@ -27,26 +48,29 @@ function DashboardHeader() {
   };
 
   return (
-    <header className="h-16 shrink-0 border-b bg-background">
-      <div className="flex h-full items-center px-4">
+    <header className="h-16 shrink-0 border-b border-border/70 bg-background">
+      <div className="flex h-full items-center gap-3 px-4">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="lg:hidden"
+          className="rounded-full lg:hidden"
           aria-label="Open navigation menu"
           //   onClick={() => setMobileSidebarOpen(true)}
         >
           <Menu className="size-5" />
         </Button>
 
-        <NavLink to="/dashboard" className="flex shrink-0 items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <NavLink to="/dashboard" className="flex shrink-0 items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Cloud className="size-5" />
           </span>
 
-          <span className="hidden text-xl font-semibold sm:block">File Central</span>
+          <span className="hidden text-[1.375rem] font-normal tracking-tight text-foreground sm:block">
+            File <span className="font-medium text-muted-foreground">Central</span>
+          </span>
         </NavLink>
+
         <div className="mx-auto w-full max-w-2xl">
           <div className="relative">
             <Search className="absolute inset-y-0 left-4 my-auto size-5 text-muted-foreground" />
@@ -54,7 +78,7 @@ function DashboardHeader() {
             <Input
               type="search"
               placeholder="Search in Drive"
-              className="h-11 rounded-full border-transparent bg-muted pl-12 pr-12 "
+              className="h-11 rounded-full border-transparent bg-muted pl-12 pr-12 shadow-none focus-visible:border-primary/30 focus-visible:ring-primary/20"
             />
 
             <Button
@@ -96,9 +120,9 @@ function DashboardHeader() {
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="ghost" className="size-10 rounded-full p-0" aria-label="Open account menu">
                 <Avatar className="size-9">
-                  <AvatarImage src="" alt="User profile" />
+                  <AvatarImage src={currentUser?.avatarUrl} alt={displayName} />
 
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -106,9 +130,11 @@ function DashboardHeader() {
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel>
                 <div className="flex flex-col">
-                  <span>John Doe</span>
+                  <span className="truncate">{displayName}</span>
 
-                  <span className="text-xs font-normal text-muted-foreground">john@example.com</span>
+                  {currentUser?.email && (
+                    <span className="truncate text-xs font-normal text-muted-foreground">{currentUser.email}</span>
+                  )}
                 </div>
               </DropdownMenuLabel>
 
@@ -136,6 +162,20 @@ function DashboardHeader() {
       </div>
     </header>
   );
+}
+
+function getInitials(value: string) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length === 0) {
+    return "U";
+  }
+
+  if (words.length === 1) {
+    return words[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${words[0][0]}${words.at(-1)?.[0] ?? ""}`.toUpperCase();
 }
 
 export default DashboardHeader;
