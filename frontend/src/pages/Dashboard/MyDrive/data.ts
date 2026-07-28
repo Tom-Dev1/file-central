@@ -1,15 +1,6 @@
-import { File, FileArchive, FileImage, FileSpreadsheet, FileText, Folder } from "lucide-react";
-import type { ComponentType } from "react";
+import type { FileType } from "@/types/file-type";
 
-type FileType = "folder" | "document" | "spreadsheet" | "image" | "archive" | "file";
-export const fileIcons: Record<FileType, ComponentType<{ className?: string }>> = {
-  folder: Folder,
-  document: FileText,
-  spreadsheet: FileSpreadsheet,
-  image: FileImage,
-  archive: FileArchive,
-  file: File,
-};
+
 
 export interface DriveItem {
   id: string;

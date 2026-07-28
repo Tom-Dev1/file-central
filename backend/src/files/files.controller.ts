@@ -9,41 +9,33 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { randomUUID } from 'crypto';
-import { extname } from 'path';
-import { tmpdir } from 'os';
-import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { CurrentUser, AuthUser } from '../common/decorators/current-user.decorator';
-import { FilesService } from './files.service';
-import { UploadFileDto } from './dto/upload-file.dto';
-import { toDriveItemDto } from '../common/mappers/response-mapper';
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { diskStorage } from "multer";
+import { randomUUID } from "crypto";
+import { extname } from "path";
+import { tmpdir } from "os";
+import { ApiBearerAuth, ApiConsumes, ApiTags } from "@nestjs/swagger";
+import { Response } from "express";
+import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { CurrentUser, AuthUser } from "../common/decorators/current-user.decorator";
+import { FilesService } from "./files.service";
+import { UploadFileDto } from "./dto/upload-file.dto";
+import { toDriveItemDto } from "../common/mappers/response-mapper";
 
 const UPLOAD_TMP_DIR = process.env.UPLOAD_TMP_DIR || `${tmpdir()}/file-central-uploads`;
 
-@ApiTags('files')
+@ApiTags("files")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('files')
+@Controller("files")
 export class FilesController {
   constructor(private filesService: FilesService) {}
 
-  @Post('upload')
-  @ApiConsumes('multipart/form-data')
+  @Post("upload")
+  @ApiConsumes("multipart/form-data")
   @UseInterceptors(
-    FileInterceptor('file', {
-      // IMPORTANT: diskStorage instead of the default memoryStorage.
-      // memoryStorage keeps the entire file in the Node process's RAM
-      // (via file.buffer) until upload finishes - fine for small demo
-      // files, but a real risk with many concurrent large uploads.
-      // diskStorage writes straight to a temp file on disk as multer
-      // parses the multipart stream, so RAM usage stays flat regardless
-      // of file size. FilesService then re-streams that temp file to
-      // MinIO and deletes it afterwards (success or failure).
+    FileInterceptor("file", {
       storage: diskStorage({
         destination: UPLOAD_TMP_DIR,
         filename: (_req, file, cb) => {
@@ -51,64 +43,32 @@ export class FilesController {
         },
       }),
       limits: {
-        fileSize: parseInt(process.env.MAX_UPLOAD_SIZE_MB || '200', 10) * 1024 * 1024,
+        fileSize: parseInt(process.env.MAX_UPLOAD_SIZE_MB || "200", 10) * 1024 * 1024,
       },
-    }),
+    })
   )
-  async upload(
-    @CurrentUser() user: AuthUser,
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: UploadFileDto,
-  ) {
+  async upload(@CurrentUser() user: AuthUser, @UploadedFile() file: Express.Multer.File, @Body() body: UploadFileDto) {
     if (!file) {
-      throw new BadRequestException('file is required');
+      throw new BadRequestException("file is required");
     }
     const created = await this.filesService.upload(user.userId, body?.parentId ?? null, file);
     return toDriveItemDto(created);
   }
 
-  @Get(':id/download')
-  async download(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Res({ passthrough: false }) res: Response,
-  ) {
-    const { stream, name, mimeType, size } = await this.filesService.getDownloadStream(
-      user.userId,
-      user.email,
-      id,
-    );
+  @Get(":id/download")
+  async download(@CurrentUser() user: AuthUser, @Param("id") id: string, @Res({ passthrough: false }) res: Response) {
+    const { stream, name, mimeType, size } = await this.filesService.getDownloadStream(user.userId, user.email, id);
 
-    res.setHeader('Content-Type', mimeType || 'application/octet-stream');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(name)}"`,
-    );
+    res.setHeader("Content-Type", mimeType || "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(name)}"`);
     if (size) {
-      res.setHeader('Content-Length', size.toString());
+      res.setHeader("Content-Length", size.toString());
     }
     stream.pipe(res);
   }
 
-  /**
-   * Preview only requires VIEW permission (weaker than download) and sets
-   * Content-Disposition: inline so the browser renders it directly
-   * (images, PDFs) instead of triggering a "Save As" dialog.
-   */
-  @Get(':id/preview')
-  async preview(
-    @CurrentUser() user: AuthUser,
-    @Param('id') id: string,
-    @Res({ passthrough: false }) res: Response,
-  ) {
-    const { stream, mimeType, name } = await this.filesService.getPreviewStream(
-      user.userId,
-      user.email,
-      id,
-    );
-
-    res.setHeader('Content-Type', mimeType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(name)}"`);
-    stream.pipe(res);
+  @Get(":id/preview-link")
+  previewLink(@CurrentUser() user: AuthUser, @Param("id") id: string) {
+    return this.filesService.getPreviewLink(user.userId, user.email, id);
   }
 }

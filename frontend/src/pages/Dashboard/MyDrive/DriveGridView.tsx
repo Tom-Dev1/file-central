@@ -1,58 +1,119 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { fileIcons, type DriveItem } from "./data";
-import EmptyState from "./EmptyState";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
+
+import EmptyState from "./EmptyState";
 import FileActions from "./FileActions";
+import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import type { DriveItem } from "@/types/api.types";
+import { getDriveItemIcon } from "@/utils/file-utils";
+import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
 
 interface DriveGridViewProps {
   items: DriveItem[];
-  selectedIds: string[];
-  onToggleItem: (itemId: string) => void;
+  onOpenItem?: (item: DriveItem) => void;
+  onPrefetchItem?: (item: DriveItem) => void;
 }
 
-export default function DriveGridView({ items, selectedIds, onToggleItem }: DriveGridViewProps) {
+export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: DriveGridViewProps) {
+  const { selectionMode, isSelected, toggleItem } = useDriveSelection();
+
   if (items.length === 0) {
     return <EmptyState />;
   }
 
+  const handleItemClick = (item: DriveItem) => {
+    if (selectionMode) {
+      toggleItem(item.id);
+      return;
+    }
+
+    onOpenItem?.(item);
+  };
+
   return (
     <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
       {items.map((item) => {
-        const Icon = fileIcons[item.type];
-        const selected = selectedIds.includes(item.id);
+        const iconSource = getDriveItemIcon(item);
+
+        const selected = isSelected(item.id);
 
         return (
           <Card
             key={item.id}
-            className={cn("group cursor-pointer transition-colors", selected && "border-primary bg-primary/5")}
+            role="button"
+            tabIndex={0}
+            aria-selected={selected}
+            className={cn(
+              "group cursor-pointer overflow-hidden rounded-xl transition-colors",
+              "hover:bg-muted/40",
+              selected && "border-primary bg-primary/5 ring-1 ring-primary"
+            )}
+            onClick={() => handleItemClick(item)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleItemClick(item);
+              }
+            }}
+            onPointerEnter={() => {
+              onPrefetchItem?.(item);
+            }}
+            onFocus={() => {
+              onPrefetchItem?.(item);
+            }}
           >
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <Checkbox
-                  checked={selected}
-                  aria-label={`Select ${item.name}`}
-                  onCheckedChange={() => onToggleItem(item.id)}
-                />
+              <div className="flex h-8 items-center justify-between">
+                <div className="flex size-8 items-center justify-center">
+                  {selectionMode && (
+                    <Checkbox
+                      checked={selected}
+                      aria-label={`Select ${item.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                      }}
+                      onCheckedChange={() => {
+                        toggleItem(item.id);
+                      }}
+                    />
+                  )}
+                </div>
 
-                <FileActions item={item} />
+                <div
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                  onDoubleClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <FileActions item={item} />
+                </div>
               </div>
 
-              <div className="my-7 flex justify-center">
-                <span className="flex size-20 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                  <Icon className="size-10" />
-                </span>
+              <div className="my-6 flex justify-center">
+                <div className="flex size-20 items-center justify-center rounded-2xl bg-muted/50">
+                  <ThemedSvgIcon
+                    src={iconSource}
+                    aria-hidden="true"
+                    className="size-12 bg-muted-foreground group-hover:bg-primary"
+                  />
+                </div>
               </div>
 
               <div className="flex min-w-0 items-center gap-2">
-                <Icon className="size-4 shrink-0 text-primary" />
+                <ThemedSvgIcon src={iconSource} className="size-5 bg-muted-foreground group-hover:bg-primary" />
 
-                <p className="truncate text-sm font-medium">{item.name}</p>
+                <p className="truncate text-sm font-medium" title={item.name}>
+                  {item.name}
+                </p>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{item.modifiedAt}</span>
-                <span>{item.size}</span>
+                <span>{formatModifiedDate(item.updatedAt)}</span>
+
+                <span>{item.type === "folder" ? "Folder" : formatFileSize(item.size)}</span>
               </div>
             </CardContent>
           </Card>
@@ -60,4 +121,36 @@ export default function DriveGridView({ items, selectedIds, onToggleItem }: Driv
       })}
     </div>
   );
+}
+
+function formatModifiedDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatFileSize(bytes?: number): string {
+  if (bytes === undefined) {
+    return "—";
+  }
+
+  if (bytes === 0) {
+    return "0 B";
+  }
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+
+  const unitIndex = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+
+  const value = bytes / 1024 ** unitIndex;
+
+  return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }

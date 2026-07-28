@@ -1,109 +1,111 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fileIcons, type DriveItem } from "./data";
-import EmptyState from "./EmptyState";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import { Share2, Star } from "lucide-react";
+import type { DriveItem } from "@/types/api.types";
 import FileActions from "./FileActions";
+import { getDriveItemIcon } from "@/utils/file-utils";
+import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
+import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import EmptyFolderState from "@/components/EmptyFolderState";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState } from "react";
 
 interface DriveListViewProps {
   items: DriveItem[];
-  selectedIds: string[];
-  allItemsSelected: boolean;
-  partiallySelected: boolean;
-  onToggleItem: (itemId: string) => void;
-  onToggleAll: () => void;
+  onOpenItem?: (item: DriveItem) => void;
+  onPrefetchItem?: (item: DriveItem) => void;
 }
 
-export function DriveListView({
-  items,
-  selectedIds,
-  allItemsSelected,
-  partiallySelected,
-  onToggleItem,
-  onToggleAll,
-}: DriveListViewProps) {
+export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListViewProps) {
+  const { selectionMode, isSelected, toggleItem } = useDriveSelection();
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const handleItemClick = (item: DriveItem) => {
+    if (selectionMode) {
+      toggleItem(item.id);
+      return;
+    }
+    if (item.type === "file") {
+      setIsPreviewOpen(true);
+    }
+    onOpenItem?.(item);
+  };
+
   if (items.length === 0) {
-    return <EmptyState />;
+    return <EmptyFolderState />;
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">
-              <Checkbox
-                aria-label="Select all files"
-                checked={allItemsSelected ? true : partiallySelected ? "indeterminate" : false}
-                onCheckedChange={onToggleAll}
-              />
-            </TableHead>
+    <div className="overflow-hidden rounded-xl  bg-background">
+      <div className="grid grid-cols-[minmax(0,1fr)_140px_120px_48px] items-center  bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+        <span>Name</span>
+        <span>Last modified</span>
+        <span>File size</span>
+        <span />
+      </div>
 
-            <TableHead>Name</TableHead>
-            <TableHead>Owner</TableHead>
-            <TableHead>Last modified</TableHead>
-            <TableHead>File size</TableHead>
-            <TableHead className="w-12" />
-          </TableRow>
-        </TableHeader>
+      <div>
+        {items.map((item) => {
+          const selected = isSelected(item.id);
 
-        <TableBody>
-          {items.map((item) => {
-            const Icon = fileIcons[item.type];
-            const selected = selectedIds.includes(item.id);
-
-            return (
-              <TableRow key={item.id} data-state={selected ? "selected" : undefined} className="group cursor-pointer">
-                <TableCell>
+          const iconSource = getDriveItemIcon(item);
+          return (
+            <div
+              key={item.id}
+              role="button"
+              tabIndex={0}
+              aria-selected={selected}
+              className={cn(
+                "group grid min-h-12 cursor-pointer grid-cols-[36px_minmax(0,1fr)_160px_120px_44px] items-center border-b px-3 text-sm transition-colors last:border-b-0",
+                "hover:bg-muted/50",
+                selected && "bg-primary/5"
+              )}
+              onClick={() => handleItemClick(item)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleItemClick(item);
+                }
+              }}
+              onPointerEnter={() => {
+                onPrefetchItem?.(item);
+              }}
+              onFocus={() => {
+                onPrefetchItem?.(item);
+              }}
+            >
+              <div className="flex items-center justify-center mr-2">
+                {selectionMode && (
                   <Checkbox
                     checked={selected}
                     aria-label={`Select ${item.name}`}
-                    onCheckedChange={() => onToggleItem(item.id)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                    }}
+                    onCheckedChange={() => {
+                      toggleItem(item.id);
+                    }}
                   />
-                </TableCell>
+                )}
+              </div>
+              <div className="flex min-w-0 items-center gap-3">
+                <ThemedSvgIcon src={iconSource} className="size-5 bg-muted-foreground group-hover:bg-primary" />
+                <span className="truncate font-medium" title={item.name}>
+                  {item.name}
+                </span>
+              </div>
 
-                <TableCell>
-                  <div className="flex min-w-56 items-center gap-3">
-                    <span
-                      className={cn(
-                        "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                        item.type === "folder" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="size-5" />
-                    </span>
+              <span className="truncate text-xs text-muted-foreground">{formatModifiedDate(item.updatedAt)}</span>
 
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{item.name}</p>
+              <span className="text-xs text-muted-foreground">
+                {item.type === "folder" ? "—" : formatFileSize(item.size ?? 0)}
+              </span>
 
-                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground md:hidden">
-                        <span>{item.modifiedAt}</span>
-                        <span>·</span>
-                        <span>{item.size}</span>
-                      </div>
-                    </div>
-
-                    {item.shared && <Share2 className="size-4 text-muted-foreground" />}
-
-                    {item.starred && <Star className="size-4 fill-current text-muted-foreground" />}
-                  </div>
-                </TableCell>
-
-                <TableCell className="text-muted-foreground">{item.owner}</TableCell>
-
-                <TableCell className="text-muted-foreground">{item.modifiedAt}</TableCell>
-
-                <TableCell className="text-muted-foreground">{item.size}</TableCell>
-
-                <TableCell>
-                  <FileActions item={item} />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+              <FileActions item={item} isPreview={isPreviewOpen} />
+              {/* <DriveListRow key={item.id} item={item} onOpen={() => onOpenItem?.(item)} /> */}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -48,7 +48,7 @@ function LoginPage() {
           },
           remember
         );
-        navigate("/", {
+        navigate("/dashboard", {
           replace: true,
         });
       },

@@ -1,10 +1,13 @@
 import { Outlet } from "react-router-dom";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
+import { DriveSelectionProvider } from "@/components/drive/selection/DriveSelectionContext";
+import { DriveNProgress } from "@/components/DriveNProgress";
 
 export default function DashboardLayout() {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
+      <DriveNProgress />
       <DashboardHeader />
 
       <div className="flex min-h-0 flex-1">
@@ -12,10 +15,10 @@ export default function DashboardLayout() {
           <DashboardSidebar />
         </aside>
 
-        <main className="custom-scrollbar min-w-0 flex-1 overflow-y-auto overscroll-contain bg-background">
-          <div className="p-4 sm:p-6">
+        <main className="min-w-0 flex-1 overflow-hidden mx-auto max-w-[1600px] space-y-6">
+          <DriveSelectionProvider>
             <Outlet />
-          </div>
+          </DriveSelectionProvider>
         </main>
       </div>
     </div>

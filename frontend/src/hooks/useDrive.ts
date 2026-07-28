@@ -7,11 +7,18 @@ import type {
   SearchDriveParams,
 } from "../../../frontend/src/types/api.types";
 import { driveApi } from "@/apis/drive.api";
+import { driveListQueryOptions } from "./queries/drive-query-options";
+import { folderBreadcrumbQueryOptions } from "./queries/folder-query-options";
 
 export function useDriveList(params: ListDriveParams = {}) {
+  return useQuery(driveListQueryOptions(params));
+}
+
+export function useFolderBreadcrumbs(folderId?: string) {
   return useQuery({
-    queryKey: driveKeys.list(params),
-    queryFn: () => driveApi.list(params),
+    ...folderBreadcrumbQueryOptions(folderId ?? ""),
+
+    enabled: Boolean(folderId),
   });
 }
 

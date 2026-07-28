@@ -82,6 +82,17 @@ size: number;
 checksum?: string;
 ```
 
+Cả file và folder đều có 2 timestamp ngữ nghĩa riêng (khác với `updatedAt` tự động của Mongoose, vốn bị bump ngay cả khi chỉ xem item):
+
+```ts
+lastModifiedAt?: Date | null; // upload / create / rename / move
+lastViewedAt?: Date | null;   // download / preview / mở chi tiết (getById)
+```
+
+- `lastModifiedAt` chỉ đổi khi nội dung hoặc metadata thay đổi → dùng cho cột "Last modified".
+- `lastViewedAt` cập nhật mỗi khi người dùng mở/xem file (fire-and-forget, không bump `updatedAt`).
+- Item tạo trước lần deploy này có thể `null`; frontend cần fallback về `createdAt`/`updatedAt` khi hiển thị.
+
 ### 2.4. Vì sao file và folder dùng chung collection?
 
 Collection:
@@ -258,7 +269,10 @@ Xử lý hành vi chung:
 - Move file hoặc folder.
 - Soft delete.
 - Kiểm tra item tồn tại, owner và trạng thái.
-- Kiểm tra trùng tên tại cùng parent.
+- Chính sách trùng tên theo hành động:
+  - **Upload file / tạo folder**: auto-rename kiểu Google Drive (`Whale.png` → `Whale 1.png` → `Whale 2.png`), luôn lấy max+1, không lấp chỗ trống.
+  - **Rename / move**: trả `409 Conflict` để người dùng tự quyết định (tránh đổi tên ngoài ý kiến khi dời file).
+  - Race condition giữa các request song song vẫn cần unique index để phòng vệ.
 
 ### 4.2. `FoldersService`
 
@@ -501,7 +515,7 @@ Query:
 | `parentId` | ObjectId hoặc bỏ trống | Vị trí hiện tại; bỏ trống là root |
 | `type` | `file`, `folder` | Filter tùy chọn |
 | `q` | string | Tìm theo tên |
-| `sort` | string | `name`, `updatedAt`, `size` |
+| `sort` | string | `name`, `lastModifiedAt`, `lastViewedAt`, `size` |
 | `order` | `asc`, `desc` | Thứ tự |
 | `limit` | number | Tối đa 100 |
 | `cursor` | string | Trang kế tiếp |
@@ -523,7 +537,9 @@ Response:
       "type": "folder",
       "parentId": "folder-id",
       "createdAt": "2026-07-20T10:00:00.000Z",
-      "updatedAt": "2026-07-20T10:00:00.000Z"
+      "updatedAt": "2026-07-20T10:00:00.000Z",
+      "lastModifiedAt": "2026-07-20T10:00:00.000Z",
+      "lastViewedAt": "2026-07-21T08:30:00.000Z"
     },
     {
       "id": "file-id",
@@ -533,7 +549,9 @@ Response:
       "mimeType": "application/pdf",
       "size": 245678,
       "createdAt": "2026-07-20T10:01:00.000Z",
-      "updatedAt": "2026-07-20T10:01:00.000Z"
+      "updatedAt": "2026-07-20T10:01:00.000Z",
+      "lastModifiedAt": "2026-07-20T10:01:00.000Z",
+      "lastViewedAt": "2026-07-22T14:05:00.000Z"
     }
   ],
   "meta": {
@@ -625,8 +643,8 @@ Các bước service:
    - `type = folder`;
    - chưa bị xóa;
    - actor có quyền `UPLOAD_CHILD`.
-4. Kiểm tra trùng tên cùng parent.
-5. Tạo `DriveItem` có `type = folder`.
+4. Auto-rename nếu trùng tên cùng parent (`Folder` → `Folder 1` → `Folder 2`).
+5. Tạo `DriveItem` có `type = folder`; set `lastModifiedAt` và `lastViewedAt` = now.
 6. Emit event `drive-item.created`.
 7. Trả response DTO.
 
@@ -708,9 +726,9 @@ Luồng:
    - MIME/type policy;
    - parentId.
 5. `PermissionsService.requireAccess(..., UPLOAD_CHILD)`.
-6. Kiểm tra trùng tên.
+6. Auto-rename nếu trùng tên cùng parent (`Whale.png` → `Whale 1.png`).
 7. Lưu binary qua `StorageService`.
-8. Tạo metadata `DriveItem`.
+8. Tạo metadata `DriveItem`; set `lastModifiedAt` và `lastViewedAt` = now.
 9. Nếu tạo MongoDB lỗi, xóa object vừa upload.
 10. Emit event.
 11. Trả response DTO.

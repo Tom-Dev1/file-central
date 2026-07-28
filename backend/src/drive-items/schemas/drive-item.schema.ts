@@ -45,6 +45,17 @@ export class DriveItem {
 
   @Prop({ type: Date, default: null })
   deletedAt?: Date | null;
+
+  // Explicit "last modified" - set on upload/create/rename/move. More
+  // reliable than Mongoose's auto `updatedAt`, which also bumps on a
+  // mere view-touch (see touchViewed).
+  @Prop({ type: Date, default: null })
+  lastModifiedAt?: Date | null;
+
+  // Last time anyone opened/viewed/downloaded/previewed the item.
+  // Global (single timestamp per item), updated via touchViewed.
+  @Prop({ type: Date, default: null })
+  lastViewedAt?: Date | null;
 }
 
 export const DriveItemSchema = SchemaFactory.createForClass(DriveItem);

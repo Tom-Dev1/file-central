@@ -4,15 +4,10 @@ import type { AuthResponse, LoginRequest, RegisterRequest, User } from "../../..
 import { authApi } from "@/apis/auth.api";
 import type { ApiError } from "@/lib/api-error";
 
-const CURRENT_USER_KEY = "fc_current_user";
+const CURRENT_USER_KEY = "auth-user";
 
 function persistUser(user: User) {
   window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-}
-
-export function getStoredUser(): User | null {
-  const raw = window.localStorage.getItem(CURRENT_USER_KEY);
-  return raw ? (JSON.parse(raw) as User) : null;
 }
 
 function onAuthSuccess(data: AuthResponse) {
@@ -42,18 +37,6 @@ export function useLogout() {
       if (!refreshToken) return Promise.resolve({ loggedOut: true as const });
       return authApi.logout(refreshToken);
     },
-    onSuccess: () => {
-      tokenStorage.clear();
-      window.localStorage.removeItem(CURRENT_USER_KEY);
-      queryClient.clear();
-    },
-  });
-}
-
-export function useLogoutAll() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => authApi.logoutAll(),
     onSuccess: () => {
       tokenStorage.clear();
       window.localStorage.removeItem(CURRENT_USER_KEY);

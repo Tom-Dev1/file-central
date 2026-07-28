@@ -10,14 +10,18 @@ export class FoldersService {
 
   async create(ownerId: string, dto: CreateFolderDto) {
     const parentId = await this.driveItemsService.assertValidParent(ownerId, dto.parentId);
-    await this.driveItemsService.assertNoDuplicateName(ownerId, parentId, dto.name);
+    // Auto-rename on collision: "New Folder" -> "New Folder 1", etc.
+    const uniqueName = await this.driveItemsService.resolveUniqueName(ownerId, parentId, dto.name);
 
     const folder = await this.driveItemsService.model.create({
-      name: dto.name,
+      name: uniqueName,
       type: DriveItemType.FOLDER,
       ownerId: new Types.ObjectId(ownerId),
       parentId,
       isDeleted: false,
+      // A freshly created folder is both "just modified" and "just viewed".
+      lastModifiedAt: new Date(),
+      lastViewedAt: new Date(),
     });
 
     return folder;

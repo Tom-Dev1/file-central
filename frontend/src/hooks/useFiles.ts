@@ -22,8 +22,22 @@ export function useDownloadFile() {
   });
 }
 
-export function usePreviewObjectUrl() {
+export function useFilePreviewLink() {
+  const queryClient = useQueryClient();
+
   return useMutation({
+    mutationKey: ["files", "preview-link"],
+
     mutationFn: (fileId: string) => filesApi.getPreviewObjectUrl(fileId),
+
+    onSuccess: () => {
+      /*
+       * Preview updates lastOpenedAt, so cached drive lists
+       * may need to be refreshed later.
+       */
+      void queryClient.invalidateQueries({
+        queryKey: driveKeys.all,
+      });
+    },
   });
 }

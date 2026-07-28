@@ -4,6 +4,8 @@ export const driveKeys = {
   all: ["drive"] as const,
   list: (params: ListDriveParams) => [...driveKeys.all, "list", params] as const,
   search: (params: SearchDriveParams) => [...driveKeys.all, "search", params] as const,
+  breadcrumbs: () => [...driveKeys.all, "breadcrumbs"] as const,
+  breadcrumb: (folderId: string) => [...driveKeys.breadcrumbs(), folderId] as const,
 };
 
 export const trashKeys = {

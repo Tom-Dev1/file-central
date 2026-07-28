@@ -1,15 +1,9 @@
+import DropdownUpload from "@/components/PopoverUpload";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/components/ui/dropdown";
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { Clock3, FileClock, FolderPlus, HardDrive, Plus, Share2, Star, Trash2, Upload } from "lucide-react";
+import { Clock3, FileClock, HardDrive, Share2, Star, Trash2 } from "lucide-react";
 import type { ComponentType } from "react";
 import { NavLink } from "react-router-dom";
 
@@ -58,33 +52,7 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
   return (
     <div className="flex h-full flex-col">
       <div className="p-4">
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 w-full justify-start rounded-2xl border-border/80 bg-background px-4 shadow-sm hover:bg-accent hover:text-accent-foreground">
-              <Plus className="mr-3 size-5" />
-              New
-            </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem>
-              <FolderPlus className="mr-2 size-4" />
-              New folder
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem>
-              <Upload className="mr-2 size-4" />
-              File upload
-            </DropdownMenuItem>
-
-            <DropdownMenuItem>
-              <FolderPlus className="mr-2 size-4" />
-              Folder upload
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <DropdownUpload />
       </div>
 
       <nav className="space-y-1 px-3">

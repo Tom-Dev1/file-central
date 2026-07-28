@@ -1,5 +1,5 @@
-import { Expose, Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Expose, Transform } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 /**
  * Public-facing shape of a DriveItem. Deliberately does NOT expose
@@ -11,15 +11,15 @@ export class DriveItemResponseDto {
   @ApiProperty()
   @Expose()
   @Transform(({ obj }) => (obj._id ?? obj.id)?.toString())
-  id: string;
+  id!: string;
 
   @ApiProperty()
   @Expose()
-  name: string;
+  name!: string;
 
-  @ApiProperty({ enum: ['file', 'folder'] })
+  @ApiProperty({ enum: ["file", "folder"] })
   @Expose()
-  type: 'file' | 'folder';
+  type!: "file" | "folder";
 
   @ApiPropertyOptional()
   @Expose()
@@ -36,16 +36,16 @@ export class DriveItemResponseDto {
   @ApiProperty()
   @Expose()
   @Transform(({ obj }) => obj.ownerId?.toString())
-  ownerId: string;
+  ownerId!: string;
 
   @ApiPropertyOptional({ nullable: true })
   @Expose()
   @Transform(({ obj }) => (obj.parentId ? obj.parentId.toString() : null))
-  parentId: string | null;
+  parentId!: string | null;
 
   @ApiProperty()
   @Expose()
-  isDeleted: boolean;
+  isDeleted!: boolean;
 
   @ApiPropertyOptional({ nullable: true })
   @Expose()
@@ -53,9 +53,17 @@ export class DriveItemResponseDto {
 
   @ApiProperty()
   @Expose()
-  createdAt: Date;
+  createdAt!: Date;
 
   @ApiProperty()
   @Expose()
-  updatedAt: Date;
+  updatedAt!: Date;
+
+  @ApiPropertyOptional({ nullable: true })
+  @Expose()
+  lastModifiedAt?: Date | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @Expose()
+  lastViewedAt?: Date | null;
 }

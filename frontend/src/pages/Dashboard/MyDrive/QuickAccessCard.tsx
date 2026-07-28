@@ -1,40 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { DriveItem } from "@/types/api.types";
+import { fileIcons } from "@/types/file-type";
 import { MoreVertical, Share2, Star } from "lucide-react";
-
-import { fileIcons } from "./data";
-
-type FileType =
-  | "folder"
-  | "document"
-  | "spreadsheet"
-  | "image"
-  | "archive"
-  | "file";
-
-interface DriveItem {
-  id: string;
-  name: string;
-  type: FileType;
-  owner: string;
-  modifiedAt: string;
-  size: string;
-  shared?: boolean;
-  starred?: boolean;
-}
 
 interface QuickAccessCardProps {
   item: DriveItem;
 }
 
-export default function QuickAccessCard({
-  item,
-}: QuickAccessCardProps) {
+export default function QuickAccessCard({ item }: QuickAccessCardProps) {
   const Icon = fileIcons[item.type];
 
   return (
     <Card className="group cursor-pointer rounded-xl border-border/50 bg-card shadow-none transition-colors hover:bg-muted/50 ">
-      <CardContent >
+      <CardContent>
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Icon className="size-5" />
@@ -42,33 +21,22 @@ export default function QuickAccessCard({
 
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
-              <p
-                className="truncate text-sm font-medium"
-                title={item.name}
-              >
+              <p className="truncate text-sm font-medium" title={item.name}>
                 {item.name}
               </p>
 
-              {item.shared && (
-                <Share2 className="size-3.5 shrink-0 text-muted-foreground" />
-              )}
+              {item.size && <Share2 className="size-3.5 shrink-0 text-muted-foreground" />}
 
-              {item.starred && (
-                <Star className="size-3.5 shrink-0 fill-current text-muted-foreground" />
-              )}
+              {item.ownerId && <Star className="size-3.5 shrink-0 fill-current text-muted-foreground" />}
             </div>
 
             <div className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-              <span className="truncate">
-                {item.modifiedAt}
-              </span>
+              <span className="truncate">{item.createdAt}</span>
 
-              {item.size !== "—" && (
+              {item.size && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span className="shrink-0">
-                    {item.size}
-                  </span>
+                  <span className="shrink-0">{item.size}</span>
                 </>
               )}
             </div>

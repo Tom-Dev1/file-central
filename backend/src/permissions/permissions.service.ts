@@ -1,8 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
-import { DriveItem, DriveItemDocument } from '../drive-items/schemas/drive-item.schema';
-import { Share, ShareDocument, SharePermission } from '../shares/schemas/share.schema';
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model, Types } from "mongoose";
+import { DriveItem, DriveItemDocument } from "../drive-items/schemas/drive-item.schema";
+import { Share, ShareDocument, SharePermission } from "../shares/schemas/share.schema";
 
 const PERMISSION_RANK: Record<SharePermission, number> = {
   [SharePermission.VIEW]: 1,
@@ -19,7 +19,7 @@ export interface AccessResult {
 export class PermissionsService {
   constructor(
     @InjectModel(DriveItem.name) private driveItemModel: Model<DriveItemDocument>,
-    @InjectModel(Share.name) private shareModel: Model<ShareDocument>,
+    @InjectModel(Share.name) private shareModel: Model<ShareDocument>
   ) {}
 
   /**
@@ -28,20 +28,14 @@ export class PermissionsService {
    */
   async getAncestorChain(itemId: Types.ObjectId): Promise<Types.ObjectId[]> {
     const chain: Types.ObjectId[] = [];
-    let current = await this.driveItemModel
-      .findById(itemId)
-      .select('_id parentId')
-      .lean();
+    let current = await this.driveItemModel.findById(itemId).select("_id parentId").lean();
     if (!current) return chain;
     chain.push(current._id);
 
     // Guard against pathological cycles with a max-depth cutoff.
     let depth = 0;
     while (current?.parentId && depth < 1000) {
-      const parent = await this.driveItemModel
-        .findById(current.parentId)
-        .select('_id parentId')
-        .lean();
+      const parent = await this.driveItemModel.findById(current.parentId).select("_id parentId").lean();
       if (!parent) break;
       chain.push(parent._id);
       current = parent;
@@ -57,14 +51,10 @@ export class PermissionsService {
    *   on the item OR on any ancestor folder (folder shares cascade down),
    *   and take the highest permission found.
    */
-  async getAccess(
-    userId: string,
-    userEmail: string | undefined,
-    itemId: Types.ObjectId,
-  ): Promise<AccessResult> {
+  async getAccess(userId: string, userEmail: string | undefined, itemId: Types.ObjectId): Promise<AccessResult> {
     const item = await this.driveItemModel.findById(itemId);
     if (!item || item.isDeleted) {
-      throw new NotFoundException('Item not found');
+      throw new NotFoundException("Item not found");
     }
 
     if (item.ownerId.toString() === userId) {
@@ -90,9 +80,7 @@ export class PermissionsService {
       return { isOwner: false, permission: null };
     }
 
-    const best = active.reduce((acc, s) =>
-      PERMISSION_RANK[s.permission] > PERMISSION_RANK[acc.permission] ? s : acc,
-    );
+    const best = active.reduce((acc, s) => (PERMISSION_RANK[s.permission] > PERMISSION_RANK[acc.permission] ? s : acc));
 
     return { isOwner: false, permission: best.permission };
   }
@@ -106,15 +94,13 @@ export class PermissionsService {
     userId: string,
     userEmail: string | undefined,
     itemId: Types.ObjectId,
-    required: SharePermission,
+    required: SharePermission
   ): Promise<AccessResult> {
     const access = await this.getAccess(userId, userEmail, itemId);
     if (access.isOwner) return access;
 
     if (!access.permission || PERMISSION_RANK[access.permission] < PERMISSION_RANK[required]) {
-      throw new ForbiddenException(
-        `Requires "${required}" permission on this item`,
-      );
+      throw new ForbiddenException(`Requires "${required}" permission on this item`);
     }
     return access;
   }
@@ -127,7 +113,7 @@ export class PermissionsService {
     userId: string,
     userEmail: string | undefined,
     itemId: Types.ObjectId,
-    required: SharePermission,
+    required: SharePermission
   ): Promise<boolean> {
     try {
       await this.requireAccess(userId, userEmail, itemId, required);
@@ -135,5 +121,31 @@ export class PermissionsService {
     } catch {
       return false;
     }
+  }
+  async findShareEntryPoint(
+    userId: string,
+    userEmail: string | undefined,
+    chainRootFirst: Types.ObjectId[]
+  ): Promise<Types.ObjectId | null> {
+    if (chainRootFirst.length === 0) return null;
+
+    const shares = await this.shareModel
+      .find({
+        itemId: { $in: chainRootFirst },
+        isRevoked: { $ne: true },
+        $or: [
+          { sharedWithUserId: new Types.ObjectId(userId) },
+          ...(userEmail ? [{ sharedWithEmail: userEmail.toLowerCase() }] : []),
+        ],
+      })
+      .lean();
+
+    const now = new Date();
+    const activeIds = new Set(shares.filter((s) => !s.expiresAt || s.expiresAt > now).map((s) => s.itemId.toString()));
+
+    for (const id of chainRootFirst) {
+      if (activeIds.has(id.toString())) return id;
+    }
+    return null;
   }
 }

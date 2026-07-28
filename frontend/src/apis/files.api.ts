@@ -1,6 +1,7 @@
 import type { DriveItem } from "@/types/api.types";
 import { api } from "../lib/axios";
 import type { AxiosProgressEvent } from "axios";
+import type { PreviewLinkResponse } from "@/types/file-preview.types";
 
 export interface UploadFileOptions {
   file: File;
@@ -9,7 +10,6 @@ export interface UploadFileOptions {
   signal?: AbortSignal;
 }
 
-/** Extracts the filename from a Content-Disposition header, falling back to a default. */
 function parseFilename(contentDisposition: string | undefined, fallback: string): string {
   if (!contentDisposition) return fallback;
   const match = /filename="?([^"]+)"?/.exec(contentDisposition);
@@ -17,24 +17,38 @@ function parseFilename(contentDisposition: string | undefined, fallback: string)
 }
 
 export const filesApi = {
-  upload: ({ file, parentId, onProgress, signal }: UploadFileOptions) => {
+  upload: async ({ file, parentId, onProgress, signal }: UploadFileOptions): Promise<DriveItem> => {
     const form = new FormData();
-    form.append("file", file);
-    if (parentId) form.append("parentId", parentId);
 
-    return api
-      .post<DriveItem>("/files/upload", form, {
-        signal,
-        onUploadProgress: (event: AxiosProgressEvent) => {
-          if (onProgress && event.total) {
-            onProgress(Math.round((event.loaded / event.total) * 100));
-          }
-        },
-      })
-      .then((res) => res.data);
+    form.append("file", file);
+
+    if (parentId?.trim()) {
+      form.append("parentId", parentId.trim());
+    }
+
+    const response = await api.post<DriveItem>("/files/upload", form, {
+      signal,
+
+      onUploadProgress: (event: AxiosProgressEvent) => {
+        let progress: number | undefined;
+
+        if (typeof event.total === "number" && event.total > 0) {
+          progress = Math.round((event.loaded / event.total) * 100);
+        } else if (typeof event.progress === "number") {
+          progress = Math.round(event.progress * 100);
+        }
+
+        if (progress === undefined) {
+          return;
+        }
+
+        onProgress?.(Math.min(Math.max(progress, 0), 100));
+      },
+    });
+
+    return response.data;
   },
 
-  /** Downloads a file and triggers a browser "Save As" via a temporary object URL. */
   download: async (fileId: string, fallbackName = "download") => {
     const res = await api.get(`/files/${fileId}/download`, { responseType: "blob" });
     const filename = parseFilename(res.headers["content-disposition"], fallbackName);
@@ -46,9 +60,8 @@ export const filesApi = {
     URL.revokeObjectURL(url);
   },
 
-  /** Returns an object URL for inline preview (e.g. <img src={url} />). Caller must revokeObjectURL when done. */
-  getPreviewObjectUrl: async (fileId: string): Promise<string> => {
-    const res = await api.get(`/files/${fileId}/preview`, { responseType: "blob" });
-    return URL.createObjectURL(res.data as Blob);
+  getPreviewObjectUrl: async (fileId: string): Promise<PreviewLinkResponse> => {
+    const res = await api.get(`/files/${fileId}/preview-link`);
+    return res.data;
   },
 };

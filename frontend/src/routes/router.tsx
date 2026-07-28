@@ -11,6 +11,8 @@ import AuthLayout from "@/layouts/AuthLayout/AuthLayout";
 import NotFoundPage from "@/pages/NotFound/NotFound";
 import DashboardLayout from "@/layouts/DashboardLayout/DashboardLayout";
 import MyDrivePage from "@/pages/Dashboard/MyDrive";
+import FolderPage from "@/pages/FolderPage";
+import { folderLoader } from "./loaders/folder-loader";
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +53,11 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: MyDrivePage,
+      },
+      {
+        path: "folders/:folderId",
+        loader: folderLoader,
+        Component: FolderPage,
       },
     ],
   },
