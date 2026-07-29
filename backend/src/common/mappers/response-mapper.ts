@@ -1,11 +1,11 @@
-import { plainToInstance } from 'class-transformer';
-import { DriveItemResponseDto } from '../dto/drive-item-response.dto';
-import { ShareResponseDto } from '../dto/share-response.dto';
+import { plainToInstance } from "class-transformer";
+import { DriveItemResponseDto } from "../dto/drive-item-response.dto";
+import { ShareResponseDto } from "../dto/share-response.dto";
 
-/** Normalizes a Mongoose HydratedDocument (has .toObject) or a .lean() plain object into a plain object. */
+// Normalizes a Mongoose HydratedDocument (has .toObject)
 function toPlain(doc: any): any {
   if (!doc) return doc;
-  return typeof doc.toObject === 'function' ? doc.toObject() : doc;
+  return typeof doc.toObject === "function" ? doc.toObject() : doc;
 }
 
 export function toDriveItemDto(doc: any): DriveItemResponseDto {

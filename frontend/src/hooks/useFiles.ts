@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { driveKeys } from "../lib/query-keys";
+import { driveKeys, fileKeys } from "../lib/query-keys";
 import { filesApi } from "@/apis";
 import type { UploadFileOptions } from "@/apis/files.api";
 
@@ -26,7 +26,7 @@ export function useFilePreviewLink() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["files", "preview-link"],
+    mutationKey: fileKeys.preview,
 
     mutationFn: (fileId: string) => filesApi.getPreviewObjectUrl(fileId),
 

@@ -61,7 +61,7 @@ export const filesApi = {
   },
 
   getPreviewObjectUrl: async (fileId: string): Promise<PreviewLinkResponse> => {
-    const res = await api.get(`/files/${fileId}/preview-link`);
-    return res.data;
+    const response = await api.get<PreviewLinkResponse>(`/files/${fileId}/preview-link`);
+    return response.data;
   },
 };

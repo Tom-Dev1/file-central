@@ -19,6 +19,8 @@ export function UploadFileButton({ parentId, className }: UploadFileButtonProps)
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
+    console.log(`file,`, file);
+
     if (!file) {
       return;
     }

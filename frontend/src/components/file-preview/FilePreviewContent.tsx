@@ -1,6 +1,4 @@
-// components/file-preview/FilePreviewContent.tsx
-
-import { Download, ExternalLink, FileQuestion } from "lucide-react";
+import { Download, FileQuestion } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
@@ -12,6 +10,7 @@ interface FilePreviewContentProps {
 
 export function FilePreviewContent({ preview }: FilePreviewContentProps) {
   const previewKind = resolvePreviewKind(preview.previewKind, preview.name);
+  console.log(`Rendering preview for ${preview.name} with kind ${previewKind} and URL ${preview.url}`);
 
   switch (previewKind) {
     case "image":
@@ -22,7 +21,9 @@ export function FilePreviewContent({ preview }: FilePreviewContentProps) {
       );
 
     case "pdf":
-      return <iframe src={preview.url} title={preview.name} className="size-full border-0 bg-background" />;
+      return (
+        <iframe src={preview.url} title={preview.name} className="size-full border-0 bg-background w-full h-full" />
+      );
 
     case "video":
       return (
@@ -47,8 +48,14 @@ export function FilePreviewContent({ preview }: FilePreviewContentProps) {
       );
 
     case "text":
-      return <iframe src={preview.url} title={preview.name} sandbox="" className="size-full border-0 bg-background" />;
+      return <iframe src={preview.url} title={preview.name} className="size-full border-0 bg-background" />;
 
+    case "unsupported":
+      return (
+        <>
+          <iframe src={preview.url} title={preview.name} className="size-full border-0 bg-background w-full h-full" />
+        </>
+      );
     default:
       return (
         <div className="flex size-full items-center justify-center p-6">
@@ -60,16 +67,6 @@ export function FilePreviewContent({ preview }: FilePreviewContentProps) {
             <p className="mt-2 text-sm text-muted-foreground">This file type cannot be previewed in the browser.</p>
 
             <div className="mt-5 flex justify-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  window.open(preview.url, "_blank", "noopener,noreferrer");
-                }}
-              >
-                <ExternalLink className="size-4" />
-                Open file
-              </Button>
 
               <Button asChild>
                 <a href={preview.url} download={preview.name}>

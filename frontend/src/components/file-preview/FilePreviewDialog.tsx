@@ -1,13 +1,12 @@
-// components/file-preview/FilePreviewDialog.tsx
-
+import { useEffect } from "react";
 import { ExternalLink, LoaderCircle, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useFilePreviewLink } from "@/hooks/useFiles";
 import type { DriveItem } from "@/types/api.types";
 
 import { FilePreviewContent } from "./FilePreviewContent";
-import { useFilePreviewLink } from "@/hooks/useFiles";
 
 interface FilePreviewDialogProps {
   item: DriveItem;
@@ -18,21 +17,37 @@ interface FilePreviewDialogProps {
 export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialogProps) {
   const previewMutation = useFilePreviewLink();
 
+  const { mutate, reset, data, isPending, isError } = previewMutation;
+
+  useEffect(() => {
+    if (!open) {
+      reset();
+      return;
+    }
+
+    mutate(item.id);
+  }, [open, item.id, mutate, reset]);
+
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
 
-    if (nextOpen && !previewMutation.isPending) {
-      previewMutation.mutate(item.id);
-    }
-
     if (!nextOpen) {
-      previewMutation.reset();
+      reset();
     }
   };
 
   const handleRetry = () => {
-    previewMutation.mutate(item.id);
+    reset();
+    mutate(item.id);
   };
+
+  // const handleOpenInNewTab = () => {
+  //   if (!data?.url) {
+  //     return;
+  //   }
+
+  //   // window.open(data.url, "_blank", "noopener,noreferrer");
+  // };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -43,19 +58,17 @@ export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialo
               <DialogTitle className="truncate">{item.name}</DialogTitle>
 
               <DialogDescription className="mt-1 truncate">
-                {previewMutation.data?.mimeType ?? item.mimeType ?? "Unknown file type"}
+                {data?.mimeType ?? item.mimeType ?? "Unknown file type"}
               </DialogDescription>
             </div>
 
-            {previewMutation.data && (
+            {data?.url && (
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 aria-label="Open file in a new tab"
-                onClick={() => {
-                  window.open(previewMutation.data.url, "_blank", "noopener,noreferrer");
-                }}
+                // onClick={handleOpenInNewTab}
               >
                 <ExternalLink className="size-4" />
               </Button>
@@ -64,13 +77,13 @@ export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialo
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-hidden">
-          {previewMutation.isPending ? (
+          {isPending ? (
             <div className="flex size-full flex-col items-center justify-center">
               <LoaderCircle className="size-8 animate-spin text-primary" />
 
               <p className="mt-3 text-sm text-muted-foreground">Preparing preview...</p>
             </div>
-          ) : previewMutation.isError ? (
+          ) : isError ? (
             <div className="flex size-full items-center justify-center p-6">
               <div className="text-center">
                 <h3 className="font-medium">Unable to open preview</h3>
@@ -85,9 +98,13 @@ export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialo
                 </Button>
               </div>
             </div>
-          ) : previewMutation.data ? (
-            <FilePreviewContent preview={previewMutation.data} />
-          ) : null}
+          ) : data ? (
+            <FilePreviewContent preview={data} />
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <p className="text-sm text-muted-foreground">No preview data is available.</p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

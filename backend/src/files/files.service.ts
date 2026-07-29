@@ -15,15 +15,13 @@ import { classifyPreviewKind, PreviewKind } from "./previewkind";
 @Injectable()
 export class FilesService {
   private readonly logger = new Logger(FilesService.name);
-  private readonly defaultPreviewExpiration = 300;
 
   constructor(
     private driveItemsService: DriveItemsService,
     private minioService: MinioService,
-    private permissionsService: PermissionsService
+    private permissionsService: PermissionsService // private fileMetadataResolverService: FileMetadataResolverService
   ) {}
 
-  //
   // Upload flow:
   // 1. Validate parent folder + duplicate name up front (fail fast, no I/O to MinIO yet)
   //  2. Re-stream the multer temp file (already on disk, NOT in RAM) to MinIO
@@ -34,13 +32,8 @@ export class FilesService {
 
   async upload(ownerId: string, parentId: string | null | undefined, file: Express.Multer.File) {
     const resolvedParentId = await this.driveItemsService.assertValidParent(ownerId, parentId);
-    // Google-Drive-style auto-rename: "Whale.png" -> "Whale 1.png" when a
-    // sibling with the same name already exists under this folder.
-    const uniqueName = await this.driveItemsService.resolveUniqueName(
-      ownerId,
-      resolvedParentId,
-      file.originalname
-    );
+    // auto-rename: "Whale.png" -> "Whale 1.png" w
+    const uniqueName = await this.driveItemsService.resolveUniqueName(ownerId, resolvedParentId, file.originalname);
 
     const extension = extname(uniqueName).replace(".", "");
     const objectKey = `users/${ownerId}/files/${randomUUID()}-${uniqueName}`;
@@ -64,7 +57,6 @@ export class FilesService {
           objectKey,
           extension,
           isDeleted: false,
-          // A freshly created item is both "just modified" and "just viewed".
           lastModifiedAt: new Date(),
           lastViewedAt: new Date(),
         });
@@ -77,7 +69,6 @@ export class FilesService {
         throw err;
       }
     } finally {
-      // Always clean up the multer temp file, whether upload succeeded or not.
       await unlink(file.path).catch((cleanupErr) => {
         this.logger.warn(`Failed to remove temp upload file ${file.path}: ${(cleanupErr as Error).message}`);
       });

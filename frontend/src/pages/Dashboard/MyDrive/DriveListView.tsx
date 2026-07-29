@@ -17,17 +17,24 @@ interface DriveListViewProps {
 
 export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListViewProps) {
   const { selectionMode, isSelected, toggleItem } = useDriveSelection();
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   const handleItemClick = (item: DriveItem) => {
     if (selectionMode) {
       toggleItem(item.id);
       return;
     }
-    if (item.type === "file") {
-      setIsPreviewOpen(true);
+    if (item.type === "folder") {
+      onOpenItem?.(item);
+      return;
     }
-    onOpenItem?.(item);
+
+    setPreviewItemId(item.id);
+  };
+
+  const handlePreviewChange = (itemId: string, open: boolean) => {
+    setPreviewItemId(open ? itemId : null);
   };
 
   if (items.length === 0) {
@@ -35,8 +42,9 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
   }
 
   return (
-    <div className="overflow-hidden rounded-xl  bg-background">
-      <div className="grid grid-cols-[minmax(0,1fr)_140px_120px_48px] items-center  bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
+    <div className="overflow-hidden rounded-xl bg-background">
+      <div className="grid grid-cols-[36px_minmax(0,1fr)_160px_120px_44px] items-center bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+        <span />
         <span>Name</span>
         <span>Last modified</span>
         <span>File size</span>
@@ -48,6 +56,9 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
           const selected = isSelected(item.id);
 
           const iconSource = getDriveItemIcon(item);
+
+          const isItemPreviewOpen = previewItemId === item.id;
+
           return (
             <div
               key={item.id}
@@ -59,7 +70,9 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
                 "hover:bg-muted/50",
                 selected && "bg-primary/5"
               )}
-              onClick={() => handleItemClick(item)}
+              onClick={() => {
+                handleItemClick(item);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
@@ -73,7 +86,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
                 onPrefetchItem?.(item);
               }}
             >
-              <div className="flex items-center justify-center mr-2">
+              <div className="mr-2 flex items-center justify-center">
                 {selectionMode && (
                   <Checkbox
                     checked={selected}
@@ -87,8 +100,10 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
                   />
                 )}
               </div>
+
               <div className="flex min-w-0 items-center gap-3">
                 <ThemedSvgIcon src={iconSource} className="size-5 bg-muted-foreground group-hover:bg-primary" />
+
                 <span className="truncate font-medium" title={item.name}>
                   {item.name}
                 </span>
@@ -100,8 +115,30 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
                 {item.type === "folder" ? "—" : formatFileSize(item.size ?? 0)}
               </span>
 
-              <FileActions item={item} isPreview={isPreviewOpen} />
-              {/* <DriveListRow key={item.id} item={item} onOpen={() => onOpenItem?.(item)} /> */}
+              <div
+                className={cn(
+                  "flex justify-end transition-opacity",
+                  "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+                  isItemPreviewOpen && "opacity-100"
+                )}
+                onClick={(event) => {
+                  event.stopPropagation();
+                }}
+                onKeyDown={(event) => {
+                  event.stopPropagation();
+                }}
+              >
+                <FileActions
+                  item={item}
+                  isPreview={isItemPreviewOpen}
+                  onPreviewChange={(open) => {
+                    handlePreviewChange(item.id, open);
+                  }}
+                  onOpenItem={() => {
+                    onOpenItem?.(item);
+                  }}
+                />
+              </div>
             </div>
           );
         })}

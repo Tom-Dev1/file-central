@@ -20,3 +20,8 @@ export const shareKeys = {
   sharedFolderChildren: (folderId: string) => [...shareKeys.all, "shared-with-me", folderId, "items"] as const,
   publicMeta: (token: string) => [...shareKeys.all, "public", token] as const,
 };
+
+export const fileKeys = {
+  all: ["files"] as const,
+  preview: ["preview"] as const,
+};
