@@ -1,5 +1,6 @@
 import { Expose, Transform } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { DriveItemType, FileStatus } from "../../modules/drive-items/enums/drive-item.enum";
 
 /**
  * Public-facing shape of a DriveItem. Deliberately does NOT expose
@@ -17,21 +18,33 @@ export class DriveItemResponseDto {
   @Expose()
   name!: string;
 
-  @ApiProperty({ enum: ["file", "folder"] })
+  @ApiProperty({ enum: DriveItemType })
   @Expose()
-  type!: "file" | "folder";
+  type!: DriveItemType;
+
+  @ApiProperty({ enum: FileStatus, nullable: true })
+  @Expose()
+  fileStatus!: FileStatus | null;
 
   @ApiPropertyOptional()
   @Expose()
-  mimeType?: string;
+  mimeType!: string | null;
 
   @ApiPropertyOptional()
   @Expose()
-  size?: number;
+  @Transform(({ obj }) => {
+    const value = obj.sizeBytes ?? obj.size;
+    return value === null || value === undefined ? null : value.toString();
+  })
+  sizeBytes!: string | null;
 
   @ApiPropertyOptional()
   @Expose()
-  extension?: string;
+  extension!: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  @Expose()
+  childCount!: number | null;
 
   @ApiProperty()
   @Expose()
@@ -45,25 +58,29 @@ export class DriveItemResponseDto {
 
   @ApiProperty()
   @Expose()
-  isDeleted!: boolean;
+  isTrashed!: boolean;
 
   @ApiPropertyOptional({ nullable: true })
   @Expose()
-  deletedAt?: Date | null;
+  @Transform(({ value }) => (value ? new Date(value).toISOString() : null))
+  trashedAt!: string | null;
 
   @ApiProperty()
   @Expose()
-  createdAt!: Date;
+  metadataVersion!: number;
 
   @ApiProperty()
   @Expose()
-  updatedAt!: Date;
+  @Transform(({ value }) => new Date(value).toISOString())
+  createdAt!: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiProperty()
   @Expose()
-  lastModifiedAt?: Date | null;
+  @Transform(({ value }) => new Date(value).toISOString())
+  updatedAt!: string;
 
-  @ApiPropertyOptional({ nullable: true })
+  @ApiProperty()
   @Expose()
-  lastViewedAt?: Date | null;
+  @Transform(({ value }) => new Date(value).toISOString())
+  lastModifiedAt!: string;
 }
