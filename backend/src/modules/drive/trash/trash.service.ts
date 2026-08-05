@@ -1,69 +1,66 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { Types } from "mongoose";
-import { DriveItemsService } from "../../drive-items/drive-items.service";
-import { MinioService } from "../../storage/minio.service";
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Types } from 'mongoose';
+import { DriveItemsService } from '../../drive-items/drive-items.service';
+import { StorageObjectsService } from '../../storage/storage-objects.service';
+import { QuotaService } from '../../quota/quota.service';
+import { SharesService } from '../../shares/shares.service';
 
 @Injectable()
 export class TrashService {
-  constructor(private driveItemsService: DriveItemsService, private minioService: MinioService) {}
+  constructor(
+    private readonly driveItems: DriveItemsService,
+    private readonly storageObjects: StorageObjectsService,
+    private readonly quota: QuotaService,
+    private readonly shares: SharesService,
+  ) {}
 
-  async list(ownerId: string) {
-    return this.driveItemsService.listTrashRoots(ownerId);
-  }
+  list(ownerId: string) { return this.driveItems.listTrashRoots(ownerId); }
 
   private async assertOwnsTrashedItem(ownerId: string, itemId: Types.ObjectId) {
-    const item = await this.driveItemsService.model.findOne({ _id: itemId, isDeleted: true });
-    if (!item) throw new NotFoundException("Item not found in trash");
-    if (item.ownerId.toString() !== ownerId) {
-      throw new ForbiddenException("Only the owner can manage this trashed item");
-    }
+    const item = await this.driveItems.model.findOne({ _id: itemId, ownerId: new Types.ObjectId(ownerId), isTrashed: true });
+    if (!item) throw new NotFoundException('ITEM_NOT_FOUND_IN_TRASH');
+    if (!item.trashedRootId?.equals(item._id)) throw new ForbiddenException('RESTORE_TRASH_ROOT_INSTEAD');
     return item;
   }
 
-  async restore(ownerId: string, itemId: string) {
-    const objectId = new Types.ObjectId(itemId);
-    await this.assertOwnsTrashedItem(ownerId, objectId);
-
-    // Restoring shouldn't silently succeed while leaving the item invisible
-    // because its parent folder is still trashed - require restoring the
-    // parent first, same as Google Drive.
-    const item = await this.driveItemsService.model.findById(objectId);
-    if (item?.parentId) {
-      const parent = await this.driveItemsService.model.findById(item.parentId);
-      if (parent?.isDeleted) {
-        throw new ForbiddenException("Parent folder is still in trash - restore the parent folder first");
-      }
+  async restore(ownerId: string, itemIdValue: string) {
+    const itemId = new Types.ObjectId(itemIdValue);
+    const item = await this.assertOwnsTrashedItem(ownerId, itemId);
+    if (item.parentId) {
+      const parent = await this.driveItems.model.findById(item.parentId).lean();
+      if (parent?.isTrashed) throw new ForbiddenException('PARENT_STILL_TRASHED');
     }
-
-    const restoredIds = await this.driveItemsService.restoreRecursive(objectId);
+    const restoredIds = await this.driveItems.restoreRecursive(itemId);
     return { restoredIds: restoredIds.map((id) => id.toString()) };
   }
 
-  async purgeOne(ownerId: string, itemId: string) {
-    const objectId = new Types.ObjectId(itemId);
-    await this.assertOwnsTrashedItem(ownerId, objectId);
-
-    const { deletedIds, objectKeys } = await this.driveItemsService.hardDeleteRecursive(objectId);
-    if (objectKeys.length > 0) {
-      await this.minioService.removeObjects(objectKeys);
-    }
-    return { deletedIds: deletedIds.map((id) => id.toString()) };
+  async purgeOne(ownerId: string, itemIdValue: string) {
+    const itemId = new Types.ObjectId(itemIdValue);
+    await this.assertOwnsTrashedItem(ownerId, itemId);
+    const result = await this.driveItems.hardDeleteRecursive(itemId);
+    await this.deleteStorageObjects(result.storageObjectIds);
+    await this.shares.cleanupItems(result.deletedIds);
+    await this.driveItems.finalizeHardDelete(result.deletedIds);
+    return { deletedIds: result.deletedIds.map((id) => id.toString()) };
   }
 
   async purgeAll(ownerId: string) {
-    const roots = await this.driveItemsService.listTrashRoots(ownerId);
-    const allDeletedIds: string[] = [];
-    const allObjectKeys: string[] = [];
-
+    const roots = await this.driveItems.listTrashRoots(ownerId);
+    const deletedIds: string[] = [];
     for (const root of roots) {
-      const { deletedIds, objectKeys } = await this.driveItemsService.hardDeleteRecursive(root._id);
-      allDeletedIds.push(...deletedIds.map((id) => id.toString()));
-      allObjectKeys.push(...objectKeys);
+      const result = await this.driveItems.hardDeleteRecursive(root._id);
+      await this.deleteStorageObjects(result.storageObjectIds);
+      await this.shares.cleanupItems(result.deletedIds);
+      await this.driveItems.finalizeHardDelete(result.deletedIds);
+      deletedIds.push(...result.deletedIds.map((id) => id.toString()));
     }
+    return { deletedIds };
+  }
 
-    if (allObjectKeys.length > 0) {
-      await this.minioService.removeObjects(allObjectKeys);
+  private async deleteStorageObjects(ids: Types.ObjectId[]): Promise<void> {
+    for (const id of ids) {
+      const deleted = await this.storageObjects.permanentDelete(id);
+      if (deleted) await this.quota.releaseUsed(deleted.ownerId, deleted.sizeBytes, `storage-object:${id.toString()}:delete`);
     }
-    return { deletedIds: allDeletedIds };
   }
 }

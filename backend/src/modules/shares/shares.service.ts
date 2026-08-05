@@ -1,175 +1,109 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
-import { Readable } from "stream";
-import { Share, ShareDocument, ShareType, SharePermission } from "./schemas/share.schema";
-import { CreateShareDto } from "./dto/create-share.dto";
-import { DriveItemsService } from "../drive-items/drive-items.service";
-import { DriveItemType } from "../drive-items/schemas/drive-item.schema";
-import { PermissionsService } from "../permissions/permissions.service";
-import { UsersService } from "../users/users.service";
-import { MinioService } from "../storage/minio.service";
-import { generateToken } from "../../common/utils/token.util";
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { createHash, randomBytes } from 'crypto';
+import { Model, Types } from 'mongoose';
+import { DriveItemsService } from '../drive-items/drive-items.service';
+import { DriveItemType } from '../drive-items/schemas/drive-item.schema';
+import { PermissionsService } from '../permissions/permissions.service';
+import { StorageObjectsService } from '../storage/storage-objects.service';
+import { UsersService } from '../users/users.service';
+import { CreateShareDto } from './dto/create-share.dto';
+import { Share, ShareDocument, SharePermission, ShareType } from './schemas/share.schema';
 
 @Injectable()
 export class SharesService {
   constructor(
-    @InjectModel(Share.name) private shareModel: Model<ShareDocument>,
-    private driveItemsService: DriveItemsService,
-    // private permissionsService: PermissionsService,
-    private usersService: UsersService,
-    private minioService: MinioService
+    @InjectModel(Share.name) private readonly shareModel: Model<ShareDocument>,
+    private readonly driveItems: DriveItemsService,
+    private readonly permissions: PermissionsService,
+    private readonly users: UsersService,
+    private readonly storageObjects: StorageObjectsService,
   ) {}
 
-  /**
-   * Only the owner of an item may share it (per analysis doc §5.7/§5.8:
-   * "check current user là owner"). Folder shares are NOT copied down to
-   * children (see §5.8 Cách 1) - access to descendants is computed at
-   * read-time by PermissionsService walking the ancestor chain.
-   */
-  async create(ownerId: string, dto: CreateShareDto) {
-    const item = await this.driveItemsService.model.findOne({
-      _id: dto.itemId,
-      isDeleted: false,
-    });
-    if (!item) throw new NotFoundException("Item not found");
-    if (item.ownerId.toString() !== ownerId) {
-      throw new ForbiddenException("Only the owner can share this item");
-    }
-
-    const shareDoc: Partial<Share> = {
-      itemId: item._id,
+  async create(actorIdValue: string, dto: CreateShareDto) {
+    const actorId = new Types.ObjectId(actorIdValue);
+    const itemId = new Types.ObjectId(dto.itemId);
+    await this.permissions.requireAccess(actorIdValue, undefined, itemId, SharePermission.EDIT);
+    const item = await this.driveItems.model.findOne({ _id: itemId, isTrashed: false }).lean();
+    if (!item) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
+    const share: Partial<Share> = {
+      itemId,
       itemType: item.type,
       ownerId: item.ownerId,
       permission: dto.permission,
       shareType: dto.shareType,
       expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
     };
-
+    let token: string | null = null;
     if (dto.shareType === ShareType.USER) {
-      if (!dto.sharedWithEmail) {
-        throw new BadRequestException("sharedWithEmail is required for user shares");
-      }
-      shareDoc.sharedWithEmail = dto.sharedWithEmail.toLowerCase();
-      const existingUser = await this.usersService.findByEmail(dto.sharedWithEmail);
-      if (existingUser) {
-        shareDoc.sharedWithUserId = existingUser._id;
-      }
+      if (!dto.sharedWithEmail) throw new BadRequestException('SHARED_EMAIL_REQUIRED');
+      share.sharedWithEmail = dto.sharedWithEmail.toLowerCase();
+      share.sharedWithUserId = (await this.users.findByEmail(dto.sharedWithEmail))?._id ?? null;
     } else {
-      shareDoc.token = generateToken();
+      token = randomBytes(32).toString('base64url');
+      share.tokenHash = this.hashToken(token);
     }
-
-    const share = await this.shareModel.create(shareDoc);
-    return share;
+    return { share: await this.shareModel.create(share), token };
   }
 
-  /** Shares the current user has created (as owner). */
-  async listMyShares(ownerId: string) {
-    return this.shareModel.find({ ownerId: new Types.ObjectId(ownerId), isRevoked: { $ne: true } }).lean();
+  listMyShares(ownerId: string) {
+    return this.shareModel.find({ ownerId: new Types.ObjectId(ownerId), isRevoked: false }).lean();
   }
 
-  /**
-   * Items shared directly with the current user (by userId or email),
-   * i.e. the "roots" a user would see under "Shared with me". Does NOT
-   * include implicit access to descendants of a shared folder - use
-   * listSharedFolderChildren for that.
-   */
   async listSharedWithMe(userId: string, userEmail: string | undefined) {
+    const shares = await this.shareModel.find({
+      isRevoked: false,
+      shareType: ShareType.USER,
+      $or: [{ sharedWithUserId: new Types.ObjectId(userId) }, ...(userEmail ? [{ sharedWithEmail: userEmail.toLowerCase() }] : [])],
+    }).lean();
     const now = new Date();
-    const shares = await this.shareModel
-      .find({
-        isRevoked: { $ne: true },
-        shareType: ShareType.USER,
-        $or: [
-          { sharedWithUserId: new Types.ObjectId(userId) },
-          ...(userEmail ? [{ sharedWithEmail: userEmail.toLowerCase() }] : []),
-        ],
-      })
-      .lean();
-
-    const active = shares.filter((s) => !s.expiresAt || s.expiresAt > now);
-    const itemIds = active.map((s) => s.itemId);
-    const items = await this.driveItemsService.model.find({ _id: { $in: itemIds }, isDeleted: false }).lean();
-
-    const itemsById = new Map(items.map((i) => [i._id.toString(), i]));
-    return active
-      .map((s) => ({
-        share: s,
-        item: itemsById.get(s.itemId.toString()) || null,
-      }))
-      .filter((row) => row.item !== null);
+    const active = shares.filter((share) => !share.expiresAt || share.expiresAt > now);
+    const items = await this.driveItems.model.find({ _id: { $in: active.map((share) => share.itemId) }, isTrashed: false }).lean();
+    const byId = new Map(items.map((item) => [item._id.toString(), item]));
+    return active.map((share) => ({ share, item: byId.get(share.itemId.toString()) ?? null })).filter((row) => row.item);
   }
 
-  /**
-   * Lists children of a folder that the current user only has access to
-   * via a share (direct or ancestor). Enforces the ancestor-check from
-   * analysis doc §5.8/§10.5.
-   */
-  async listSharedFolderChildren(userId: string, userEmail: string | undefined, folderId: string) {
-    const objectId = new Types.ObjectId(folderId);
-    // await this.permissionsService.requireAccess(userId, userEmail, objectId, SharePermission.VIEW);
-
-    const folder = await this.driveItemsService.model.findOne({
-      _id: objectId,
-      isDeleted: false,
-    });
-    if (!folder || folder.type !== DriveItemType.FOLDER) {
-      throw new NotFoundException("Shared folder not found");
-    }
-
-    return this.driveItemsService.model.find({ parentId: objectId, isDeleted: false }).lean();
+  async listSharedFolderChildren(userId: string, userEmail: string | undefined, folderIdValue: string) {
+    const folderId = new Types.ObjectId(folderIdValue);
+    await this.permissions.requireAccess(userId, userEmail, folderId, SharePermission.VIEW);
+    const folder = await this.driveItems.model.findOne({ _id: folderId, type: DriveItemType.FOLDER, isTrashed: false });
+    if (!folder) throw new NotFoundException('SHARED_FOLDER_NOT_FOUND');
+    return this.driveItems.model.find({ ownerId: folder.ownerId, parentId: folderId, isTrashed: false }).lean();
   }
 
-  async revoke(ownerId: string, shareId: string) {
-    const share = await this.shareModel.findOne({ _id: shareId, ownerId });
-    if (!share) throw new NotFoundException("Share not found");
+  async revoke(actorId: string, shareId: string) {
+    const share = await this.shareModel.findById(shareId);
+    if (!share) throw new NotFoundException('SHARE_NOT_FOUND');
+    await this.permissions.requireAccess(actorId, undefined, share.itemId, SharePermission.EDIT);
     share.isRevoked = true;
     await share.save();
     return { revoked: true };
   }
 
-  // --- Public link (no auth) ---
-
-  private async resolvePublicShare(token: string): Promise<ShareDocument> {
-    const share = await this.shareModel.findOne({
-      token,
-      shareType: ShareType.PUBLIC_LINK,
-      isRevoked: { $ne: true },
-    });
-    if (!share) throw new NotFoundException("Share link not found");
-    if (share.expiresAt && share.expiresAt < new Date()) {
-      throw new ForbiddenException("Share link has expired");
-    }
-    return share;
-  }
-
   async getPublicShareMetadata(token: string) {
     const share = await this.resolvePublicShare(token);
-    const item = await this.driveItemsService.model.findOne({
-      _id: share.itemId,
-      isDeleted: false,
-    });
-    if (!item) throw new NotFoundException("Shared item not found");
+    const item = await this.driveItems.model.findOne({ _id: share.itemId, isTrashed: false });
+    if (!item) throw new NotFoundException('LINK_UNAVAILABLE');
     return { item, permission: share.permission };
   }
 
-  // async getPublicDownloadStream(
-  //   token: string
-  // ): Promise<{ stream: Readable; name: string; mimeType?: string; size?: number }> {
-  //   const share = await this.resolvePublicShare(token);
-  //   if (share.permission !== SharePermission.DOWNLOAD && share.permission !== SharePermission.EDIT) {
-  //     throw new ForbiddenException("This link does not allow downloads");
-  //   }
+  async getPublicDownloadUrl(token: string) {
+    const share = await this.resolvePublicShare(token);
+    if (![SharePermission.DOWNLOAD, SharePermission.EDIT].includes(share.permission)) throw new NotFoundException('LINK_UNAVAILABLE');
+    const item = await this.driveItems.model.findOne({ _id: share.itemId, type: DriveItemType.FILE, isTrashed: false });
+    if (!item?.storageObjectId) throw new NotFoundException('LINK_UNAVAILABLE');
+    return { url: await this.storageObjects.getPresignedDownloadUrl(item.storageObjectId, item.ownerId), expiresInSeconds: 3600 };
+  }
 
-  //   const item = await this.driveItemsService.model.findOne({
-  //     _id: share.itemId,
-  //     isDeleted: false,
-  //   });
-  //   if (!item || item.type !== DriveItemType.FILE || !item.storageObjectId) {
-  //     throw new NotFoundException("Shared file not found");
-  //   }
+  async cleanupItems(itemIds: Types.ObjectId[]): Promise<void> {
+    if (itemIds.length) await this.shareModel.deleteMany({ itemId: { $in: itemIds } });
+  }
 
-  //   const stream = await this.minioService.getObjectStream(item.storageObjectId);
-  //   return { stream, name: item.name, mimeType: item.mimeType, size: item.size };
-  // }
+  private async resolvePublicShare(token: string): Promise<ShareDocument> {
+    const share = await this.shareModel.findOne({ tokenHash: this.hashToken(token), shareType: ShareType.PUBLIC_LINK, isRevoked: false }).select('+tokenHash');
+    if (!share || (share.expiresAt && share.expiresAt < new Date())) throw new NotFoundException('LINK_UNAVAILABLE');
+    return share;
+  }
+
+  private hashToken(token: string): Buffer { return createHash('sha256').update(token).digest(); }
 }

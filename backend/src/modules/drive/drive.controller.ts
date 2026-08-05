@@ -24,7 +24,7 @@ export class DriveController {
       user.userId,
       query.q || "",
       query.type,
-      query.page ?? 1,
+      query.cursor,
       query.limit ?? 50
     );
     return { ...result, items: toDriveItemDtoList(result.items) };
@@ -39,7 +39,7 @@ export class DriveController {
     const result = await this.driveService.list(
       user.userId,
       parentId || null,
-      pagination.page ?? 1,
+      pagination.cursor,
       pagination.limit ?? 50
     );
     return { ...result, items: toDriveItemDtoList(result.items) };

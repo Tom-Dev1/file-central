@@ -16,8 +16,8 @@ import { StorageModule } from "../storage/storage.module";
     UsersModule,
     StorageModule,
   ],
-  // controllers: [SharesController],
-  // providers: [SharesService],
-  // exports: [SharesService],
+  controllers: [SharesController],
+  providers: [SharesService],
+  exports: [SharesService],
 })
 export class SharesModule {}

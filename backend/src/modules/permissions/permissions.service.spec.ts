@@ -29,7 +29,7 @@ interface FakeDriveItem {
   ownerId: Types.ObjectId;
   parentId: Types.ObjectId | null;
   type: DriveItemType;
-  isDeleted: boolean;
+  isTrashed: boolean;
 }
 
 interface FakeShare {
@@ -57,21 +57,21 @@ describe("PermissionsService", () => {
     ownerId: userA,
     parentId: null,
     type: DriveItemType.FOLDER,
-    isDeleted: false,
+    isTrashed: false,
   };
   const parentFolder: FakeDriveItem = {
     _id: new Types.ObjectId(),
     ownerId: userA,
     parentId: grandparentFolder._id,
     type: DriveItemType.FOLDER,
-    isDeleted: false,
+    isTrashed: false,
   };
   const file: FakeDriveItem = {
     _id: new Types.ObjectId(),
     ownerId: userA,
     parentId: parentFolder._id,
     type: DriveItemType.FILE,
-    isDeleted: false,
+    isTrashed: false,
   };
 
   beforeEach(async () => {
@@ -226,7 +226,7 @@ describe("PermissionsService", () => {
 
   it("10. requireAccess (and getAccess) throws NotFoundException for a soft-deleted item", async () => {
     const deletedFile = driveItems.find((i) => i._id.equals(file._id))!;
-    deletedFile.isDeleted = true;
+    deletedFile.isTrashed = true;
 
     await expect(service.getAccess(userA.toString(), undefined, file._id)).rejects.toThrow(NotFoundException);
   });

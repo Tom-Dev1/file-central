@@ -20,6 +20,8 @@ import { Transform } from 'class-transformer';
 import { DriveItemNameDto } from '../../drive-items/dto/drive-item-name.dto';
 
 // Ngưỡng chọn chiến lược upload
+import 'reflect-metadata';
+
 export const SINGLE_PART_MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 export const MIN_PART_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 export const MAX_PARTS_ALLOWED = 9000; // margin dưới giới hạn 10,000 của S3
@@ -104,7 +106,7 @@ export interface ResumeUploadResponseDto {
     driveItemId?: string;
     singlePartUploaded?: boolean;
     totalParts?: number;
-    uploadedParts?: number;
-    uploadedPartNumbers?: number[];
+    uploadedPartCount?: number;
+    uploadedParts?: Array<{ partNumber: number; etag: string; sizeBytes: string }>;
     missingPartUrls?: UploadPartUrlDto[];
 }

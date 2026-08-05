@@ -10,6 +10,8 @@ const PERMISSION_RANK: Record<SharePermission, number> = {
   [SharePermission.EDIT]: 3,
 };
 
+import 'reflect-metadata';
+
 export interface AccessResult {
   isOwner: boolean;
   permission: SharePermission | null; // highest permission the user effectively has, null = no access
@@ -53,7 +55,7 @@ export class PermissionsService {
    */
   async getAccess(userId: string, userEmail: string | undefined, itemId: Types.ObjectId): Promise<AccessResult> {
     const item = await this.driveItemModel.findById(itemId);
-    if (!item || item.isDeleted) {
+    if (!item || item.isTrashed) {
       throw new NotFoundException("Item not found");
     }
 
@@ -61,7 +63,9 @@ export class PermissionsService {
       return { isOwner: true, permission: SharePermission.EDIT };
     }
 
-    const chain = await this.getAncestorChain(itemId);
+    const chain = Array.isArray(item.ancestorIds)
+      ? [item._id, ...item.ancestorIds]
+      : await this.getAncestorChain(itemId);
 
     const shareFilter: any = {
       itemId: { $in: chain },

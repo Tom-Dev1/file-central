@@ -4,8 +4,11 @@ import { StorageModule } from "../../storage/storage.module";
 import { TrashService } from "./trash.service";
 import { TrashController } from "./trash.controller";
 
+import { QuotaModule } from '../../quota/quota.module';
+import { SharesModule } from '../../shares/shares.module';
+
 @Module({
-  imports: [DriveItemsModule, StorageModule],
+  imports: [DriveItemsModule, StorageModule, QuotaModule, SharesModule],
   controllers: [TrashController],
   providers: [TrashService],
 })

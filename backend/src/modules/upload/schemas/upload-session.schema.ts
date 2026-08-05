@@ -32,6 +32,9 @@ export class UploadSession {
     @Prop({ type: Types.ObjectId, default: null })
     parentId: Types.ObjectId | null;
 
+    @Prop({ type: String, default: null })
+    originalName: string | null;
+
     @Prop({ type: String, enum: UploadMethod, required: true })
     method: UploadMethod;
 
@@ -94,4 +97,5 @@ UploadSessionSchema.index(
         partialFilterExpression: { idempotencyKey: { $type: 'string' } },
     },
 );
-UploadSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+// The reaper must observe expired sessions before archival cleanup so it can
+// abort multipart uploads and release reserved quota.

@@ -214,6 +214,10 @@ export class FileMetadataResolverService {
     };
   }
 
+  resolveFromBuffer(originalname: string, mimetype: string | undefined, buffer: Buffer): Promise<ResolvedFileMetadata> {
+    return this.resolve({ originalname, mimetype: mimetype ?? '', buffer } as Express.Multer.File);
+  }
+
   private async detectBinaryType(buffer?: Buffer): Promise<FileTypeResult | null> {
     if (!buffer?.length) {
       return null;

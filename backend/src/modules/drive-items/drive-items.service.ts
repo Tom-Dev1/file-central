@@ -1,239 +1,261 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model, Types } from "mongoose";
-import { DriveItem, DriveItemDocument, DriveItemType } from "./schemas/drive-item.schema";
-import { FileStatus } from "./enums/drive-item.enum";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
+import { DriveItem, DriveItemDocument, DriveItemType, MAX_FOLDER_DEPTH } from './schemas/drive-item.schema';
+import { FileStatus } from './enums/drive-item.enum';
+
+const MAX_SYNC_SUBTREE_ITEMS = 1000;
 
 @Injectable()
 export class DriveItemsService {
-  constructor(@InjectModel(DriveItem.name) private driveItemModel: Model<DriveItemDocument>) {}
+  constructor(@InjectModel(DriveItem.name) private readonly driveItemModel: Model<DriveItemDocument>) {}
 
-  get model() {
-    return this.driveItemModel;
+  get model() { return this.driveItemModel; }
+
+  normalizeName(name: string): string {
+    return name.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
+  }
+
+  extractExtension(name: string): string | null {
+    const index = name.lastIndexOf('.');
+    return index > 0 ? name.slice(index + 1).toLowerCase() : null;
+  }
+
+  async resolveAncestors(ownerId: Types.ObjectId, parentId: Types.ObjectId | null): Promise<Types.ObjectId[]> {
+    if (!parentId) return [];
+    const parent = await this.driveItemModel.findOne({
+      _id: parentId,
+      ownerId,
+      type: DriveItemType.FOLDER,
+      isTrashed: false,
+    }).lean();
+    if (!parent) throw new NotFoundException('PARENT_NOT_FOUND');
+    const ancestors = [...parent.ancestorIds, parent._id];
+    if (ancestors.length > MAX_FOLDER_DEPTH) throw new BadRequestException('MAX_DEPTH_EXCEEDED');
+    return ancestors;
+  }
+
+  async createFolder(args: { ownerId: Types.ObjectId; parentId: Types.ObjectId | null; name: string }) {
+    const ancestorIds = await this.resolveAncestors(args.ownerId, args.parentId);
+    try {
+      const folder = await this.driveItemModel.create({
+        ...args,
+        ancestorIds,
+        normalizedName: this.normalizeName(args.name),
+        type: DriveItemType.FOLDER,
+        storageObjectId: null,
+        fileStatus: null,
+        mimeType: null,
+        sizeBytes: null,
+        extension: null,
+        childCount: 0,
+      });
+      await this.adjustChildCount(args.parentId, 1);
+      return folder;
+    } catch (error) { this.rethrowDuplicate(error); }
   }
 
   async createPlaceholder(args: { ownerId: Types.ObjectId; parentId: Types.ObjectId | null; name: string }) {
-    const parent = args.parentId
-      ? await this.driveItemModel.findOne({ _id: args.parentId, ownerId: args.ownerId, type: DriveItemType.FOLDER, isTrashed: false }).lean()
-      : null;
-    if (args.parentId && !parent) throw new NotFoundException("Parent folder not found");
-    const item = await this.driveItemModel.create({
-      ownerId: args.ownerId,
-      parentId: args.parentId,
-      ancestorIds: parent ? [...parent.ancestorIds, parent._id] : [],
-      name: args.name,
-      normalizedName: args.name.normalize("NFC").trim().toLocaleLowerCase("en-US"),
-      type: DriveItemType.FILE,
-      fileStatus: FileStatus.UPLOADING,
-      childCount: null,
-    });
-    return { id: item._id };
+    const ancestorIds = await this.resolveAncestors(args.ownerId, args.parentId);
+    try {
+      const item = await this.driveItemModel.create({
+        ...args,
+        ancestorIds,
+        normalizedName: this.normalizeName(args.name),
+        type: DriveItemType.FILE,
+        storageObjectId: null,
+        fileStatus: FileStatus.UPLOADING,
+        mimeType: null,
+        sizeBytes: null,
+        extension: this.extractExtension(args.name),
+        childCount: null,
+      });
+      return { id: item._id };
+    } catch (error) { this.rethrowDuplicate(error); }
   }
 
   async activateFile(args: { driveItemId: Types.ObjectId; storageObjectId: Types.ObjectId; mimeType: string; sizeBytes: bigint; extension: string | null }) {
-    await this.driveItemModel.updateOne(
-      { _id: args.driveItemId, fileStatus: { $in: [FileStatus.UPLOADING, FileStatus.PROCESSING] } },
+    const item = await this.driveItemModel.findOneAndUpdate(
+      { _id: args.driveItemId, type: DriveItemType.FILE, fileStatus: { $in: [FileStatus.UPLOADING, FileStatus.PROCESSING] } },
       { $set: { storageObjectId: args.storageObjectId, fileStatus: FileStatus.ACTIVE, mimeType: args.mimeType, sizeBytes: args.sizeBytes, extension: args.extension, lastModifiedAt: new Date() }, $inc: { metadataVersion: 1 } },
+      { returnDocument: 'after' },
     );
+    if (!item) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
+    await this.adjustChildCount(item.parentId, 1);
+  }
+
+  async rollbackActivation(driveItemId: Types.ObjectId): Promise<void> {
+    const item = await this.driveItemModel.findOneAndUpdate(
+      { _id: driveItemId, type: DriveItemType.FILE, fileStatus: FileStatus.ACTIVE },
+      { $set: { storageObjectId: null, fileStatus: FileStatus.FAILED, mimeType: null, sizeBytes: null, extension: null }, $inc: { metadataVersion: 1 } },
+      { returnDocument: 'before' },
+    );
+    if (item) await this.adjustChildCount(item.parentId, -1);
   }
 
   async markFailed(driveItemId: Types.ObjectId) {
-    await this.driveItemModel.updateOne({ _id: driveItemId, fileStatus: { $ne: FileStatus.ACTIVE } }, { $set: { fileStatus: FileStatus.FAILED } });
+    await this.driveItemModel.updateOne(
+      { _id: driveItemId, type: DriveItemType.FILE, fileStatus: { $ne: FileStatus.ACTIVE } },
+      { $set: { fileStatus: FileStatus.FAILED } },
+    );
   }
 
-  /**
-   * Validates that `parentId` (if provided) exists, belongs to `ownerId`,
-   * is a folder, and is not soft-deleted. Returns null for root (parentId
-   * omitted/null).
-   */
   async assertValidParent(ownerId: string, parentId?: string | null): Promise<Types.ObjectId | null> {
-    if (!parentId) return null;
-
-    const parent = await this.driveItemModel.findOne({
-      _id: parentId,
-      ownerId: new Types.ObjectId(ownerId),
-      isDeleted: false,
-    });
-
-    if (!parent) {
-      throw new NotFoundException("Parent folder not found");
-    }
-    if (parent.type !== DriveItemType.FOLDER) {
-      throw new BadRequestException("parentId does not point to a folder");
-    }
-    return parent._id;
+    const id = parentId ? new Types.ObjectId(parentId) : null;
+    await this.resolveAncestors(new Types.ObjectId(ownerId), id);
+    return id;
   }
 
-  /**
-   * Prevents two active items with the same name under the same parent
-   * for the same owner (MVP policy: block duplicates rather than
-   * auto-renaming to "name (1)").
-   */
-  async assertNoDuplicateName(
-    ownerId: string,
-    parentId: Types.ObjectId | null,
-    name: string,
-    excludeId?: Types.ObjectId
-  ): Promise<void> {
-    const filter: any = {
-      ownerId: new Types.ObjectId(ownerId),
-      parentId,
-      name,
-      isDeleted: false,
+  async assertNoDuplicateName(ownerId: string, parentId: Types.ObjectId | null, name: string, excludeId?: Types.ObjectId) {
+    const filter: Record<string, unknown> = {
+      ownerId: new Types.ObjectId(ownerId), parentId, normalizedName: this.normalizeName(name), isTrashed: false,
     };
     if (excludeId) filter._id = { $ne: excludeId };
-
-    const dup = await this.driveItemModel.findOne(filter);
-    if (dup) {
-      throw new ConflictException(`An item named "${name}" already exists in this folder`);
-    }
+    if (await this.driveItemModel.exists(filter)) throw new ConflictException('NAME_ALREADY_EXISTS');
   }
 
-  /**
-   * Guards against moving a folder into itself or into one of its own
-   * descendants, which would create a cycle in the tree.
-   */
-  async assertNotCircularMove(itemId: Types.ObjectId, newParentId: Types.ObjectId | null): Promise<void> {
-    if (!newParentId) return;
-    if (newParentId.equals(itemId)) {
-      throw new BadRequestException("Cannot move a folder into itself");
-    }
-
-    let current: { _id: Types.ObjectId; parentId: Types.ObjectId | null } | null = await this.driveItemModel
-      .findById(newParentId)
-      .select("_id parentId")
-      .lean();
-
-    let depth = 0;
-    while (current && depth < 1000) {
-      if (current._id.equals(itemId)) {
-        throw new BadRequestException("Cannot move a folder into one of its own subfolders");
-      }
-      if (!current.parentId) break;
-      current = await this.driveItemModel.findById(current.parentId).select("_id parentId").lean();
-      depth++;
-    }
+  async rename(args: { ownerId: Types.ObjectId; itemId: Types.ObjectId; name: string; expectedMetadataVersion: number }) {
+    const current = await this.driveItemModel.findOne({ _id: args.itemId, ownerId: args.ownerId, isTrashed: false }).lean();
+    if (!current) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
+    try {
+      const updated = await this.driveItemModel.findOneAndUpdate(
+        { _id: args.itemId, ownerId: args.ownerId, metadataVersion: args.expectedMetadataVersion, isTrashed: false },
+        { $set: { name: args.name, normalizedName: this.normalizeName(args.name), extension: current.type === DriveItemType.FILE ? this.extractExtension(args.name) : null, lastModifiedAt: new Date() }, $inc: { metadataVersion: 1 } },
+        { returnDocument: 'after' },
+      );
+      if (!updated) throw new ConflictException('DRIVE_ITEM_VERSION_CONFLICT');
+      return updated;
+    } catch (error) { this.rethrowDuplicate(error); }
   }
 
-  /**
-   * Soft-deletes an item and, if it's a folder, recursively soft-deletes
-   * all descendants (files and subfolders). Returns the ids that were
-   * newly soft-deleted (useful for cascading share cleanup later if desired).
-   */
+  async move(args: { ownerId: Types.ObjectId; itemId: Types.ObjectId; newParentId: Types.ObjectId | null; expectedMetadataVersion: number }) {
+    const item = await this.driveItemModel.findOne({ _id: args.itemId, ownerId: args.ownerId, isTrashed: false });
+    if (!item) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
+    if (args.newParentId?.equals(item._id)) throw new BadRequestException('CANNOT_MOVE_INTO_ITSELF');
+    const newAncestors = await this.resolveAncestors(args.ownerId, args.newParentId);
+    if (newAncestors.some((id) => id.equals(item._id))) throw new BadRequestException('CANNOT_MOVE_INTO_SUBTREE');
+    await this.assertNoDuplicateName(args.ownerId.toString(), args.newParentId, item.name, item._id);
+
+    const descendants = item.type === DriveItemType.FOLDER
+      ? await this.driveItemModel.find({ ownerId: args.ownerId, ancestorIds: item._id }).select('_id ancestorIds').limit(MAX_SYNC_SUBTREE_ITEMS + 1).lean()
+      : [];
+    if (descendants.length > MAX_SYNC_SUBTREE_ITEMS) throw new ConflictException('SUBTREE_TOO_LARGE');
+    const oldPrefixLength = item.ancestorIds.length + 1;
+    const deepestRelativeDepth = descendants.reduce(
+      (maximum, descendant) => Math.max(maximum, descendant.ancestorIds.length - oldPrefixLength),
+      0,
+    );
+    if (newAncestors.length + 1 + deepestRelativeDepth > MAX_FOLDER_DEPTH) {
+      throw new BadRequestException('MAX_DEPTH_EXCEEDED');
+    }
+    const updated = await this.driveItemModel.findOneAndUpdate(
+      { _id: item._id, ownerId: args.ownerId, metadataVersion: args.expectedMetadataVersion, isTrashed: false },
+      { $set: { parentId: args.newParentId, ancestorIds: newAncestors, lastModifiedAt: new Date() }, $inc: { metadataVersion: 1 } },
+      { returnDocument: 'after' },
+    );
+    if (!updated) throw new ConflictException('DRIVE_ITEM_VERSION_CONFLICT');
+    if (descendants.length) {
+      await this.driveItemModel.bulkWrite(descendants.map((descendant) => ({ updateOne: {
+        filter: { _id: descendant._id },
+        update: { $set: { ancestorIds: [...newAncestors, item._id, ...descendant.ancestorIds.slice(oldPrefixLength)] } },
+      } })));
+    }
+    if (!(item.parentId?.equals(args.newParentId) ?? args.newParentId === null)) {
+      await this.adjustChildCount(item.parentId, -1);
+      await this.adjustChildCount(args.newParentId, 1);
+    }
+    return updated;
+  }
+
   async softDeleteRecursive(itemId: Types.ObjectId): Promise<Types.ObjectId[]> {
-    const deletedIds: Types.ObjectId[] = [];
-    const stack: Types.ObjectId[] = [itemId];
-
-    while (stack.length > 0) {
-      const currentId = stack.pop() as Types.ObjectId;
-      const item = await this.driveItemModel.findOne({ _id: currentId, isDeleted: false });
-      if (!item) continue;
-
-      item.isDeleted = true;
-      item.deletedAt = new Date();
-      await item.save();
-      deletedIds.push(currentId);
-
-      if (item.type === DriveItemType.FOLDER) {
-        const children = await this.driveItemModel.find({ parentId: currentId, isDeleted: false }).select("_id").lean();
-        stack.push(...children.map((c) => c._id));
-      }
-    }
-
-    return deletedIds;
+    const root = await this.driveItemModel.findOne({ _id: itemId, isTrashed: false });
+    if (!root) return [];
+    const descendants = await this.driveItemModel.find({ ownerId: root.ownerId, ancestorIds: root._id, isTrashed: false }).select('_id').limit(MAX_SYNC_SUBTREE_ITEMS + 1).lean();
+    if (descendants.length > MAX_SYNC_SUBTREE_ITEMS) throw new ConflictException('SUBTREE_TOO_LARGE');
+    const ids = [root._id, ...descendants.map((item) => item._id)];
+    await this.driveItemModel.updateMany(
+      { _id: { $in: ids }, isTrashed: false },
+      { $set: { isTrashed: true, trashedAt: new Date(), trashedRootId: root._id }, $inc: { metadataVersion: 1 } },
+    );
+    await this.adjustChildCount(root.parentId, -1);
+    return ids;
   }
 
-  /**
-   * Lists the "roots" of the trash tree for an owner: trashed items whose
-   * immediate parent is either root, an active (non-trashed) folder, or
-   * a folder that no longer exists. Mirrors Google Drive's trash view,
-   * which shows a deleted folder once rather than every descendant file
-   * individually.
-   */
   async listTrashRoots(ownerId: string) {
-    const allTrashed = await this.driveItemModel
-      .find({ ownerId: new Types.ObjectId(ownerId), isDeleted: true })
-      .sort({ deletedAt: -1 })
-      .lean();
-
-    const trashedIds = new Set(allTrashed.map((i) => i._id.toString()));
-    return allTrashed.filter((item) => !item.parentId || !trashedIds.has(item.parentId.toString()));
+    return this.driveItemModel.find({ ownerId: new Types.ObjectId(ownerId), isTrashed: true, $expr: { $eq: ['$_id', '$trashedRootId'] } }).sort({ trashedAt: -1, _id: -1 }).lean();
   }
 
-  /**
-   * Restores a trashed item. If it's a folder, cascades to every
-   * currently-trashed descendant too (simple MVP policy: restoring a
-   * folder brings back everything that's inside it right now).
-   */
   async restoreRecursive(itemId: Types.ObjectId): Promise<Types.ObjectId[]> {
-    const restoredIds: Types.ObjectId[] = [];
-    const stack: Types.ObjectId[] = [itemId];
-
-    while (stack.length > 0) {
-      const currentId = stack.pop() as Types.ObjectId;
-      const item = await this.driveItemModel.findOne({ _id: currentId, isDeleted: true });
-      if (!item) continue;
-
-      item.isDeleted = false;
-      item.deletedAt = null;
-      await item.save();
-      restoredIds.push(currentId);
-
-      if (item.type === DriveItemType.FOLDER) {
-        const children = await this.driveItemModel.find({ parentId: currentId, isDeleted: true }).select("_id").lean();
-        stack.push(...children.map((c) => c._id));
-      }
-    }
-
-    return restoredIds;
+    const root = await this.driveItemModel.findOne({ _id: itemId, isTrashed: true, trashedRootId: itemId });
+    if (!root) return [];
+    await this.assertNoDuplicateName(root.ownerId.toString(), root.parentId, root.name, root._id);
+    const docs = await this.driveItemModel.find({ ownerId: root.ownerId, trashedRootId: root._id, isTrashed: true }).select('_id').limit(MAX_SYNC_SUBTREE_ITEMS + 1).lean();
+    if (docs.length > MAX_SYNC_SUBTREE_ITEMS) throw new ConflictException('SUBTREE_TOO_LARGE');
+    const ids = docs.map((item) => item._id);
+    await this.driveItemModel.updateMany(
+      { _id: { $in: ids } },
+      { $set: { isTrashed: false, trashedAt: null, trashedRootId: null }, $inc: { metadataVersion: 1 } },
+    );
+    await this.adjustChildCount(root.parentId, 1);
+    return ids;
   }
 
-  /**
-   * Permanently deletes a trashed item and, if it's a folder, its entire
-   * trashed subtree. Returns the objectKeys of any files that were
-   * removed, so the caller can also delete them from MinIO.
-   */
-  async hardDeleteRecursive(itemId: Types.ObjectId): Promise<{ deletedIds: Types.ObjectId[]; objectKeys: string[] }> {
-    const deletedIds: Types.ObjectId[] = [];
-    const objectKeys: string[] = [];
-    const stack: Types.ObjectId[] = [itemId];
-
-    while (stack.length > 0) {
-      const currentId = stack.pop() as Types.ObjectId;
-      const item = await this.driveItemModel.findOne({ _id: currentId, isDeleted: true });
-      if (!item) continue;
-
-      if (item.type === DriveItemType.FOLDER) {
-        const children = await this.driveItemModel.find({ parentId: currentId, isDeleted: true }).select("_id").lean();
-        stack.push(...children.map((c) => c._id));
-      } else if (item.objectKey) {
-        objectKeys.push(item.objectKey);
-      }
-
-      await this.driveItemModel.deleteOne({ _id: currentId });
-      deletedIds.push(currentId);
-    }
-
-    return { deletedIds, objectKeys };
+  async hardDeleteRecursive(itemId: Types.ObjectId): Promise<{ deletedIds: Types.ObjectId[]; storageObjectIds: Types.ObjectId[] }> {
+    const root = await this.driveItemModel.findOne({ _id: itemId, isTrashed: true });
+    if (!root) return { deletedIds: [], storageObjectIds: [] };
+    const docs = await this.driveItemModel.find({ ownerId: root.ownerId, trashedRootId: root.trashedRootId ?? root._id, isTrashed: true }).select('_id storageObjectId').limit(MAX_SYNC_SUBTREE_ITEMS + 1).lean();
+    if (docs.length > MAX_SYNC_SUBTREE_ITEMS) throw new ConflictException('SUBTREE_TOO_LARGE');
+    const deletedIds = docs.map((item) => item._id);
+    const storageObjectIds = docs.flatMap((item) => item.storageObjectId ? [item.storageObjectId] : []);
+    return { deletedIds, storageObjectIds };
   }
+
+  async finalizeHardDelete(deletedIds: Types.ObjectId[]): Promise<void> {
+    if (deletedIds.length) await this.driveItemModel.deleteMany({ _id: { $in: deletedIds }, isTrashed: true });
+  }
+
   async getAncestorsIncludingSelf(itemId: Types.ObjectId) {
-    const chain: DriveItemDocument[] = [];
-    let current = await this.driveItemModel.findOne({ _id: itemId, isDeleted: false });
-    if (!current) return chain;
-    chain.push(current);
+    const item = await this.driveItemModel.findOne({ _id: itemId, isTrashed: false }).lean();
+    if (!item) return [];
+    const ancestors = item.ancestorIds.length
+      ? await this.driveItemModel.find({ _id: { $in: item.ancestorIds }, isTrashed: false }).lean()
+      : [];
+    const byId = new Map(ancestors.map((ancestor) => [ancestor._id.toString(), ancestor]));
+    return [...item.ancestorIds.map((id) => byId.get(id.toString())).filter((value): value is NonNullable<typeof value> => Boolean(value)), item];
+  }
 
-    let depth = 0;
-    while (current?.parentId && depth < 1000) {
-      const parent = await this.driveItemModel.findOne({
-        _id: current.parentId,
-        isDeleted: false,
-      });
-      if (!parent) break;
-      chain.push(parent);
-      current = parent;
-      depth++;
+  async reconcileChildCounts(batchSize = 100): Promise<number> {
+    const folders = await this.driveItemModel.find({ type: DriveItemType.FOLDER, isTrashed: false }).select('_id').sort({ updatedAt: 1, _id: 1 }).limit(batchSize).lean();
+    if (!folders.length) return 0;
+    const ids = folders.map((folder) => folder._id);
+    const counts = await this.driveItemModel.aggregate<{ _id: Types.ObjectId; count: number }>([
+      { $match: { parentId: { $in: ids }, isTrashed: false, $or: [{ type: DriveItemType.FOLDER }, { type: DriveItemType.FILE, fileStatus: FileStatus.ACTIVE }] } },
+      { $group: { _id: '$parentId', count: { $sum: 1 } } },
+    ]);
+    const byId = new Map(counts.map((row) => [row._id.toString(), row.count]));
+    await this.driveItemModel.bulkWrite(folders.map((folder) => ({ updateOne: {
+      filter: { _id: folder._id },
+      update: { $set: { childCount: byId.get(folder._id.toString()) ?? 0 } },
+    } })));
+    return folders.length;
+  }
+
+  private rethrowDuplicate(error: unknown): never {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+      throw new ConflictException('NAME_ALREADY_EXISTS');
     }
+    throw error;
+  }
 
-    return chain.reverse(); // was item-first while walking up - flip to root-first
+  private async adjustChildCount(parentId: Types.ObjectId | null, delta: 1 | -1): Promise<void> {
+    if (!parentId) return;
+    if (delta > 0) {
+      await this.driveItemModel.updateOne({ _id: parentId, type: DriveItemType.FOLDER }, { $inc: { childCount: 1 } });
+      return;
+    }
+    await this.driveItemModel.updateOne(
+      { _id: parentId, type: DriveItemType.FOLDER },
+      [{ $set: { childCount: { $max: [0, { $subtract: [{ $ifNull: ['$childCount', 0] }, 1] }] } } }],
+    );
   }
 }

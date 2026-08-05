@@ -38,10 +38,6 @@ export class ShareResponseDto {
   @Expose()
   shareType: 'user' | 'public_link';
 
-  @ApiPropertyOptional({ nullable: true, description: 'Only present for public_link shares' })
-  @Expose()
-  token?: string | null;
-
   @ApiPropertyOptional({ nullable: true })
   @Expose()
   expiresAt?: Date | null;

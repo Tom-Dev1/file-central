@@ -8,9 +8,8 @@ import { UploadSession, UploadSessionSchema } from './schemas/upload-session.sch
 import { UploadPart, UploadPartSchema } from './schemas/upload-part.schema';
 import { DriveItemsModule } from '../drive-items/drive-items.module';
 import { StorageModule } from '../storage/storage.module';
-// import { DriveItemsModule } from '../drive-items/drive-items.module';
-// import { QuotaModule } from '../quota/quota.module';
-// import { StorageObjectsModule } from '../storage/storage-objects.module';
+import { QuotaModule } from '../quota/quota.module';
+import { FileMetadataResolverService } from '../files/file-metadata-resolver.service';
 
 @Module({
     imports: [
@@ -20,10 +19,11 @@ import { StorageModule } from '../storage/storage.module';
         ]),
         DriveItemsModule,
         StorageModule,
+        QuotaModule,
         // DriveItemsModule, QuotaModule, StorageObjectsModule — import thật ở đây
     ],
     controllers: [UploadsController],
-    providers: [UploadsService, UploadsReaperCron, S3StorageAdapter],
+    providers: [UploadsService, UploadsReaperCron, S3StorageAdapter, FileMetadataResolverService],
     exports: [UploadsService],
 })
 export class UploadsModule { }

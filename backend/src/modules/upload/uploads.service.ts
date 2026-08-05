@@ -11,7 +11,9 @@ import { S3StorageAdapter } from './storage/s3-storage.adapter';
 import { UploadSession, UploadMethod, UploadStatus } from './schemas/upload-session.schema';
 import { UploadPart } from './schemas/upload-part.schema';
 import { DriveItemsService } from '../drive-items/drive-items.service';
-import { StorageObject, StorageProvider } from '../storage/storage-object.schema';
+import { StorageObjectsService } from '../storage/storage-objects.service';
+import { QuotaService } from '../quota/quota.service';
+import { FileMetadataResolverService } from '../files/file-metadata-resolver.service';
 import {
     InitUploadDto,
     CompleteUploadDto,
@@ -58,7 +60,7 @@ interface StorageObjectsPort {
 @Injectable()
 export class UploadsService {
     private readonly logger = new Logger(UploadsService.name);
-    private readonly bucketName = process.env.STORAGE_BUCKET ?? 'file-central';
+    private readonly bucketName = process.env.STORAGE_BUCKET ?? process.env.MINIO_BUCKET ?? 'file-central';
     private readonly sessionTtlMs = 24 * 60 * 60 * 1000; // 24h
 
     constructor(
@@ -66,18 +68,13 @@ export class UploadsService {
         private readonly sessionModel: Model<UploadSession>,
         @InjectModel(UploadPart.name)
         private readonly partModel: Model<UploadPart>,
-        @InjectModel(StorageObject.name)
-        private readonly storageObjectModel: Model<StorageObject>,
+        private readonly storageObjects: StorageObjectsService,
         private readonly storage: S3StorageAdapter,
         // Trong module thật: inject qua DI token của các module tương ứng
         private readonly driveItems: DriveItemsService,
+        private readonly quota: QuotaService,
+        private readonly metadataResolver: FileMetadataResolverService,
     ) { }
-
-    private readonly quota: QuotaPort = {
-        reserve: async () => undefined,
-        commit: async () => undefined,
-        release: async () => undefined,
-    };
 
     // ---------------------------------------------------------------------
     // 1. INIT — quyết định single vs multipart, reserve quota, tạo placeholder
@@ -98,7 +95,7 @@ export class UploadsService {
         }
 
         // 1a. Reserve quota trước — atomic, fail-fast nếu vượt hạn mức
-        await this.quota.reserve(ownerId, declaredSizeBytes, dto.idempotencyKey);
+        await this.quota.reserve(ownerId, declaredSizeBytes, `${dto.idempotencyKey}:reserve`);
 
         let driveItemId: Types.ObjectId;
         try {
@@ -110,7 +107,7 @@ export class UploadsService {
             driveItemId = placeholder.id;
         } catch (err) {
             // Rollback quota nếu tạo placeholder thất bại (vd trùng tên)
-            await this.quota.release(ownerId, declaredSizeBytes, dto.idempotencyKey);
+            await this.quota.release(ownerId, declaredSizeBytes, `${dto.idempotencyKey}:placeholder-rollback`);
             throw err;
         }
 
@@ -141,6 +138,7 @@ export class UploadsService {
             ownerId,
             driveItemId,
             parentId: dto.parentId ? new Types.ObjectId(dto.parentId) : null,
+            originalName: dto.name,
             method: useMultipart ? UploadMethod.MULTIPART : UploadMethod.SINGLE,
             providerUploadId,
             temporaryObjectKey: objectKey,
@@ -289,8 +287,10 @@ export class UploadsService {
         return {
             status: session.status,
             totalParts: allParts.length,
-            uploadedParts: allParts.length - missingPartNumbers.length,
-            uploadedPartNumbers: remoteParts.map((part) => part.partNumber).sort((a, b) => a - b),
+            uploadedPartCount: remoteParts.length,
+            uploadedParts: remoteParts
+                .map((part) => ({ partNumber: part.partNumber, etag: part.etag, sizeBytes: String(part.sizeBytes) }))
+                .sort((a, b) => a.partNumber - b.partNumber),
             missingPartUrls,
         };
     }
@@ -344,6 +344,8 @@ export class UploadsService {
         session.status = UploadStatus.PROCESSING;
         await session.save();
 
+        let quotaCommitted = false;
+        let createdStorageObjectId: Types.ObjectId | null = null;
         try {
             let finalSizeBytes: bigint;
 
@@ -365,6 +367,16 @@ export class UploadsService {
                     .sort((a, b) => a - b);
                 if (actualNumbers.some((partNumber, index) => partNumber !== index + 1)) {
                     throw new BadRequestException('Multipart upload contains missing or invalid part numbers');
+                }
+                if (dto.parts) {
+                    const submitted = new Map(dto.parts.map((part) => [part.partNumber, part]));
+                    const mismatch = remoteParts.some((remote) => {
+                        const part = submitted.get(remote.partNumber);
+                        return !part || this.normalizeEtag(part.etag) !== this.normalizeEtag(remote.etag) || BigInt(part.sizeBytes) !== BigInt(remote.sizeBytes);
+                    });
+                    if (submitted.size !== expected || mismatch) {
+                        throw new BadRequestException('Submitted multipart manifest does not match object storage');
+                    }
                 }
                 await this.storage.completeMultipartUpload(
                     session.temporaryObjectKey,
@@ -393,10 +405,14 @@ export class UploadsService {
                 );
             }
 
-            const mimeType =
-                (await this.storage.headObject(session.temporaryObjectKey))
-                    ?.contentType ?? 'application/octet-stream';
-            const extension = null;
+            const prefix = await this.storage.getObjectPrefix(session.temporaryObjectKey);
+            const metadata = await this.metadataResolver.resolveFromBuffer(
+                session.originalName ?? 'upload',
+                (await this.storage.headObject(session.temporaryObjectKey))?.contentType,
+                prefix,
+            );
+            const mimeType = metadata.mimeType;
+            const extension = metadata.detectedExtension ?? metadata.extension;
             const verifiedChecksum = await this.storage.calculateSha256(session.temporaryObjectKey);
             if (session.declaredChecksumSha256 && !verifiedChecksum.equals(session.declaredChecksumSha256)) {
                 throw new BadRequestException('SHA-256 checksum mismatch');
@@ -409,19 +425,18 @@ export class UploadsService {
             }
             session.verifiedChecksumSha256 = verifiedChecksum;
 
-            const storageObject = await this.storageObjectModel.create({
+            const storageObject = await this.storageObjects.create({
                 ownerId,
-                provider: StorageProvider.MINIO,
-                bucket: this.bucketName,
                 objectKey: session.temporaryObjectKey,
                 sizeBytes: finalSizeBytes,
                 mimeType,
                 checksumSha256: verifiedChecksum,
             });
+            createdStorageObjectId = storageObject.id;
 
             await this.driveItems.activateFile({
                 driveItemId: session.driveItemId,
-                storageObjectId: storageObject._id,
+                storageObjectId: storageObject.id,
                 mimeType,
                 sizeBytes: finalSizeBytes,
                 extension,
@@ -430,8 +445,10 @@ export class UploadsService {
             await this.quota.commit(
                 ownerId,
                 finalSizeBytes,
-                session.idempotencyKey ?? session._id.toString(),
+                `${session.idempotencyKey ?? session._id.toString()}:commit`,
+                { uploadSessionId: session._id, driveItemId: session.driveItemId },
             );
+            quotaCommitted = true;
 
             // Nếu quota thực tế < declared (hiếm, nhưng có thể xảy ra), release phần dư
             const reservedExtra = declared - finalSizeBytes;
@@ -452,7 +469,22 @@ export class UploadsService {
             session.status = UploadStatus.FAILED;
             session.errorCode = err instanceof Error ? err.message : 'UNKNOWN_ERROR';
             await session.save();
-            await this.driveItems.markFailed(session.driveItemId);
+            if (!quotaCommitted) await this.driveItems.rollbackActivation(session.driveItemId);
+            else await this.driveItems.markFailed(session.driveItemId);
+            if (!quotaCommitted) {
+                if (session.method === UploadMethod.MULTIPART && session.providerUploadId) {
+                    await this.storage.abortMultipartUpload(session.temporaryObjectKey, session.providerUploadId);
+                }
+                await this.storage.deleteObject(session.temporaryObjectKey).catch(() => undefined);
+                if (createdStorageObjectId) {
+                    await this.storageObjects.permanentDelete(createdStorageObjectId).catch(() => undefined);
+                }
+                await this.quota.release(
+                    ownerId,
+                    BigInt(session.declaredSizeBytes),
+                    `${session.idempotencyKey ?? session._id.toString()}:failure-release`,
+                );
+            }
             throw err;
         }
     }
@@ -460,6 +492,10 @@ export class UploadsService {
     private extractExtension(name: string): string | null {
         const idx = name.lastIndexOf('.');
         return idx > 0 ? name.slice(idx + 1).toLowerCase() : null;
+    }
+
+    private normalizeEtag(etag: string): string {
+        return etag.trim().replaceAll(String.fromCharCode(34), '');
     }
 
     // ---------------------------------------------------------------------
@@ -473,6 +509,9 @@ export class UploadsService {
         if (!session) throw new NotFoundException('Upload session not found');
         if (session.status === UploadStatus.COMPLETED) {
             throw new ConflictException('Cannot abort a completed upload');
+        }
+        if ([UploadStatus.ABORTED, UploadStatus.EXPIRED, UploadStatus.FAILED].includes(session.status)) {
+            return { status: session.status };
         }
 
         if (session.method === UploadMethod.MULTIPART && session.providerUploadId) {
@@ -489,7 +528,7 @@ export class UploadsService {
         await this.quota.release(
             ownerId,
             BigInt(session.declaredSizeBytes),
-            session.idempotencyKey ?? session._id.toString(),
+            `${session.idempotencyKey ?? session._id.toString()}:abort-release`,
         );
         await this.driveItems.markFailed(session.driveItemId);
 
@@ -527,7 +566,7 @@ export class UploadsService {
                 await this.quota.release(
                     s.ownerId,
                     BigInt(s.declaredSizeBytes),
-                    s.idempotencyKey ?? s._id.toString(),
+                    `${s.idempotencyKey ?? s._id.toString()}:expiry-release`,
                 );
                 await this.driveItems.markFailed(s.driveItemId);
 
