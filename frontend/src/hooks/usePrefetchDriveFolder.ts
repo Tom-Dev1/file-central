@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+﻿import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { driveListQueryOptions } from "@/hooks/queries/drive-query-options";
 import { folderBreadcrumbQueryOptions } from "@/hooks/queries/folder-query-options";
@@ -17,7 +17,6 @@ export function usePrefetchDriveFolder() {
         queryClient.prefetchQuery(
           driveListQueryOptions({
             parentId: item.id,
-            page: 1,
             limit: 100,
           })
         ),

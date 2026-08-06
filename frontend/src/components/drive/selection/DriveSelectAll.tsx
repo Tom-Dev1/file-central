@@ -1,5 +1,4 @@
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { Checkbox } from "antd";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +19,8 @@ export function DriveSelectAll({ itemIds, className, showLabel = true }: DriveSe
 
   const partiallySelected = selectedVisibleCount > 0 && !allSelected;
 
-  const checked = partiallySelected ? "indeterminate" : allSelected;
-
-  const handleCheckedChange = (nextChecked: boolean | "indeterminate") => {
-    if (nextChecked === true || nextChecked === "indeterminate") {
+  const handleCheckedChange = (nextChecked: boolean) => {
+    if (nextChecked) {
       selectAll(itemIds);
       return;
     }
@@ -35,14 +32,15 @@ export function DriveSelectAll({ itemIds, className, showLabel = true }: DriveSe
     <div className={cn("flex h-7 items-center gap-2", className)}>
       <Checkbox
         id="drive-select-all"
-        checked={checked}
+        checked={allSelected}
+        indeterminate={partiallySelected}
         disabled={!hasItems}
         aria-label="Select all visible items"
-        onCheckedChange={handleCheckedChange}
+        onChange={(event) => handleCheckedChange(event.target.checked)}
       />
 
       {showLabel && (
-        <Label
+        <label
           htmlFor="drive-select-all"
           className={cn(
             "cursor-pointer whitespace-nowrap text-sm font-normal mt-0.5 px-1",
@@ -54,7 +52,7 @@ export function DriveSelectAll({ itemIds, className, showLabel = true }: DriveSe
             : partiallySelected
             ? `${selectedVisibleCount} selected`
             : "Select all"}
-        </Label>
+        </label>
       )}
     </div>
   );

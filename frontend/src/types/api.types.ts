@@ -1,24 +1,30 @@
-//enums
-export type DriveItemKind = "file" | "folder";
+﻿export type DriveItemKind = "file" | "folder";
+export type FileStatus = "uploading" | "processing" | "active" | "failed";
 export type SharePermission = "view" | "download" | "edit";
 export type ShareType = "user" | "public_link";
 
-//core entities
+/** Exact JSON shape returned by DriveItemResponseDto. */
 export interface DriveItem {
   id: string;
   name: string;
   type: DriveItemKind;
-  mimeType?: string;
-  size?: number;
-  extension?: string;
+  fileStatus: FileStatus | null;
+  mimeType: string | null;
+  /** Int64 serialized as a string by the backend. */
+  sizeBytes: string | null;
+  extension: string | null;
+  childCount: number | null;
   ownerId: string;
   parentId: string | null;
-  isDeleted: boolean;
-  deletedAt?: string | null;
+  isTrashed: boolean;
+  trashedAt: string | null;
+  metadataVersion: number;
   createdAt: string;
   updatedAt: string;
+  lastModifiedAt: string;
 }
 
+/** Exact JSON shape returned by ShareResponseDto. */
 export interface Share {
   id: string;
   itemId: string;
@@ -28,10 +34,14 @@ export interface Share {
   sharedWithEmail?: string | null;
   permission: SharePermission;
   shareType: ShareType;
-  token?: string | null;
   expiresAt?: string | null;
   isRevoked: boolean;
   createdAt: string;
+}
+
+export interface CreateShareResponse {
+  share: Share;
+  token: string | null;
 }
 
 export interface User {
@@ -41,13 +51,10 @@ export interface User {
   name: string;
 }
 
-//wrapper
-export interface PaginatedResponse<T> {
+export interface CursorPage<T> {
   items: T[];
-  page: number;
   limit: number;
-  total: number;
-  totalPages: number;
+  nextCursor: string | null;
 }
 
 export interface AuthResponse {
@@ -56,7 +63,11 @@ export interface AuthResponse {
   user: User;
 }
 
-//backend error shape (common/filters/http-exception.filter.ts)
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface ApiErrorShape {
   statusCode: number;
   path: string;
@@ -65,72 +76,17 @@ export interface ApiErrorShape {
   error?: string;
 }
 
-//request DTOs
-export interface RegisterRequest {
-  email: string;
-  name: string;
-  username: string;
-  password: string;
-}
-
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface RefreshRequest {
-  refreshToken: string;
-}
-
-export interface CreateFolderRequest {
-  name: string;
-  parentId?: string | null;
-}
-
-export interface RenameRequest {
-  name: string;
-}
-
-export interface MoveRequest {
-  newParentId?: string | null;
-}
-
-export interface ListDriveParams {
-  parentId?: string;
-  type?: DriveItemKind;
-  page?: number;
-  limit?: number;
-}
-
-export interface SearchDriveParams {
-  q?: string;
-  type?: DriveItemKind;
-  page?: number;
-  limit?: number;
-}
-
-export interface CreateShareRequest {
-  itemId: string;
-  shareType: ShareType;
-  permission: SharePermission;
-  sharedWithEmail?: string;
-  expiresAt?: string | null;
-}
-
-export interface SharedWithMeRow {
-  share: Share;
-  item: DriveItem;
-}
-
-export interface PublicShareMetadata {
-  item: DriveItem;
-  permission: SharePermission;
-}
-
-export interface DeletedIdsResponse {
-  deletedIds: string[];
-}
-
-export interface RestoreResponse {
-  restoredIds: string[];
-}
+export interface RegisterRequest { email: string; name: string; username: string; password: string; }
+export interface LoginRequest { username: string; password: string; }
+export interface RefreshRequest { refreshToken: string; }
+export interface CreateFolderRequest { name: string; parentId?: string | null; }
+export interface RenameRequest { name: string; expectedMetadataVersion: number; }
+export interface MoveRequest { newParentId?: string | null; expectedMetadataVersion: number; }
+export interface ListDriveParams { parentId?: string; cursor?: string; limit?: number; }
+export interface SearchDriveParams { q?: string; type?: DriveItemKind; cursor?: string; limit?: number; }
+export interface CreateShareRequest { itemId: string; shareType: ShareType; permission: SharePermission; sharedWithEmail?: string; expiresAt?: string | null; }
+export interface SharedWithMeRow { share: Share; item: DriveItem; }
+export interface PublicShareMetadata { item: DriveItem; permission: SharePermission; }
+export interface DeletedIdsResponse { deletedIds: string[]; }
+export interface RestoreResponse { restoredIds: string[]; }
+export interface PresignedFileUrlResponse { url: string; expiresInSeconds: number; }

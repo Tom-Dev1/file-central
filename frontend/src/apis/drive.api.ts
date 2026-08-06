@@ -1,9 +1,9 @@
-import type {
+﻿import type {
   DeletedIdsResponse,
   DriveItem,
   ListDriveParams,
   MoveRequest,
-  PaginatedResponse,
+  CursorPage,
   RenameRequest,
   SearchDriveParams,
 } from "@/types/api.types";
@@ -12,10 +12,13 @@ import type { FolderBreadcrumbItem } from "@/types/drive.type";
 
 export const driveApi = {
   list: async (params: ListDriveParams = {}, signal?: AbortSignal) =>
-    api.get<PaginatedResponse<DriveItem>>("/drive", { params, signal }).then((res) => res.data),
+    api.get<CursorPage<DriveItem>>("/drive", { params, signal }).then((res) => res.data),
 
-  search: (params: SearchDriveParams = {}) =>
-    api.get<PaginatedResponse<DriveItem>>("/drive/search", { params }).then((res) => res.data),
+  search: (params: SearchDriveParams = {}, signal?: AbortSignal) =>
+    api.get<CursorPage<DriveItem>>("/drive/search", { params, signal }).then((res) => res.data),
+
+  getById: (id: string, signal?: AbortSignal) =>
+    api.get<DriveItem>(`/drive/${id}`, { signal }).then((res) => res.data),
 
   rename: (id: string, body: RenameRequest) =>
     api.patch<DriveItem>(`/drive/${id}/rename`, body).then((res) => res.data),

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { ExternalLink, LoaderCircle, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialo
               <DialogTitle className="truncate">{item.name}</DialogTitle>
 
               <DialogDescription className="mt-1 truncate">
-                {data?.mimeType ?? item.mimeType ?? "Unknown file type"}
+                {item.mimeType ?? "Unknown file type"}
               </DialogDescription>
             </div>
 
@@ -99,7 +99,7 @@ export function FilePreviewDialog({ item, open, onOpenChange }: FilePreviewDialo
               </div>
             </div>
           ) : data ? (
-            <FilePreviewContent preview={data} />
+            <FilePreviewContent preview={data} fileName={item.name} />
           ) : (
             <div className="flex size-full items-center justify-center">
               <p className="text-sm text-muted-foreground">No preview data is available.</p>

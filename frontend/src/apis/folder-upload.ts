@@ -1,4 +1,4 @@
-import { toApiError, type ApiError } from "@/lib/api-error";
+﻿import { toApiError, type ApiError } from "@/lib/api-error";
 import type { DriveItem } from "@/types/api.types";
 import { foldersApi } from "./folders.api";
 import { driveApi } from "./drive.api";
@@ -57,7 +57,6 @@ async function ensureFolder(name: string, parentId: string | null): Promise<Driv
 
     const existing = await driveApi.list({
       parentId: parentId ?? undefined,
-      type: "folder",
       limit: 200,
     });
     const match = existing.items.find((item) => item.name === name);

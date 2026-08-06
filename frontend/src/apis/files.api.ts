@@ -1,4 +1,4 @@
-import type { DriveItem } from "@/types/api.types";
+﻿import type { DriveItem } from "@/types/api.types";
 import { api } from "../lib/axios";
 import type { AxiosProgressEvent } from "axios";
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
@@ -61,7 +61,7 @@ export const filesApi = {
   },
 
   getPreviewObjectUrl: async (fileId: string): Promise<PreviewLinkResponse> => {
-    const response = await api.get<PreviewLinkResponse>(`/files/${fileId}/preview-link`);
+    const response = await api.get<PreviewLinkResponse>(`/files/${fileId}/preview`);
     return response.data;
   },
 };

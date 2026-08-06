@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+﻿import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DriveItem } from "@/types/api.types";
 import { fileIcons } from "@/types/file-type";
@@ -25,7 +25,7 @@ export default function QuickAccessCard({ item }: QuickAccessCardProps) {
                 {item.name}
               </p>
 
-              {item.size && <Share2 className="size-3.5 shrink-0 text-muted-foreground" />}
+              {item.sizeBytes && <Share2 className="size-3.5 shrink-0 text-muted-foreground" />}
 
               {item.ownerId && <Star className="size-3.5 shrink-0 fill-current text-muted-foreground" />}
             </div>
@@ -33,10 +33,10 @@ export default function QuickAccessCard({ item }: QuickAccessCardProps) {
             <div className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
               <span className="truncate">{item.createdAt}</span>
 
-              {item.size && (
+              {item.sizeBytes && (
                 <>
                   <span aria-hidden="true">·</span>
-                  <span className="shrink-0">{item.size}</span>
+                  <span className="shrink-0">{item.sizeBytes}</span>
                 </>
               )}
             </div>

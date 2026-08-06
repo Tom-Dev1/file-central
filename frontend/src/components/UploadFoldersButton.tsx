@@ -1,9 +1,9 @@
 import { useRef, useState, type ChangeEvent, type InputHTMLAttributes } from "react";
 
-import { FolderUp, LoaderCircle } from "lucide-react";
+import { FolderOpenOutlined } from "@ant-design/icons";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "antd";
 import { cn } from "@/lib/utils";
 import { useUploadFolder } from "@/hooks/useFolderUpload";
 import type { UploadFolderProgress, UploadFolderResult } from "@/apis/folder-upload";
@@ -21,6 +21,7 @@ interface UploadFolderButtonProps {
   className?: string;
   disabled?: boolean;
   concurrency?: number;
+  variant?: "menu" | "button";
 }
 
 type DirectoryInputProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -38,6 +39,7 @@ export function UploadFolderButton({
   className,
   disabled = false,
   concurrency = 3,
+  variant = "menu",
 }: UploadFolderButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -172,18 +174,14 @@ export function UploadFolderButton({
       />
 
       <Button
-        type="button"
-        variant="secondary"
-        size="lg"
+        type={variant === "menu" ? "text" : "default"}
+        block={variant === "menu"}
+        loading={isUploading}
         disabled={disabled || isUploading}
-        className={cn(
-          "w-full justify-start  border-0 bg-transparent shadow-none hover:bg-accent cursor-pointer",
-          className
-        )}
+        className={cn(variant === "menu" && "justify-start", className)}
+        icon={<FolderOpenOutlined />}
         onClick={openFolderPicker}
       >
-        {isUploading ? <LoaderCircle className="mr-2 size-4 animate-spin" /> : <FolderUp className="mr-2 size-4" />}
-
         {isUploading ? getButtonLabel(progress) : "Folder upload"}
       </Button>
     </>

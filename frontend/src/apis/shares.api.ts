@@ -1,14 +1,15 @@
-import { api } from "../lib/axios";
+﻿import { api } from "../lib/axios";
 import {
   type CreateShareRequest,
+  type CreateShareResponse,
   type DriveItem,
   type PublicShareMetadata,
   type Share,
   type SharedWithMeRow,
-} from "../../../frontend/src/types/api.types";
+} from "@/types/api.types";
 
 export const sharesApi = {
-  create: (body: CreateShareRequest) => api.post<Share>("/shares", body).then((res) => res.data),
+  create: (body: CreateShareRequest) => api.post<CreateShareResponse>("/shares", body).then((res) => res.data),
 
   listMine: () => api.get<Share[]>("/shares").then((res) => res.data),
 

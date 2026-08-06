@@ -1,41 +1,33 @@
-import { useState, type SubmitEventHandler } from "react";
-import { FolderPlus, LoaderCircle } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FolderAddOutlined } from "@ant-design/icons";
+import { App, Button, Form, Input, Modal } from "antd";
+import { useState } from "react";
+
 import { useCreateFolder } from "@/hooks";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { Label } from "./ui/label";
 
 interface CreateFolderButtonProps {
   parentId?: string | null;
   className?: string;
+  variant?: "menu" | "button";
 }
 
-export function CreateFolderButton({ parentId, className }: CreateFolderButtonProps) {
-  const [folderName, setFolderName] = useState("");
+interface CreateFolderFormValues {
+  folderName: string;
+}
 
-  const createFolder = useCreateFolder();
+export function CreateFolderButton({
+  parentId,
+  className,
+  variant = "menu",
+}: CreateFolderButtonProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [form] = Form.useForm<CreateFolderFormValues>();
+  const folderName = Form.useWatch("folderName", form) ?? "";
+  const createFolder = useCreateFolder();
+  const { message } = App.useApp();
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-
-    const normalizedName = folderName.trim();
-
-    if (!normalizedName) {
-      toast.error("Folder name is required.");
-
-      return;
-    }
+  const handleSubmit = ({ folderName: value }: CreateFolderFormValues) => {
+    const normalizedName = value.trim();
 
     createFolder.mutate(
       {
@@ -44,100 +36,81 @@ export function CreateFolderButton({ parentId, className }: CreateFolderButtonPr
       },
       {
         onSuccess: () => {
-          toast.success("Folder created successfully.", {
-            description: normalizedName,
-          });
-
-          setFolderName("");
+          void message.success("Folder created successfully.");
+          form.resetFields();
           setDialogOpen(false);
         },
-
         onError: (error) => {
-          toast.error("Unable to create folder.", {
-            description: error instanceof Error ? error.message : "Please try again.",
-          });
+          void message.error(
+            error instanceof Error ? error.message : "Unable to create folder. Please try again."
+          );
         },
       }
     );
   };
-  const handleDialogChange = (open: boolean) => {
+
+  const handleCancel = () => {
     if (createFolder.isPending) {
       return;
     }
 
-    setDialogOpen(open);
-
-    if (!open) {
-      setFolderName("");
-    }
+    form.resetFields();
+    setDialogOpen(false);
   };
+
   return (
     <>
       <Button
-        type="button"
-        variant="secondary"
-        size="lg"
-        className={cn(
-          "w-full justify-start  border-0 bg-transparent shadow-none hover:bg-accent cursor-pointer",
-          className
-        )}
+        type={variant === "menu" ? "text" : "default"}
+        block={variant === "menu"}
+        className={cn(variant === "menu" && "justify-start", className)}
+        icon={<FolderAddOutlined />}
         onClick={() => setDialogOpen(true)}
       >
-        <FolderPlus className="mr-2 size-4" />
         New folder
       </Button>
 
-      <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
-        <DialogContent className="sm:max-w-md">
-          <form onSubmit={handleSubmit}>
-            <DialogHeader>
-              <DialogTitle>Create new folder</DialogTitle>
-
-              <DialogDescription>Enter a name for the new folder.</DialogDescription>
-            </DialogHeader>
-
-            <div className="py-5">
-              <Label htmlFor="folder-name" className="sr-only">
-                Folder name
-              </Label>
-
-              <Input
-                id="folder-name"
-                value={folderName}
-                placeholder="Untitled folder"
-                autoComplete="off"
-                autoFocus
-                maxLength={255}
-                disabled={createFolder.isPending}
-                onChange={(event) => setFolderName(event.target.value)}
-              />
-
-              <p className="mt-2 text-xs text-muted-foreground">{folderName.length}/255 characters</p>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={createFolder.isPending}
-                onClick={() => handleDialogChange(false)}
-              >
-                Cancel
-              </Button>
-
-              <Button type="submit" disabled={createFolder.isPending || !folderName.trim()}>
-                {createFolder.isPending ? (
-                  <LoaderCircle className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <FolderPlus className="mr-2 size-4" />
-                )}
-
-                {createFolder.isPending ? "Creating..." : "Create folder"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <Modal
+        open={dialogOpen}
+        title="Create new folder"
+        okText="Create folder"
+        cancelText="Cancel"
+        confirmLoading={createFolder.isPending}
+        okButtonProps={{ disabled: !folderName.trim() }}
+        cancelButtonProps={{ disabled: createFolder.isPending }}
+        maskClosable={!createFolder.isPending}
+        keyboard={!createFolder.isPending}
+        destroyOnHidden
+        onOk={() => form.submit()}
+        onCancel={handleCancel}
+      >
+        <p className="mb-4 text-sm text-muted-foreground">Enter a name for the new folder.</p>
+        <Form<CreateFolderFormValues>
+          form={form}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={handleSubmit}
+        >
+          <Form.Item
+            name="folderName"
+            label="Folder name"
+            rules={[
+              { required: true, whitespace: true, message: "Folder name is required." },
+              { max: 255, message: "Folder names can contain up to 255 characters." },
+            ]}
+            extra={`${folderName.length}/255 characters`}
+          >
+            <Input
+              autoFocus
+              autoComplete="off"
+              maxLength={255}
+              placeholder="Untitled folder"
+              disabled={createFolder.isPending}
+              onPressEnter={() => form.submit()}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 }

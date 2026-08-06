@@ -1,14 +1,11 @@
-import { ChevronDown, Grid2X2, List, RefreshCw } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AppstoreOutlined,
+  CheckOutlined,
+  DownOutlined,
+  ReloadOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+import { Button, Dropdown, Segmented, Space, Tooltip, type MenuProps } from "antd";
 import PopoverUpload from "@/components/PopoverUpload";
 import { DriveSelectionToggle } from "../DriveSelectionToggle";
 import { DriveSelectAll } from "./selection/DriveSelectAll";
@@ -34,71 +31,50 @@ export function DriveViewActions({
   itemIds,
 }: DriveViewActionsProps) {
   const { selectionMode } = useDriveSelection();
+  const sortItems: MenuProps["items"] = [
+    { key: "name", label: "Name" },
+    { key: "modified", label: "Last modified", icon: <CheckOutlined /> },
+    { key: "opened", label: "Last opened" },
+    { key: "size", label: "File size" },
+  ];
+
   return (
-    <div className="flex items-center gap-2">
+    <Space size={8} wrap>
       <PopoverUpload parentId={parentId} className="h-9 rounded-xl" />
 
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" className="h-9">
-            Last modified
-            <ChevronDown className="ml-2 size-4" />
-          </Button>
-        </DropdownMenuTrigger>
+      <Dropdown menu={{ items: sortItems }} trigger={["click"]} placement="bottomRight">
+        <Button className="h-9" icon={<DownOutlined />} iconPosition="end">
+          Last modified
+        </Button>
+      </Dropdown>
 
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem>Name</DropdownMenuItem>
-
-          <DropdownMenuItem>Last modified</DropdownMenuItem>
-
-          <DropdownMenuItem>Last opened</DropdownMenuItem>
-
-          <DropdownMenuItem>File size</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <div className="flex h-9 items-center rounded-lg border bg-background py-1 px-3">
-        {selectionMode === true && <DriveSelectAll itemIds={itemIds} />}
+      <Space.Compact className="rounded-xl border border-border bg-background p-0.5">
+        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel={false} className="px-1" />}
 
         <DriveSelectionToggle />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          disabled={isFetching}
-          aria-label="Refresh files"
-          onClick={onRefresh}
-        >
-          <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
-        </Button>
+        <Tooltip title="Refresh files">
+          <Button
+            type="text"
+            size="small"
+            shape="circle"
+            loading={isFetching}
+            aria-label="Refresh files"
+            icon={<ReloadOutlined />}
+            onClick={onRefresh}
+          />
+        </Tooltip>
 
-        <Button
-          type="button"
-          variant={viewMode === "list" ? "secondary" : "ghost"}
-          size="icon"
-          className="size-7"
-          aria-label="List view"
-          onClick={() => onViewModeChange("list")}
-        >
-          <List className="size-4" />
-        </Button>
-
-        <Button
-          type="button"
-          variant={viewMode === "grid" ? "secondary" : "ghost"}
-          size="icon"
-          className="size-7"
-          aria-label="Grid view"
-          onClick={() => onViewModeChange("grid")}
-        >
-          <Grid2X2 className="size-4" />
-        </Button>
-      </div>
-    </div>
+        <Segmented
+          size="small"
+          value={viewMode}
+          aria-label="Choose file view"
+          options={[
+            { value: "list", icon: <UnorderedListOutlined />, label: <span className="sr-only">List view</span> },
+            { value: "grid", icon: <AppstoreOutlined />, label: <span className="sr-only">Grid view</span> },
+          ]}
+          onChange={(value) => onViewModeChange(value as ViewMode)}
+        />
+      </Space.Compact>
+    </Space>
   );
 }

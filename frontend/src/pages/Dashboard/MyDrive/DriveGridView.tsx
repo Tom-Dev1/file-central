@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+﻿import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
               <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                 <span>{formatModifiedDate(item.updatedAt)}</span>
 
-                <span>{item.type === "folder" ? "Folder" : formatFileSize(item.size)}</span>
+                <span>{item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0))}</span>
               </div>
             </CardContent>
           </Card>
@@ -139,7 +139,7 @@ function formatModifiedDate(value: string): string {
 
 function formatFileSize(bytes?: number): string {
   if (bytes === undefined) {
-    return "—";
+    return "â€”";
   }
 
   if (bytes === 0) {

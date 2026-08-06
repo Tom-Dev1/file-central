@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+﻿import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tokenStorage } from "../lib/token-storage";
 import type { AuthResponse, LoginRequest, RegisterRequest, User } from "../../../frontend/src/types/api.types";
 import { authApi } from "@/apis/auth.api";
@@ -23,7 +23,7 @@ export function useRegister() {
 }
 
 export function useLogin() {
-  return useMutation<AuthResponse, ApiError, RegisterRequest>({
+  return useMutation<AuthResponse, ApiError, LoginRequest>({
     mutationFn: (body: LoginRequest) => authApi.login(body),
     onSuccess: onAuthSuccess,
   });

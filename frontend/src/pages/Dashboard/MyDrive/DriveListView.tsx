@@ -1,4 +1,4 @@
-import type { DriveItem } from "@/types/api.types";
+﻿import type { DriveItem } from "@/types/api.types";
 import FileActions from "./FileActions";
 import { getDriveItemIcon } from "@/utils/file-utils";
 import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
@@ -112,7 +112,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
               <span className="truncate text-xs text-muted-foreground">{formatModifiedDate(item.updatedAt)}</span>
 
               <span className="text-xs text-muted-foreground">
-                {item.type === "folder" ? "—" : formatFileSize(item.size ?? 0)}
+                {item.type === "folder" ? "â€”" : formatFileSize(Number(item.sizeBytes ?? 0))}
               </span>
 
               <div

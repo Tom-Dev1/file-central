@@ -1,4 +1,5 @@
-export type UploadMethod = "single" | "multipart";
+﻿export type UploadMethod = "single" | "multipart";
+export type UploadStatus = "pending" | "paused" | "uploaded" | "processing" | "completed" | "aborted" | "expired" | "failed";
 
 export interface InitUploadRequest {
   name: string;
@@ -40,14 +41,13 @@ export interface UploadedPart {
 }
 
 export interface UploadStatusResponse {
-  status: string;
+  status: UploadStatus;
   driveItemId?: string;
   singlePartUploaded?: boolean;
   totalParts?: number;
   uploadedPartCount?: number;
   uploadedParts?: UploadedPart[];
   missingPartUrls?: PartUrl[];
-  partSizeBytes?: number;
 }
 
 export interface CompletePart {
@@ -63,5 +63,5 @@ export interface CompleteUploadRequest {
 
 export interface CompleteUploadResponse {
   driveItemId: string;
-  status: string;
+  status: UploadStatus;
 }

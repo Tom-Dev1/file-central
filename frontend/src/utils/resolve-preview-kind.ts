@@ -1,4 +1,4 @@
-import type { PreviewKind } from "@/types/file-preview.types";
+﻿import type { PreviewKind } from "@/types/file-preview.types";
 
 const TEXT_EXTENSIONS = new Set([
   "txt",
@@ -26,7 +26,7 @@ const TEXT_EXTENSIONS = new Set([
   "yml",
 ]);
 
-export function resolvePreviewKind(previewKind: PreviewKind, fileName: string): PreviewKind {
+export function resolvePreviewKind(fileName: string): PreviewKind {
   const extension = getFileExtension(fileName);
 
   if (TEXT_EXTENSIONS.has(extension)) {
@@ -49,7 +49,7 @@ export function resolvePreviewKind(previewKind: PreviewKind, fileName: string): 
     return "audio";
   }
 
-  return previewKind;
+  return "unsupported";
 }
 
 function getFileExtension(fileName: string): string {

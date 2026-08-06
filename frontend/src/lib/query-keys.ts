@@ -1,9 +1,11 @@
-import type { ListDriveParams, SearchDriveParams } from "@/types/api.types";
+﻿import type { ListDriveParams, SearchDriveParams } from "@/types/api.types";
 
 export const driveKeys = {
   all: ["drive"] as const,
   list: (params: ListDriveParams) => [...driveKeys.all, "list", params] as const,
+  infiniteList: (params: Omit<ListDriveParams, "cursor">) => [...driveKeys.all, "infinite-list", params] as const,
   search: (params: SearchDriveParams) => [...driveKeys.all, "search", params] as const,
+  infiniteSearch: (params: Omit<SearchDriveParams, "cursor">) => [...driveKeys.all, "infinite-search", params] as const,
   breadcrumbs: () => [...driveKeys.all, "breadcrumbs"] as const,
   breadcrumb: (folderId: string) => [...driveKeys.breadcrumbs(), folderId] as const,
 };
@@ -24,4 +26,9 @@ export const shareKeys = {
 export const fileKeys = {
   all: ["files"] as const,
   preview: ["preview"] as const,
+};
+
+export const uploadKeys = {
+  all: ["uploads"] as const,
+  status: (sessionId: string) => [...uploadKeys.all, "status", sessionId] as const,
 };

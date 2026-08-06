@@ -11,6 +11,7 @@ interface ThemeProviderProps {
 
 export interface ThemeProviderState {
   theme: Theme;
+  resolvedTheme: Exclude<Theme, "system">;
   setTheme: (theme: Theme) => void;
 }
 
@@ -24,6 +25,13 @@ export function ThemeProvider({
 
     return storedTheme ?? defaultTheme;
   });
+  const [resolvedTheme, setResolvedTheme] = useState<Exclude<Theme, 'system'>>(() => {
+    if (theme !== 'system') {
+      return theme;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -35,6 +43,7 @@ export function ThemeProvider({
       root.classList.remove("light", "dark");
       root.classList.add(resolvedTheme);
       root.style.colorScheme = resolvedTheme;
+      setResolvedTheme(resolvedTheme);
     };
 
     applyTheme();
@@ -53,12 +62,13 @@ export function ThemeProvider({
   const value = useMemo<ThemeProviderState>(
     () => ({
       theme,
+      resolvedTheme,
       setTheme: (newTheme) => {
         localStorage.setItem(storageKey, newTheme);
         setThemeState(newTheme);
       },
     }),
-    [storageKey, theme]
+    [resolvedTheme, storageKey, theme]
   );
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;

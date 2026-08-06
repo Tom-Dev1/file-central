@@ -1,4 +1,4 @@
-// hooks/queries/drive-query-options.ts
+﻿// hooks/queries/drive-query-options.ts
 
 import { driveApi } from "@/apis";
 import { driveKeys } from "@/lib/query-keys";
@@ -8,8 +8,6 @@ import { queryOptions } from "@tanstack/react-query";
 function normalizeListParams(params: ListDriveParams = {}): ListDriveParams {
   return {
     parentId: params.parentId?.trim() || undefined,
-    type: params.type,
-    page: params.page ?? 1,
     limit: params.limit ?? 100,
   };
 }

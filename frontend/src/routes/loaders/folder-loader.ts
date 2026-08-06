@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from "react-router-dom";
+﻿import type { LoaderFunctionArgs } from "react-router-dom";
 import { driveListQueryOptions } from "@/hooks/queries/drive-query-options";
 import { folderBreadcrumbQueryOptions } from "@/hooks/queries/folder-query-options";
 import { queryClient } from "@/lib/query-client";
@@ -15,7 +15,6 @@ export async function folderLoader({ params }: LoaderFunctionArgs) {
     queryClient.ensureQueryData(
       driveListQueryOptions({
         parentId: folderId,
-        page: 1,
         limit: 100,
       })
     ),

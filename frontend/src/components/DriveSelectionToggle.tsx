@@ -1,6 +1,6 @@
-import { CheckSquare2, X } from "lucide-react";
+import { CheckSquareOutlined, CloseOutlined } from "@ant-design/icons";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "antd";
 import { cn } from "@/lib/utils";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 
@@ -14,16 +14,15 @@ export function DriveSelectionToggle({ className, showLabel = false }: DriveSele
 
   return (
     <Button
-      type="button"
-      variant={selectionMode ? "secondary" : "ghost"}
-      size={showLabel ? "sm" : "icon"}
-      className={cn(showLabel ? "h-8 gap-2" : "size-7", className)}
+      type={selectionMode ? "default" : "text"}
+      size="small"
+      shape={showLabel ? "default" : "circle"}
+      className={cn(showLabel ? "h-8" : "size-8", className)}
       aria-label={selectionMode ? "Disable selection mode" : "Enable selection mode"}
       aria-pressed={selectionMode}
       onClick={toggleSelectionMode}
+      icon={selectionMode ? <CloseOutlined /> : <CheckSquareOutlined />}
     >
-      {selectionMode ? <X className="size-4" /> : <CheckSquare2 className="size-4" />}
-
       {showLabel && (
         <span>
           {selectionMode ? (selectedCount > 0 ? `${selectedCount} selected` : "Cancel selection") : "Select items"}

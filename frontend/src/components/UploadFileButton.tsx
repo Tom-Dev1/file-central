@@ -1,7 +1,7 @@
 import { useRef, type ChangeEvent } from "react";
-import { Upload } from "lucide-react";
+import { UploadOutlined } from "@ant-design/icons";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "antd";
 import { useUploadFile } from "@/hooks";
 import { cn } from "@/lib/utils";
 import { formatFileSize } from "@/constants/file-constants";
@@ -10,17 +10,16 @@ import { getErrorMessage } from "@/utils/upload-utils";
 interface UploadFileButtonProps {
   parentId?: string | null;
   className?: string;
+  variant?: "menu" | "button";
 }
 
-export function UploadFileButton({ parentId, className }: UploadFileButtonProps) {
+export function UploadFileButton({ parentId, className, variant = "menu" }: UploadFileButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const lastProgressRef = useRef(-1);
   const uploadFile = useUploadFile();
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
-    console.log(`file,`, file);
-
     if (!file) {
       return;
     }
@@ -80,19 +79,14 @@ export function UploadFileButton({ parentId, className }: UploadFileButtonProps)
       <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
 
       <Button
-        type="button"
-        variant="secondary"
-        size="lg"
+        type={variant === "menu" ? "text" : "default"}
+        block={variant === "menu"}
+        loading={uploadFile.isPending}
         disabled={uploadFile.isPending}
         onClick={() => inputRef.current?.click()}
-        className={cn(
-          "w-full justify-start border-0 bg-transparent shadow-none",
-          "hover:bg-accent cursor-pointer",
-          className
-        )}
+        className={cn(variant === "menu" && "justify-start", className)}
+        icon={<UploadOutlined />}
       >
-        <Upload className="mr-2 size-4" />
-
         {uploadFile.isPending ? "Uploading..." : "File upload"}
       </Button>
     </>
