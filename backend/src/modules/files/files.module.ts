@@ -9,8 +9,8 @@ import { FilesController } from "./files.controller";
 
 const UPLOAD_TMP_DIR = process.env.UPLOAD_TMP_DIR || `${tmpdir()}/file-central-uploads`;
 
-import { QuotaModule } from '../quota/quota.module';
-import { FileMetadataResolverService } from './file-metadata-resolver.service';
+import { QuotaModule } from "../quota/quota.module";
+import { FileMetadataResolverService } from "./file-metadata-resolver.service";
 
 @Module({
   imports: [DriveItemsModule, StorageModule, PermissionsModule, QuotaModule],

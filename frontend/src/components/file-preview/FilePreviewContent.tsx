@@ -1,4 +1,6 @@
-import { Download, FileQuestion } from "lucide-react";
+// components/file-preview/FilePreviewContent.tsx
+
+import { Download, ExternalLink, FileQuestion } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
@@ -10,7 +12,6 @@ interface FilePreviewContentProps {
 
 export function FilePreviewContent({ preview }: FilePreviewContentProps) {
   const previewKind = resolvePreviewKind(preview.previewKind, preview.name);
-  console.log(`Rendering preview for ${preview.name} with kind ${previewKind} and URL ${preview.url}`);
 
   switch (previewKind) {
     case "image":
@@ -67,6 +68,16 @@ export function FilePreviewContent({ preview }: FilePreviewContentProps) {
             <p className="mt-2 text-sm text-muted-foreground">This file type cannot be previewed in the browser.</p>
 
             <div className="mt-5 flex justify-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  window.open(preview.url, "_blank", "noopener,noreferrer");
+                }}
+              >
+                <ExternalLink className="size-4" />
+                Open file
+              </Button>
 
               <Button asChild>
                 <a href={preview.url} download={preview.name}>

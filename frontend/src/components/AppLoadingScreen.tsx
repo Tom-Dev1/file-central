@@ -1,3 +1,5 @@
+// components/AppLoadingScreen.tsx
+
 import { FolderClosed } from "lucide-react";
 
 export function AppLoadingScreen() {

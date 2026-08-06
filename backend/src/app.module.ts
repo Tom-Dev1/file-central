@@ -7,7 +7,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { DriveItemsModule } from "./modules/drive-items/drive-items.module";
 import { FoldersModule } from "./modules/folders/folders.module";
-import { FilesModule } from "./modules/files/files.module";
+// import { FilesModule } from "./modules/files/files.module";
 import { DriveModule } from "./modules/drive/drive.module";
 
 import { TrashModule } from "./modules/drive/trash/trash.module";
@@ -38,7 +38,7 @@ import { UploadsModule } from "./modules/upload/uploads.module";
     DriveItemsModule,
     PermissionsModule,
     FoldersModule,
-    FilesModule,
+    // FilesModule,
     DriveModule,
     TrashModule,
     SharesModule,

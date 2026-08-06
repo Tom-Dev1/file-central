@@ -14,6 +14,7 @@ import { RefreshToken, RefreshTokenSchema } from "./schemas/refresh-token.schema
   imports: [
     UsersModule,
     PassportModule,
+
     MongooseModule.forFeature([{ name: RefreshToken.name, schema: RefreshTokenSchema }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

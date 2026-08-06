@@ -17,8 +17,6 @@ export interface DriveItem {
   deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  lastModifiedAt: string;
-  lastViewedAt: string | null;
 }
 
 export interface Share {
@@ -58,6 +56,7 @@ export interface AuthResponse {
   user: User;
 }
 
+//backend error shape (common/filters/http-exception.filter.ts)
 export interface ApiErrorShape {
   statusCode: number;
   path: string;

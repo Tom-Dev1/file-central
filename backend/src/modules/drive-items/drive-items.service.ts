@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+﻿import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DriveItem, DriveItemDocument, DriveItemType, MAX_FOLDER_DEPTH } from './schemas/drive-item.schema';
@@ -57,21 +57,36 @@ export class DriveItemsService {
 
   async createPlaceholder(args: { ownerId: Types.ObjectId; parentId: Types.ObjectId | null; name: string }) {
     const ancestorIds = await this.resolveAncestors(args.ownerId, args.parentId);
-    try {
-      const item = await this.driveItemModel.create({
-        ...args,
-        ancestorIds,
-        normalizedName: this.normalizeName(args.name),
-        type: DriveItemType.FILE,
-        storageObjectId: null,
-        fileStatus: FileStatus.UPLOADING,
-        mimeType: null,
-        sizeBytes: null,
-        extension: this.extractExtension(args.name),
-        childCount: null,
-      });
-      return { id: item._id };
-    } catch (error) { this.rethrowDuplicate(error); }
+    for (let copyNumber = 0; ; copyNumber++) {
+      const name = this.getUploadCopyName(args.name, copyNumber);
+      try {
+        const item = await this.driveItemModel.create({
+          ...args,
+          name,
+          ancestorIds,
+          normalizedName: this.normalizeName(name),
+          type: DriveItemType.FILE,
+          storageObjectId: null,
+          fileStatus: FileStatus.UPLOADING,
+          mimeType: null,
+          sizeBytes: null,
+          extension: this.extractExtension(name),
+          childCount: null,
+        });
+        return { id: item._id, name: item.name };
+      } catch (error) {
+        if (!this.isDuplicateKeyError(error)) throw error;
+      }
+    }
+  }
+
+  private getUploadCopyName(originalName: string, copyNumber: number): string {
+    if (copyNumber === 0) return originalName;
+    const extensionIndex = originalName.lastIndexOf('.');
+    const stem = extensionIndex > 0 ? originalName.slice(0, extensionIndex) : originalName;
+    const extension = extensionIndex > 0 ? originalName.slice(extensionIndex) : '';
+    const suffix = `(${copyNumber})`;
+    return `${stem.slice(0, 255 - extension.length - suffix.length)}${suffix}${extension}`;
   }
 
   async activateFile(args: { driveItemId: Types.ObjectId; storageObjectId: Types.ObjectId; mimeType: string; sizeBytes: bigint; extension: string | null }) {
@@ -241,10 +256,14 @@ export class DriveItemsService {
   }
 
   private rethrowDuplicate(error: unknown): never {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 11000) {
+    if (this.isDuplicateKeyError(error)) {
       throw new ConflictException('NAME_ALREADY_EXISTS');
     }
     throw error;
+  }
+
+  private isDuplicateKeyError(error: unknown): error is { code: number } {
+    return typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
   }
 
   private async adjustChildCount(parentId: Types.ObjectId | null, delta: 1 | -1): Promise<void> {

@@ -1,17 +1,17 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { createHash, randomUUID } from 'crypto';
-import { createReadStream } from 'fs';
-import { open } from 'fs/promises';
-import { unlink } from 'fs/promises';
-import { Types } from 'mongoose';
-import { DriveItemsService } from '../drive-items/drive-items.service';
-import { DriveItemType } from '../drive-items/enums/drive-item.enum';
-import { PermissionsService } from '../permissions/permissions.service';
-import { QuotaService } from '../quota/quota.service';
-import { SharePermission } from '../shares/schemas/share.schema';
-import { MinioService } from '../storage/minio.service';
-import { StorageObjectsService } from '../storage/storage-objects.service';
-import { FileMetadataResolverService } from './file-metadata-resolver.service';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { createHash, randomUUID } from "crypto";
+import { createReadStream } from "fs";
+import { open } from "fs/promises";
+import { unlink } from "fs/promises";
+import { Types } from "mongoose";
+import { DriveItemsService } from "../drive-items/drive-items.service";
+import { DriveItemType } from "../drive-items/enums/drive-item.enum";
+import { PermissionsService } from "../permissions/permissions.service";
+import { QuotaService } from "../quota/quota.service";
+import { SharePermission } from "../shares/schemas/share.schema";
+import { MinioService } from "../storage/minio.service";
+import { FileMetadataResolverService } from "./file-metadata-resolver.service";
+import { StorageObjectsService } from "../storage/storage-objects.services";
 
 @Injectable()
 export class FilesService {
@@ -23,7 +23,7 @@ export class FilesService {
     private readonly storageObjects: StorageObjectsService,
     private readonly permissions: PermissionsService,
     private readonly quota: QuotaService,
-    private readonly metadataResolver: FileMetadataResolverService,
+    private readonly metadataResolver: FileMetadataResolverService
   ) {}
 
   async upload(ownerIdValue: string, parentIdValue: string | null | undefined, file: Express.Multer.File) {
@@ -45,7 +45,13 @@ export class FilesService {
       driveItemId = placeholder.id;
       const checksum = await this.calculateSha256(file.path);
       await this.minio.putObject(objectKey, createReadStream(file.path), file.size, metadata.mimeType);
-      const storageObject = await this.storageObjects.create({ ownerId, objectKey, sizeBytes: bytes, mimeType: metadata.mimeType, checksumSha256: checksum });
+      const storageObject = await this.storageObjects.create({
+        ownerId,
+        objectKey,
+        sizeBytes: bytes,
+        mimeType: metadata.mimeType,
+        checksumSha256: checksum,
+      });
       storageObjectId = storageObject.id;
       await this.driveItems.activateFile({
         driveItemId,
@@ -58,10 +64,14 @@ export class FilesService {
       reserved = false;
       return this.driveItems.model.findById(driveItemId);
     } catch (error) {
-      if (storageObjectId) await this.storageObjects.permanentDelete(storageObjectId).catch((cleanup) => this.logger.error(String(cleanup)));
+      if (storageObjectId)
+        await this.storageObjects
+          .permanentDelete(storageObjectId)
+          .catch((cleanup) => this.logger.error(String(cleanup)));
       else await this.minio.removeObject(objectKey).catch(() => undefined);
       if (driveItemId) await this.driveItems.rollbackActivation(driveItemId);
-      if (reserved) await this.quota.release(ownerId, bytes, `legacy-upload:${operationId}:rollback`).catch(() => undefined);
+      if (reserved)
+        await this.quota.release(ownerId, bytes, `legacy-upload:${operationId}:rollback`).catch(() => undefined);
       throw error;
     } finally {
       await unlink(file.path).catch(() => undefined);
@@ -80,19 +90,19 @@ export class FilesService {
     const itemId = new Types.ObjectId(fileId);
     await this.permissions.requireAccess(userId, userEmail, itemId, permission);
     const item = await this.driveItems.model.findOne({ _id: itemId, type: DriveItemType.FILE, isTrashed: false });
-    if (!item?.storageObjectId) throw new NotFoundException('FILE_NOT_ACTIVE');
+    if (!item?.storageObjectId) throw new NotFoundException("FILE_NOT_ACTIVE");
     const url = await this.storageObjects.getPresignedDownloadUrl(item.storageObjectId, item.ownerId);
     return { url, expiresInSeconds: 3600 };
   }
 
   private async calculateSha256(path: string): Promise<Buffer> {
-    const hash = createHash('sha256');
+    const hash = createHash("sha256");
     for await (const chunk of createReadStream(path)) hash.update(chunk);
     return hash.digest();
   }
 
   private async readPrefix(path: string, maxBytes = 8192): Promise<Buffer> {
-    const handle = await open(path, 'r');
+    const handle = await open(path, "r");
     try {
       const buffer = Buffer.alloc(maxBytes);
       const { bytesRead } = await handle.read(buffer, 0, maxBytes, 0);

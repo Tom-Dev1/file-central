@@ -13,6 +13,7 @@ import DashboardLayout from "@/layouts/DashboardLayout/DashboardLayout";
 import MyDrivePage from "@/pages/Dashboard/MyDrive";
 import FolderPage from "@/pages/FolderPage";
 import { folderLoader } from "./loaders/folder-loader";
+import UploadTester from "@/components/UploadTesting";
 
 export const router = createBrowserRouter([
   {
@@ -58,6 +59,11 @@ export const router = createBrowserRouter([
         path: "folders/:folderId",
         loader: folderLoader,
         Component: FolderPage,
+      },
+
+      {
+        path: "test",
+        Component: UploadTester,
       },
     ],
   },

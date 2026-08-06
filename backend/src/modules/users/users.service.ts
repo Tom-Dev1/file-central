@@ -4,13 +4,13 @@ import { Model, Types } from "mongoose";
 import * as bcrypt from "bcrypt";
 import { User, UserDocument } from "./schemas/user.schema";
 
-import { QuotaService } from '../quota/quota.service';
+import { QuotaService } from "../quota/quota.service";
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly quotaService: QuotaService,
+    private readonly quotaService: QuotaService
   ) {}
   async create(email: string, name: string, password: string, username: string): Promise<UserDocument> {
     const normalizedEmail = email.trim().toLowerCase();
@@ -46,8 +46,9 @@ export class UsersService {
         name: name.trim(),
         passwordHash,
       });
+
       try {
-        const defaultQuotaBytes = BigInt(process.env.DEFAULT_QUOTA_BYTES ?? '107374182400');
+        const defaultQuotaBytes = BigInt(process.env.DEFAULT_QUOTA_BYTES ?? "107374182400");
         await this.quotaService.createAccount(user._id, defaultQuotaBytes);
       } catch (error) {
         await this.userModel.deleteOne({ _id: user._id });
