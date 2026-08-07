@@ -1,231 +1,180 @@
-import { useState, type SubmitEventHandler } from "react";
+import { LockOutlined, MailOutlined, UserAddOutlined, UserOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, Checkbox, Form, Input, Typography, theme } from "antd";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, UserPlus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PasswordInput } from "@/components/ui/PasswordInput";
-import { useRegister } from "@/hooks";
+import { useRegister } from "@/hooks/useAuth";
+import { describeAuthError } from "./authError";
+
+interface RegisterFormValues {
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  acceptedTerms: boolean;
+}
 
 function RegisterPage() {
   const navigate = useNavigate();
   const register = useRegister();
+  const { token } = theme.useToken();
 
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
-    event.preventDefault();
-    setError("");
-
-    const formData = new FormData(event.currentTarget);
-
-    const name = String(formData.get("name") ?? "").trim();
-
-    const username = String(formData.get("username") ?? "").trim();
-
-    const email = String(formData.get("email") ?? "")
-      .trim()
-      .toLowerCase();
-
-    const password = String(formData.get("password") ?? "");
-
-    const confirmPassword = String(formData.get("confirmPassword") ?? "");
-
-    if (name.length < 2) {
-      setError("Full name must contain at least 2 characters.");
-      return;
-    }
-
-    if (username.length < 3) {
-      setError("Username must contain at least 3 characters.");
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
-      setError("Username can only contain letters, numbers, dots, underscores, and hyphens.");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("Password must contain at least 8 characters.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (!acceptedTerms) {
-      setError("You must accept the Terms of Service and Privacy Policy.");
-      return;
-    }
-
-    const registerData = {
-      name,
-      username,
-      email,
-      password,
-    };
-
-    register.mutate(registerData, {
-      onSuccess: () => {
-        navigate("/auth/login", {
-          replace: true,
-        });
+  const handleSubmit = (values: RegisterFormValues) => {
+    register.reset();
+    register.mutate(
+      {
+        name: values.name.trim(),
+        username: values.username.trim(),
+        email: values.email.trim().toLowerCase(),
+        password: values.password,
       },
-      onError: (mutationError) => {
-        setError(
-          mutationError instanceof Error ? mutationError.message : "Unable to create your account. Please try again."
-        );
-      },
-    });
+      {
+        onSuccess: () => navigate("/dashboard", { replace: true }),
+      }
+    );
   };
 
   return (
-    <Card className="border-border/70 shadow-xl shadow-black/5">
-      <CardHeader className="space-y-2 text-center">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <UserPlus className="size-6" />
+    <Card
+      bordered
+      style={{ borderColor: token.colorBorderSecondary, boxShadow: token.boxShadowTertiary }}
+      styles={{ body: { padding: "clamp(24px, 5vw, 36px)" } }}
+    >
+      <header style={{ textAlign: "center", marginBottom: 24 }}>
+        <div
+          aria-hidden="true"
+          style={{
+            display: "inline-flex",
+            width: 48,
+            height: 48,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 14,
+            color: token.colorPrimary,
+            background: token.colorPrimaryBg,
+            fontSize: 22,
+            marginBottom: 14,
+          }}
+        >
+          <UserAddOutlined />
         </div>
+        <Typography.Title level={2} style={{ fontSize: 28, margin: "0 0 6px" }}>
+          Create your account
+        </Typography.Title>
+        <Typography.Text type="secondary">Start organizing and sharing your files securely.</Typography.Text>
+      </header>
 
-        <CardTitle className="text-2xl">Create an account</CardTitle>
+      <Form<RegisterFormValues>
+        name="register"
+        layout="vertical"
+        size="large"
+        requiredMark={false}
+        disabled={register.isPending}
+        onFinish={handleSubmit}
+      >
+        {register.isError && !register.isPending && (
+          <Alert
+            showIcon
+            closable
+            type="error"
+            message="Account creation unsuccessful"
+            description={describeAuthError(register.error, "register")}
+            onClose={() => register.reset()}
+            style={{ marginBottom: 20 }}
+          />
+        )}
 
-        <CardDescription>Sign up to start managing your files and folders</CardDescription>
-      </CardHeader>
+        <Form.Item
+          label="Full name"
+          name="name"
+          rules={[
+            { required: true, whitespace: true, message: "Enter your full name." },
+            { min: 2, message: "Name must contain at least 2 characters." },
+            { max: 100, message: "Name cannot exceed 100 characters." },
+          ]}
+        >
+          <Input prefix={<UserOutlined />} placeholder="Alex Morgan" autoComplete="name" autoFocus />
+        </Form.Item>
 
-      <CardContent>
-        <form id="register-form" className="space-y-5" onSubmit={handleSubmit}>
-          {error && (
-            <div
-              role="alert"
-              className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-            >
-              {error}
-            </div>
-          )}
+        <Form.Item
+          label="Username"
+          name="username"
+          extra="Use letters, numbers, dots, underscores, or hyphens."
+          rules={[
+            { required: true, whitespace: true, message: "Choose a username." },
+            { min: 3, message: "Username must contain at least 3 characters." },
+            { pattern: /^[a-zA-Z0-9._-]+$/, message: "Username contains unsupported characters." },
+          ]}
+        >
+          <Input prefix={<UserOutlined />} placeholder="alex.morgan" autoComplete="username" />
+        </Form.Item>
 
-          <div className="space-y-2">
-            <Label htmlFor="register-name">Name</Label>
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[
+            { required: true, whitespace: true, message: "Enter your email address." },
+            { type: "email", message: "Enter a valid email address." },
+          ]}
+        >
+          <Input prefix={<MailOutlined />} placeholder="alex@example.com" autoComplete="email" />
+        </Form.Item>
 
-            <Input
-              id="register-name"
-              name="name"
-              type="text"
-              placeholder="Whale"
-              autoComplete="name"
-              disabled={register.isPending}
-              required
-            />
-          </div>
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[
+            { required: true, message: "Create a password." },
+            { min: 8, message: "Password must contain at least 8 characters." },
+          ]}
+        >
+          <Input.Password prefix={<LockOutlined />} placeholder="At least 8 characters" autoComplete="new-password" />
+        </Form.Item>
 
-          <div className="space-y-2">
-            <Label htmlFor="register-username">Username</Label>
+        <Form.Item
+          label="Confirm password"
+          name="confirmPassword"
+          dependencies={["password"]}
+          rules={[
+            { required: true, message: "Confirm your password." },
+            ({ getFieldValue }) => ({
+              validator(_, value: string | undefined) {
+                if (!value || getFieldValue("password") === value) return Promise.resolve();
+                return Promise.reject(new Error("The passwords do not match."));
+              },
+            }),
+          ]}
+        >
+          <Input.Password prefix={<LockOutlined />} placeholder="Enter the password again" autoComplete="new-password" />
+        </Form.Item>
 
-            <Input
-              id="register-username"
-              name="username"
-              type="text"
-              placeholder="john.doe"
-              autoComplete="username"
-              minLength={3}
-              disabled={register.isPending}
-              required
-            />
+        <Form.Item
+          name="acceptedTerms"
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, accepted: boolean | undefined) =>
+                accepted ? Promise.resolve() : Promise.reject(new Error("You must accept the terms to continue.")),
+            },
+          ]}
+          style={{ marginBottom: 22 }}
+        >
+          <Checkbox>
+            I agree to File Central&apos;s Terms of Service and Privacy Policy.
+          </Checkbox>
+        </Form.Item>
 
-            <p className="text-xs text-muted-foreground">Use letters, numbers, dots, underscores, or hyphens.</p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="register-email">Email</Label>
-
-            <Input
-              id="register-email"
-              name="email"
-              type="email"
-              placeholder="name@example.com"
-              autoComplete="email"
-              disabled={register.isPending}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="register-password">Password</Label>
-
-            <PasswordInput
-              id="register-password"
-              name="password"
-              placeholder="Enter at least 8 characters"
-              autoComplete="new-password"
-              minLength={8}
-              disabled={register.isPending}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="register-confirm-password">Confirm password</Label>
-
-            <PasswordInput
-              id="register-confirm-password"
-              name="confirmPassword"
-              placeholder="Enter your password again"
-              autoComplete="new-password"
-              minLength={8}
-              disabled={register.isPending}
-              required
-            />
-          </div>
-
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="terms"
-              checked={acceptedTerms}
-              disabled={register.isPending}
-              onCheckedChange={(checked) => {
-                setAcceptedTerms(checked === true);
-              }}
-            />
-
-            <Label htmlFor="terms" className="cursor-pointer text-sm font-normal leading-5 text-muted-foreground">
-              I agree to the{" "}
-              <button type="button" className="font-medium text-primary hover:underline">
-                Terms of Service
-              </button>{" "}
-              and{" "}
-              <button type="button" className="font-medium text-primary hover:underline">
-                Privacy Policy
-              </button>
-              .
-            </Label>
-          </div>
-        </form>
-      </CardContent>
-
-      <CardFooter className="flex flex-col gap-4">
-        <Button form="register-form" type="submit" className="w-full" disabled={register.isPending}>
-          {register.isPending ? (
-            <>
-              <Loader2 className="mr-2 size-4 animate-spin" />
-              Creating account...
-            </>
-          ) : (
-            "Create account"
-          )}
+        <Button type="primary" htmlType="submit" block loading={register.isPending}>
+          {register.isPending ? "Creating account" : "Create account"}
         </Button>
+      </Form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
-          <Link to="/auth/login" className="font-medium text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </CardFooter>
+      <Typography.Paragraph type="secondary" style={{ margin: "22px 0 0", textAlign: "center" }}>
+        Already have an account?{" "}
+        <Link to="/auth/login" style={{ color: token.colorPrimary, fontWeight: 600 }}>
+          Log in
+        </Link>
+      </Typography.Paragraph>
     </Card>
   );
 }

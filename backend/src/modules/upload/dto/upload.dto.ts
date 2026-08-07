@@ -17,7 +17,7 @@
 } from "class-validator";
 import { Type } from "class-transformer";
 import { Transform } from "class-transformer";
-import { DriveItemNameDto } from "../../drive-items/dto/drive-item-name.dto";
+import { DriveItemNameDto } from "../../drive-items/dto/requests/drive-item-name.dto";
 
 import "reflect-metadata";
 

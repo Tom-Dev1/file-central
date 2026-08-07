@@ -3,6 +3,7 @@ import { Button, Card, Progress, Space, Tag, Typography, Input, Upload, Steps, D
 import { InboxOutlined, CloudUploadOutlined, StopOutlined, ReloadOutlined } from "@ant-design/icons";
 import { uploadApi } from "@/apis/upload.api";
 import type { InitUploadResponse, CompletePart } from "@/types/upload.types";
+import axios from "axios";
 
 const { Dragger } = Upload;
 const { Text, Paragraph } = Typography;
@@ -41,6 +42,7 @@ export default function UploadTester() {
   const [currentStep, setCurrentStep] = useState(0);
   const [parts, setParts] = useState<PartState[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [multipartPartSize, setMultipartPartSize] = useState<number | null>(null);
 
   const abortedRef = useRef(false);
   const sessionRef = useRef<string | null>(null);
@@ -56,6 +58,7 @@ export default function UploadTester() {
     setCurrentStep(0);
     setParts([]);
     setSessionId(null);
+    setMultipartPartSize(null);
     abortedRef.current = false;
     sessionRef.current = null;
   };
@@ -120,6 +123,7 @@ export default function UploadTester() {
       });
 
       setSessionId(init.uploadSessionId);
+      setMultipartPartSize(init.method === "multipart" ? init.partSizeBytes : null);
       sessionRef.current = init.uploadSessionId;
       log("success", `Server chọn method="${init.method}", sessionId=${init.uploadSessionId}`);
       log("info", "→ File placeholder đã tạo trong folder (fileStatus=uploading)");
@@ -160,7 +164,7 @@ export default function UploadTester() {
       log("success", `HOÀN TẤT! driveItemId=${result.driveItemId}, status=${result.status}`);
       log("info", "→ File chuyển fileStatus=active, sẵn sàng preview/download");
       message.success("Upload thành công");
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err);
     } finally {
       setUploading(false);
@@ -199,7 +203,7 @@ export default function UploadTester() {
         sizeBytes: p.sizeBytes,
       }));
 
-      const partSize = status.partSizeBytes ?? (file.size > SINGLE_PART_MAX_BYTES ? SINGLE_PART_MAX_BYTES : file.size);
+      const partSize = multipartPartSize ?? (file.size > SINGLE_PART_MAX_BYTES ? SINGLE_PART_MAX_BYTES : file.size);
 
       for (const { partNumber, url } of missing) {
         if (abortedRef.current) throw new Error("ABORTED_BY_USER");
@@ -218,7 +222,7 @@ export default function UploadTester() {
       setOverallProgress(100);
       log("success", `RESUME HOÀN TẤT! driveItemId=${result.driveItemId}`);
       message.success("Resume thành công");
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err);
     } finally {
       setUploading(false);
@@ -236,21 +240,22 @@ export default function UploadTester() {
         log("api", `uploadApi.abort(${sid})`);
         await uploadApi.abort(sid);
         log("info", "Server đã huỷ session + release quota");
-      } catch (err: any) {
-        log("error", `Abort lỗi: ${err.message}`);
+      } catch (err: unknown) {
+        log("error", `Abort lỗi: ${err instanceof Error ? err.message : "Lỗi không xác định"}`);
       }
     }
     setUploading(false);
   };
 
   // Xử lý lỗi chung. axios lỗi -> err.response.data.{code,message}
-  const handleError = (err: any) => {
-    if (err?.message === "ABORTED_BY_USER") {
+  const handleError = (err: unknown) => {
+    if (err instanceof Error && err.message === "ABORTED_BY_USER") {
       log("info", "Đã dừng theo yêu cầu người dùng");
       return;
     }
-    const code = err?.response?.data?.code ?? err?.code;
-    const msg = err?.response?.data?.message ?? err?.message ?? "Lỗi không xác định";
+    const responseData = axios.isAxiosError<{ code?: string; message?: string }>(err) ? err.response?.data : undefined;
+    const code = responseData?.code ?? (axios.isAxiosError(err) ? err.code : undefined);
+    const msg = responseData?.message ?? (err instanceof Error ? err.message : "Lỗi không xác định");
     log("error", `Lỗi: ${code ? `[${code}] ` : ""}${msg}`);
     if (code === "QUOTA_EXCEEDED") message.error("Vượt dung lượng cho phép");
     else message.error(msg);

@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, ForbiddenException, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { QuotaAccount } from "./schemas/quota-account.schema";
@@ -25,26 +25,9 @@ export class QuotaService {
     );
   }
 
-  // async reserve(userId: Types.ObjectId, bytes: bigint, key: string): Promise<void> {
-  //   this.assertPositive(bytes);
-  //   if (await this.wasApplied(key)) return;
-  //   const account = await this.accountModel.findOneAndUpdate(
-  //     { userId, $expr: { $lte: [{ $add: ['$usedBytes', '$reservedBytes', bytes] }, '$quotaBytes'] } },
-  //     { $inc: { reservedBytes: bytes } },
-  //     { new: true },
-  //   );
-  //   if (!account) {
-  //     if (!(await this.accountModel.exists({ userId }))) throw new NotFoundException('QUOTA_ACCOUNT_NOT_FOUND');
-  //     throw new QuotaExceededError();
-  //   }
-  //   await this.finishOrRollback(
-  //     () => this.record(userId, QuotaTxType.RESERVE, bytes, key),
-  //     () => this.accountModel.updateOne({ userId, reservedBytes: { $gte: bytes } }, { $inc: { reservedBytes: -bytes } }),
-  //   );
-  // }
-  async reserve(userId: Types.ObjectId, bytes: bigint, idempotencyKey: string): Promise<void> {
-    const isFirst = await this.recordLedgerOnce(userId, QuotaTxType.RESERVE, bytes, idempotencyKey, {});
-    if (!isFirst) return;
+  async reserve(userId: Types.ObjectId, bytes: bigint, idempotencyKey: string): Promise<boolean> {
+    this.assertPositive(bytes);
+    if (await this.wasApplied(idempotencyKey)) return false;
 
     //(lazy-init cho user cũ / user chưa có account).
     await this.ensureAccount(userId);
@@ -61,9 +44,18 @@ export class QuotaService {
     );
 
     if (!updated) {
-      await this.txModel.deleteOne({ idempotencyKey }).catch(() => {});
-
       throw new QuotaExceededError();
+    }
+    try {
+      await this.record(userId, QuotaTxType.RESERVE, bytes, idempotencyKey);
+      return true;
+    } catch (error) {
+      await this.accountModel.updateOne(
+        { userId, reservedBytes: { $gte: bytes } },
+        { $inc: { reservedBytes: -bytes } },
+      );
+      if (this.isDuplicateKey(error)) return false;
+      throw error;
     }
   }
 
@@ -118,6 +110,21 @@ export class QuotaService {
       () => this.record(userId, QuotaTxType.RELEASE, bytes, key),
       () => this.accountModel.updateOne({ userId }, { $inc: { reservedBytes: bytes } })
     );
+  }
+
+  async rollbackReservation(
+    userId: Types.ObjectId,
+    bytes: bigint,
+    reservationKey: string,
+    rollbackKey: string,
+  ): Promise<void> {
+    await this.release(userId, bytes, rollbackKey);
+    // No upload session survived this initialization attempt. Removing both
+    // entries makes the original idempotency key reusable by a later retry.
+    await this.txModel.deleteMany({
+      userId,
+      idempotencyKey: { $in: [reservationKey, rollbackKey] },
+    });
   }
 
   async releaseUsed(userId: Types.ObjectId, bytes: bigint, key: string, driveItemId?: Types.ObjectId): Promise<void> {

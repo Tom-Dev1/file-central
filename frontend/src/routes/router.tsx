@@ -14,6 +14,10 @@ import MyDrivePage from "@/pages/Dashboard/MyDrive";
 import FolderPage from "@/pages/FolderPage";
 import { folderLoader } from "./loaders/folder-loader";
 import UploadTester from "@/components/UploadTesting";
+import TrashPage from "@/pages/Dashboard/Trash";
+import SharedPage from "@/pages/Dashboard/Shared";
+import SharedFolderPage from "@/pages/Dashboard/Shared/SharedFolderPage";
+import PublicSharePage from "@/pages/PublicShare";
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +26,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: HomePage,
+      },
+      {
+        path: "shares/public/:token",
+        Component: PublicSharePage,
       },
     ],
   },
@@ -59,6 +67,18 @@ export const router = createBrowserRouter([
         path: "folders/:folderId",
         loader: folderLoader,
         Component: FolderPage,
+      },
+      {
+        path: "shared",
+        Component: SharedPage,
+      },
+      {
+        path: "shared/folders/:folderId",
+        Component: SharedFolderPage,
+      },
+      {
+        path: "trash",
+        Component: TrashPage,
       },
 
       {

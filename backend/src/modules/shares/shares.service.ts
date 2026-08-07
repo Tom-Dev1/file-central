@@ -2,8 +2,8 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { InjectModel } from "@nestjs/mongoose";
 import { createHash, randomBytes } from "crypto";
 import { Model, Types } from "mongoose";
-import { DriveItemsService } from "../drive-items/drive-items.service";
-import { DriveItemType } from "../drive-items/schemas/drive-item.schema";
+import { DriveItemLookupQuery } from "../drive-items/application/queries/drive-item-lookup.query";
+import { DriveItemType } from "../drive-items/domain/enums/drive-item.enum";
 import { PermissionsService } from "../permissions/permissions.service";
 import { UsersService } from "../users/users.service";
 import { CreateShareDto } from "./dto/create-share.dto";
@@ -14,7 +14,7 @@ import { StorageObjectsService } from "../storage/storage-objects.services";
 export class SharesService {
   constructor(
     @InjectModel(Share.name) private readonly shareModel: Model<ShareDocument>,
-    private readonly driveItems: DriveItemsService,
+    private readonly driveItems: DriveItemLookupQuery,
     private readonly permissions: PermissionsService,
     private readonly users: UsersService,
     private readonly storageObjects: StorageObjectsService
@@ -24,7 +24,7 @@ export class SharesService {
     const actorId = new Types.ObjectId(actorIdValue);
     const itemId = new Types.ObjectId(dto.itemId);
     await this.permissions.requireAccess(actorIdValue, undefined, itemId, SharePermission.EDIT);
-    const item = await this.driveItems.model.findOne({ _id: itemId, isTrashed: false }).lean();
+    const item = await this.driveItems.findOne({ _id: itemId, isTrashed: false });
     if (!item) throw new NotFoundException("DRIVE_ITEM_NOT_FOUND");
     const share: Partial<Share> = {
       itemId,
@@ -63,9 +63,10 @@ export class SharesService {
       .lean();
     const now = new Date();
     const active = shares.filter((share) => !share.expiresAt || share.expiresAt > now);
-    const items = await this.driveItems.model
-      .find({ _id: { $in: active.map((share) => share.itemId) }, isTrashed: false })
-      .lean();
+    const items = await this.driveItems.findMany({
+      _id: { $in: active.map((share) => share.itemId) },
+      isTrashed: false,
+    });
     const byId = new Map(items.map((item) => [item._id.toString(), item]));
     return active
       .map((share) => ({ share, item: byId.get(share.itemId.toString()) ?? null }))
@@ -75,9 +76,9 @@ export class SharesService {
   async listSharedFolderChildren(userId: string, userEmail: string | undefined, folderIdValue: string) {
     const folderId = new Types.ObjectId(folderIdValue);
     await this.permissions.requireAccess(userId, userEmail, folderId, SharePermission.VIEW);
-    const folder = await this.driveItems.model.findOne({ _id: folderId, type: DriveItemType.FOLDER, isTrashed: false });
+    const folder = await this.driveItems.findOne({ _id: folderId, type: DriveItemType.FOLDER, isTrashed: false });
     if (!folder) throw new NotFoundException("SHARED_FOLDER_NOT_FOUND");
-    return this.driveItems.model.find({ ownerId: folder.ownerId, parentId: folderId, isTrashed: false }).lean();
+    return this.driveItems.findMany({ ownerId: folder.ownerId, parentId: folderId, isTrashed: false });
   }
 
   async revoke(actorId: string, shareId: string) {
@@ -91,7 +92,7 @@ export class SharesService {
 
   async getPublicShareMetadata(token: string) {
     const share = await this.resolvePublicShare(token);
-    const item = await this.driveItems.model.findOne({ _id: share.itemId, isTrashed: false });
+    const item = await this.driveItems.findOne({ _id: share.itemId, isTrashed: false });
     if (!item) throw new NotFoundException("LINK_UNAVAILABLE");
     return { item, permission: share.permission };
   }
@@ -100,12 +101,13 @@ export class SharesService {
     const share = await this.resolvePublicShare(token);
     if (![SharePermission.DOWNLOAD, SharePermission.EDIT].includes(share.permission))
       throw new NotFoundException("LINK_UNAVAILABLE");
-    const item = await this.driveItems.model.findOne({ _id: share.itemId, type: DriveItemType.FILE, isTrashed: false });
+    const item = await this.driveItems.findOne({ _id: share.itemId, type: DriveItemType.FILE, isTrashed: false });
     if (!item?.storageObjectId) throw new NotFoundException("LINK_UNAVAILABLE");
-    return {
-      url: await this.storageObjects.getPresignedDownloadUrl(item.storageObjectId, item.ownerId),
-      expiresInSeconds: 3600,
-    };
+    return this.storageObjects.getPresignedDownloadUrl(
+      item.storageObjectId,
+      item.ownerId,
+      item.name,
+    );
   }
 
   async cleanupItems(itemIds: Types.ObjectId[]): Promise<void> {

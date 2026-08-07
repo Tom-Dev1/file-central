@@ -3,7 +3,8 @@ import { getModelToken } from "@nestjs/mongoose";
 import { Types } from "mongoose";
 import { ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PermissionsService } from "./permissions.service";
-import { DriveItem, DriveItemType } from "../drive-items/schemas/drive-item.schema";
+import { DriveItemLookupQuery } from "../drive-items/application/queries/drive-item-lookup.query";
+import { DriveItemType } from "../drive-items/domain/enums/drive-item.enum";
 import { Share, SharePermission } from "../shares/schemas/share.schema";
 
 /**
@@ -80,12 +81,11 @@ describe("PermissionsService", () => {
     driveItems = [{ ...grandparentFolder }, { ...parentFolder }, { ...file }];
     shares = [];
 
-    const driveItemModelMock = {
+    const driveItemQueryMock = {
       findById: jest.fn((id: Types.ObjectId) =>
-        createQuery(async () => {
-          const found = driveItems.find((i) => i._id.equals(id));
-          return found ? { ...found } : null;
-        })
+        Promise.resolve(driveItems.find((i) => i._id.equals(id))).then(
+          (found) => (found ? { ...found } : null),
+        ),
       ),
     };
 
@@ -107,7 +107,7 @@ describe("PermissionsService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PermissionsService,
-        { provide: getModelToken(DriveItem.name), useValue: driveItemModelMock },
+        { provide: DriveItemLookupQuery, useValue: driveItemQueryMock },
         { provide: getModelToken(Share.name), useValue: shareModelMock },
       ],
     }).compile();

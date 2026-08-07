@@ -1,353 +1,301 @@
+import {
+  App,
+  Avatar,
+  Button,
+  Drawer,
+  Dropdown,
+  Flex,
+  Layout,
+  Menu,
+  Space,
+  Typography,
+  type MenuProps,
+} from "antd";
+import {
+  CloudOutlined,
+  DashboardOutlined,
+  LoadingOutlined,
+  LoginOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import { useEffect, useState } from "react";
-import { Cloud, LayoutDashboard, LogOut, Menu, Settings } from "lucide-react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { ModeToggle } from "@/components/theme/ModeToggle";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { tokenStorage } from "@/lib/token-storage";
+import { useLogout } from "@/hooks/useAuth";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
+import { tokenStorage } from "@/lib/token-storage";
 
-const navigationItems = [
-  {
-    label: "Home",
-    path: "/",
-    end: true,
-  },
-  {
-    label: "Features",
-    path: "/#features",
-    end: false,
-  },
-  {
-    label: "Security",
-    path: "/#security",
-    end: false,
-  },
-];
+const publicNavigation = [
+  { key: "home", label: "Home", target: "/" },
+  { key: "features", label: "Features", target: "/#features" },
+  { key: "security", label: "Security", target: "/#security" },
+] as const;
 
 function PublicLayout() {
+  const location = useLocation();
   const navigate = useNavigate();
-
-  const [currentUser, setCurrentUser] = useState<StoredUser | null>(() => authUserStorage.getUser());
+  const logout = useLogout();
+  const { message } = App.useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const isAuthenticated = Boolean(tokenStorage.getAccessToken());
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(() => authUserStorage.getUser());
+  const isAuthenticated = tokenStorage.hasAccessToken();
 
   useEffect(() => {
-    const synchronizeAuthentication = () => {
-      setCurrentUser(authUserStorage.getUser());
-    };
-
+    const synchronizeAuthentication = () => setCurrentUser(authUserStorage.getUser());
     window.addEventListener("storage", synchronizeAuthentication);
-
-    return () => {
-      window.removeEventListener("storage", synchronizeAuthentication);
-    };
+    return () => window.removeEventListener("storage", synchronizeAuthentication);
   }, []);
 
-  function handleSignOut() {
-    tokenStorage.clear();
-    authUserStorage.clearUser();
-    setCurrentUser(null);
+  const navigateTo = (target: string) => {
+    setMobileMenuOpen(false);
+    if (target.startsWith("/#")) {
+      if (location.pathname !== "/") {
+        navigate(target);
+      } else {
+        document.getElementById(target.slice(2))?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.history.replaceState(null, "", target);
+      }
+      return;
+    }
+    navigate(target);
+  };
 
-    navigate("/auth/login", {
-      replace: true,
-    });
-  }
+  const handleSignOut = async () => {
+    try {
+      await logout.mutateAsync();
+      setCurrentUser(null);
+      setMobileMenuOpen(false);
+      navigate("/auth/login", { replace: true });
+    } catch {
+      void message.error("Unable to sign out. Please try again.");
+    }
+  };
+
+  const navigationItems: MenuProps["items"] = publicNavigation.map((item) => ({
+    key: item.key,
+    label: item.label,
+  }));
+
+  const handleNavigation: MenuProps["onClick"] = ({ key }) => {
+    const item = publicNavigation.find((candidate) => candidate.key === key);
+    if (item) navigateTo(item.target);
+  };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 border-b bg-background/90 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Cloud className="size-5" />
-            </span>
+    <Layout className="min-h-screen !bg-background !text-foreground">
+      <Layout.Header className="sticky top-0 z-50 !h-16 border-b border-border/70 !bg-background/95 !px-0 !leading-normal backdrop-blur">
+        <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Brand />
 
-            <span className="text-lg font-normal tracking-tight">
-              File <span className="font-medium text-muted-foreground">Central</span>
-            </span>
-          </Link>
+          <Menu
+            mode="horizontal"
+            items={navigationItems}
+            selectedKeys={location.pathname === "/" && !location.hash ? ["home"] : []}
+            onClick={handleNavigation}
+            className="!hidden min-w-0 flex-1 justify-center !border-0 !bg-transparent md:!flex"
+          />
 
-          <nav className="hidden items-center gap-1 md:flex">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.path}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-full px-4 py-2 text-sm font-medium transition-colors",
-                    "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    isActive && item.path === "/" && "bg-accent text-accent-foreground"
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-
-          <div className="hidden items-center gap-2 md:flex">
+          <Space size={6} className="!hidden md:!flex">
             <ModeToggle />
-
             {isAuthenticated ? (
-              <UserMenu user={currentUser} onSignOut={handleSignOut} />
+              <UserMenu user={currentUser} pending={logout.isPending} onNavigate={navigate} onSignOut={handleSignOut} />
             ) : (
               <>
-                <Button variant="ghost" asChild>
-                  <Link to="/auth/login">Sign in</Link>
+                <Button type="text" icon={<LoginOutlined />} onClick={() => navigate("/auth/login")}>
+                  Sign in
                 </Button>
-
-                <Button asChild>
-                  <Link to="/auth/register">Get started</Link>
+                <Button type="primary" icon={<UserAddOutlined />} onClick={() => navigate("/auth/register")}>
+                  Get started
                 </Button>
               </>
             )}
-          </div>
+          </Space>
 
-          <div className="flex items-center gap-1 md:hidden">
+          <Space size={2} className="md:!hidden">
             <ModeToggle />
-
-            {isAuthenticated && <UserMenu user={currentUser} onSignOut={handleSignOut} compact />}
-
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button type="button" size="icon" variant="ghost" aria-label="Open navigation menu">
-                  <Menu className="size-5" />
-                </Button>
-              </SheetTrigger>
-
-              <SheetContent side="right" className="flex w-full flex-col sm:max-w-sm">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-
-                <nav className="flex flex-col gap-1 px-4">
-                  {navigationItems.map((item) => (
-                    <NavLink
-                      key={item.label}
-                      to={item.path}
-                      end={item.end}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={({ isActive }) =>
-                        cn(
-                          "rounded-md px-4 py-3 text-sm font-medium transition-colors",
-                          "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          isActive && item.path === "/" && "bg-muted text-foreground"
-                        )
-                      }
-                    >
-                      {item.label}
-                    </NavLink>
-                  ))}
-                </nav>
-
-                <div className="mt-auto flex flex-col gap-2 border-t p-4">
-                  {isAuthenticated ? (
-                    <>
-                      <Button variant="outline" asChild onClick={() => setMobileMenuOpen(false)}>
-                        <Link to="/dashboard">Dashboard</Link>
-                      </Button>
-
-                      <Button variant="ghost" className="text-destructive" onClick={handleSignOut}>
-                        Sign out
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button variant="outline" asChild onClick={() => setMobileMenuOpen(false)}>
-                        <Link to="/auth/login">Sign in</Link>
-                      </Button>
-
-                      <Button asChild onClick={() => setMobileMenuOpen(false)}>
-                        <Link to="/auth/register">Get started</Link>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+            {isAuthenticated && (
+              <UserMenu user={currentUser} pending={logout.isPending} onNavigate={navigate} onSignOut={handleSignOut} compact />
+            )}
+            <Button
+              type="text"
+              shape="circle"
+              size="large"
+              aria-label="Open navigation menu"
+              icon={<MenuOutlined />}
+              onClick={() => setMobileMenuOpen(true)}
+            />
+          </Space>
         </div>
-      </header>
+      </Layout.Header>
 
-      <main className="relative z-30 flex-1">
+      <Layout.Content className="relative !bg-background">
         <Outlet />
-      </main>
+      </Layout.Content>
 
-      <footer className="border-t bg-muted/30">
-        <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-          <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center gap-3 font-semibold">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Cloud className="size-4" />
-              </span>
-              File Central
-            </Link>
+      <PublicFooter authenticated={isAuthenticated} onNavigate={navigateTo} onSignOut={handleSignOut} />
 
-            <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
-              A centralized workspace that helps you store, organize, share, and protect your files with ease.
-            </p>
-          </div>
+      <Drawer
+        title={<Brand />}
+        placement="right"
+        width="min(360px, calc(100vw - 24px))"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        styles={{ body: { display: "flex", flexDirection: "column", padding: 16 } }}
+      >
+        <Menu
+          mode="inline"
+          items={navigationItems}
+          selectedKeys={location.pathname === "/" ? ["home"] : []}
+          onClick={handleNavigation}
+          className="!border-0"
+        />
+        <Space direction="vertical" size={10} className="mt-auto w-full border-t border-border pt-4">
+          {isAuthenticated ? (
+            <>
+              <Button block icon={<DashboardOutlined />} onClick={() => navigateTo("/dashboard")}>
+                Dashboard
+              </Button>
+              <Button block danger loading={logout.isPending} icon={<LogoutOutlined />} onClick={() => void handleSignOut()}>
+                Sign out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button block icon={<LoginOutlined />} onClick={() => navigateTo("/auth/login")}>
+                Sign in
+              </Button>
+              <Button block type="primary" icon={<UserAddOutlined />} onClick={() => navigateTo("/auth/register")}>
+                Get started
+              </Button>
+            </>
+          )}
+        </Space>
+      </Drawer>
+    </Layout>
+  );
+}
 
-          <div>
-            <h2 className="text-sm font-semibold">Product</h2>
-
-            <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
-              <Link to="/#features" className="hover:text-foreground">
-                Features
-              </Link>
-
-              <Link to="/#security" className="hover:text-foreground">
-                Security
-              </Link>
-
-              <Link to="/auth/register" className="hover:text-foreground">
-                Create an account
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="text-sm font-semibold">Account</h2>
-
-            <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground">
-              {isAuthenticated ? (
-                <>
-                  <Link to="/dashboard" className="hover:text-foreground">
-                    Dashboard
-                  </Link>
-
-                  <Link to="/dashboard/settings" className="hover:text-foreground">
-                    Settings
-                  </Link>
-
-                  <button type="button" className="w-fit text-left hover:text-foreground" onClick={handleSignOut}>
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth/login" className="hover:text-foreground">
-                    Sign in
-                  </Link>
-
-                  <Link to="/auth/register" className="hover:text-foreground">
-                    Create an account
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-            <p>© 2026 File Central. All rights reserved.</p>
-
-            <p>Store and share your files securely.</p>
-          </div>
-        </div>
-      </footer>
-    </div>
+function Brand() {
+  return (
+    <Link to="/" aria-label="File Central home" className="flex shrink-0 items-center gap-2.5 text-foreground">
+      <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <CloudOutlined className="text-lg" />
+      </span>
+      <Typography.Text className="!text-lg">
+        File <span className="font-medium text-muted-foreground">Central</span>
+      </Typography.Text>
+    </Link>
   );
 }
 
 interface UserMenuProps {
   user: StoredUser | null;
-  onSignOut: () => void;
+  pending: boolean;
   compact?: boolean;
+  onNavigate: (to: string) => void;
+  onSignOut: () => Promise<void>;
 }
 
-function UserMenu({ user, onSignOut, compact = false }: UserMenuProps) {
+function UserMenu({ user, pending, compact = false, onNavigate, onSignOut }: UserMenuProps) {
   const displayName = user?.name || user?.username || user?.email || "User";
+  const items: MenuProps["items"] = [
+    {
+      key: "identity",
+      disabled: true,
+      label: (
+        <div className="min-w-48 py-1">
+          <Typography.Text strong className="block truncate">{displayName}</Typography.Text>
+          {user?.email && <Typography.Text type="secondary" className="block truncate !text-xs">{user.email}</Typography.Text>}
+        </div>
+      ),
+    },
+    { type: "divider" },
+    { key: "dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+    { type: "divider" },
+    {
+      key: "logout",
+      danger: true,
+      disabled: pending,
+      icon: pending ? <LoadingOutlined spin /> : <LogoutOutlined />,
+      label: pending ? "Signing out..." : "Sign out",
+    },
+  ];
 
-  const initials = getInitials(displayName);
+  const handleMenuClick: MenuProps["onClick"] = ({ key }) => {
+    if (key === "dashboard") onNavigate("/dashboard");
+    if (key === "logout") void onSignOut();
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn("h-10 rounded-full", compact ? "size-10 p-0" : "gap-3 px-2 pr-3")}
-          aria-label="Open account menu"
-        >
-          <Avatar className="size-8">
-            <AvatarImage src={user?.avatarUrl} alt={displayName} />
+    <Dropdown menu={{ items, onClick: handleMenuClick }} placement="bottomRight" trigger={["click"]}>
+      <Button type="text" className={compact ? "!size-10 !p-0" : "!h-10 !px-2"} aria-label="Open account menu">
+        <Flex align="center" gap={8}>
+          <Avatar size={32} src={user?.avatarUrl} className="!bg-primary">{getInitials(displayName)}</Avatar>
+          {!compact && <Typography.Text strong className="max-w-28 truncate">{displayName}</Typography.Text>}
+        </Flex>
+      </Button>
+    </Dropdown>
+  );
+}
 
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+function PublicFooter({ authenticated, onNavigate, onSignOut }: { authenticated: boolean; onNavigate: (to: string) => void; onSignOut: () => Promise<void> }) {
+  return (
+    <Layout.Footer className="border-t border-border !bg-muted/30 !px-0 !py-0">
+      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
+        <div className="lg:col-span-2">
+          <Brand />
+          <Typography.Paragraph type="secondary" className="!mt-4 max-w-md !leading-6">
+            A centralized workspace for storing, organizing, sharing, and protecting your files.
+          </Typography.Paragraph>
+        </div>
+        <FooterGroup title="Product" links={[{ label: "Features", target: "/#features" }, { label: "Security", target: "/#security" }]} onNavigate={onNavigate} />
+        <div>
+          <Typography.Text strong>Account</Typography.Text>
+          <Space direction="vertical" size={10} className="mt-4 flex">
+            {authenticated ? (
+              <>
+                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/dashboard")}>Dashboard</Button>
+                <Button type="link" danger className="!h-auto !p-0" onClick={() => void onSignOut()}>Sign out</Button>
+              </>
+            ) : (
+              <>
+                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/auth/login")}>Sign in</Button>
+                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/auth/register")}>Create an account</Button>
+              </>
+            )}
+          </Space>
+        </div>
+      </div>
+      <div className="border-t border-border">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:justify-between lg:px-8">
+          <span>© 2026 File Central. All rights reserved.</span>
+          <span>Store and share your files securely.</span>
+        </div>
+      </div>
+    </Layout.Footer>
+  );
+}
 
-          {!compact && (
-            <div className="max-w-36 text-left">
-              <p className="truncate text-sm font-medium">{displayName}</p>
-
-              {user?.email && <p className="truncate text-xs text-muted-foreground">{user.email}</p>}
-            </div>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>
-          <div className="flex flex-col">
-            <span className="truncate">{displayName}</span>
-
-            {user?.email && <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>}
-          </div>
-        </DropdownMenuLabel>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem asChild>
-          <Link to="/dashboard">
-            <LayoutDashboard className="mr-2 size-4" />
-            Dashboard
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link to="/dashboard/settings">
-            <Settings className="mr-2 size-4" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onSignOut}>
-          <LogOut className="mr-2 size-4" />
-          Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+function FooterGroup({ title, links, onNavigate }: { title: string; links: Array<{ label: string; target: string }>; onNavigate: (to: string) => void }) {
+  return (
+    <div>
+      <Typography.Text strong>{title}</Typography.Text>
+      <Space direction="vertical" size={10} className="mt-4 flex">
+        {links.map((link) => (
+          <Button key={link.target} type="link" className="!h-auto !p-0" onClick={() => onNavigate(link.target)}>{link.label}</Button>
+        ))}
+      </Space>
+    </div>
   );
 }
 
 function getInitials(value: string) {
   const words = value.trim().split(/\s+/).filter(Boolean);
-
-  if (words.length === 0) {
-    return "U";
-  }
-
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase();
-  }
-
+  if (words.length === 0) return "U";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return `${words[0][0]}${words.at(-1)?.[0] ?? ""}`.toUpperCase();
 }
 

@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { StorageObjectDoc } from "./schemas/storage-object.schema";
 import { StorageScanStatus, StorageObjectState, StorageProvider } from "./enums/storage-object.enum";
 import { S3StorageAdapter } from "../s3/s3-storage.adapter";
+import { Readable } from "node:stream";
 
 /**
  * Quản lý vòng đời của object vật lý (metadata ở Mongo, byte ở MinIO).
@@ -39,7 +45,7 @@ export class StorageObjectsService {
     const doc = await this.model.create({
       ownerId: args.ownerId,
       provider: args.provider ?? StorageProvider.MINIO,
-      bucket: args.bucket,
+      bucket: args.bucket ?? this.storage.getBucketName(),
       objectKey: args.objectKey,
       sizeBytes: args.sizeBytes,
       mimeType: args.mimeType,
@@ -124,6 +130,24 @@ export class StorageObjectsService {
     return { url, expiresInSeconds: this.downloadUrlTtlSeconds };
   }
 
+  async getDownloadStream(
+    storageObjectId: Types.ObjectId,
+    ownerId: Types.ObjectId,
+  ): Promise<{
+    stream: Readable;
+    contentLength: string;
+    contentType: string;
+  }> {
+    const obj = await this.getActiveOwnedOrThrow(storageObjectId, ownerId);
+    this.assertScanAllows(obj);
+    const downloaded = await this.storage.getObject(obj.objectKey);
+    return {
+      stream: downloaded.stream,
+      contentLength: String(downloaded.contentLength ?? obj.sizeBytes),
+      contentType: downloaded.contentType ?? obj.mimeType,
+    };
+  }
+
   private sanitizeFileName(name: string): string {
     return name.replace(/["\\\r\n]/g, "_").slice(0, 255);
   }
@@ -155,8 +179,12 @@ export class StorageObjectsService {
     );
 
     if (!obj) {
-      // Không tồn tại, hoặc đang ở trạng thái 'deleting' bởi tiến trình khác.
-      // Cả hai đều coi là idempotent -> return êm.
+      // A missing document means an earlier delete already completed. A
+      // document still in DELETING belongs to another worker, so callers must
+      // not release quota or delete drive metadata yet.
+      if (await this.model.exists({ _id: storageObjectId })) {
+        throw new ConflictException("STORAGE_OBJECT_DELETE_IN_PROGRESS");
+      }
       return;
     }
 

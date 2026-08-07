@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 
-import { DriveItemType, FileStatus } from "../../modules/drive-items/enums/drive-item.enum";
+import { DriveItemType, FileStatus } from "../../modules/drive-items/domain/enums/drive-item.enum";
 
 export interface DriveItemBase {
   _id: Types.ObjectId;

@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 
-import { UploadsService } from "./uploads.service";
+import { ReapExpiredUploadsUseCase } from "./application/reap-expired-uploads.use-case";
 
 @Injectable()
 export class UploadsReaperCron implements OnModuleInit, OnModuleDestroy {
@@ -8,7 +8,7 @@ export class UploadsReaperCron implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
   private running = false;
 
-  constructor(private readonly uploadsService: UploadsService) {}
+  constructor(private readonly reapExpiredUploads: ReapExpiredUploadsUseCase) {}
 
   onModuleInit() {
     this.timer = setInterval(() => void this.handleTick(), 5 * 60 * 1000);
@@ -26,7 +26,7 @@ export class UploadsReaperCron implements OnModuleInit, OnModuleDestroy {
       let total = 0;
       let count: number;
       do {
-        count = await this.uploadsService.reapExpiredSessions(100);
+        count = await this.reapExpiredUploads.execute(100);
         total += count;
       } while (count > 0);
       if (total > 0) this.logger.log(`Reaped ${total} expired upload sessions`);

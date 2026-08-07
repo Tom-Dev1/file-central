@@ -1,13 +1,15 @@
-﻿import type { DriveItem } from "@/types/api.types";
-import FileActions from "./FileActions";
-import { getDriveItemIcon } from "@/utils/file-utils";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
-import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import EmptyFolderState from "@/components/EmptyFolderState";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox, Table, Typography, type TableColumnsType } from "antd";
 import { useState } from "react";
+
+import EmptyFolderState from "@/components/EmptyFolderState";
+import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
+import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import { cn } from "@/lib/utils";
+import type { DriveItem } from "@/types/api.types";
+import { getDriveItemIcon } from "@/utils/file-utils";
+
+import FileActions from "./FileActions";
 
 interface DriveListViewProps {
   items: DriveItem[];
@@ -17,7 +19,6 @@ interface DriveListViewProps {
 
 export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListViewProps) {
   const { selectionMode, isSelected, toggleItem } = useDriveSelection();
-
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   const handleItemClick = (item: DriveItem) => {
@@ -25,6 +26,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
       toggleItem(item.id);
       return;
     }
+
     if (item.type === "folder") {
       onOpenItem?.(item);
       return;
@@ -33,116 +35,120 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
     setPreviewItemId(item.id);
   };
 
-  const handlePreviewChange = (itemId: string, open: boolean) => {
-    setPreviewItemId(open ? itemId : null);
-  };
+  const columns: TableColumnsType<DriveItem> = [
+    {
+      key: "selection",
+      width: selectionMode ? 48 : 12,
+      render: (_, item) =>
+        selectionMode ? (
+          <Checkbox
+            checked={isSelected(item.id)}
+            aria-label={`Select ${item.name}`}
+            onClick={(event) => event.stopPropagation()}
+            onChange={() => toggleItem(item.id)}
+          />
+        ) : null,
+    },
+    {
+      key: "name",
+      title: "Name",
+      render: (_, item) => {
+        const iconSource = getDriveItemIcon(item);
+        const mobileSize = item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0));
+
+        return (
+          <div className="flex min-w-0 items-center gap-3">
+            <ThemedSvgIcon
+              src={iconSource}
+              aria-hidden="true"
+              className="size-5 shrink-0 bg-muted-foreground transition-colors group-hover:bg-primary"
+            />
+            <div className="min-w-0">
+              <Typography.Text strong ellipsis={{ tooltip: item.name }} className="block">
+                {item.name}
+              </Typography.Text>
+              <Typography.Text type="secondary" className="block truncate text-xs md:hidden">
+                {formatModifiedDate(item.updatedAt)} · {mobileSize}
+              </Typography.Text>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "modified",
+      title: "Last modified",
+      width: 170,
+      responsive: ["md"],
+      render: (_, item) => <Typography.Text type="secondary">{formatModifiedDate(item.updatedAt)}</Typography.Text>,
+    },
+    {
+      key: "size",
+      title: "File size",
+      width: 120,
+      responsive: ["sm"],
+      render: (_, item) => (
+        <Typography.Text type="secondary">
+          {item.type === "folder" ? "—" : formatFileSize(Number(item.sizeBytes ?? 0))}
+        </Typography.Text>
+      ),
+    },
+    {
+      key: "actions",
+      title: <span className="sr-only">Actions</span>,
+      align: "right",
+      width: 56,
+      render: (_, item) => {
+        const isPreviewOpen = previewItemId === item.id;
+
+        return (
+          <div
+            className={cn(
+              "flex justify-end transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100",
+              isPreviewOpen && "opacity-100"
+            )}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <FileActions
+              item={item}
+              isPreview={isPreviewOpen}
+              onPreviewChange={(open) => setPreviewItemId(open ? item.id : null)}
+              onOpenItem={() => onOpenItem?.(item)}
+            />
+          </div>
+        );
+      },
+    },
+  ];
 
   if (items.length === 0) {
     return <EmptyFolderState />;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl bg-background">
-      <div className="grid grid-cols-[36px_minmax(0,1fr)_160px_120px_44px] items-center bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-        <span />
-        <span>Name</span>
-        <span>Last modified</span>
-        <span>File size</span>
-        <span />
-      </div>
-
-      <div>
-        {items.map((item) => {
-          const selected = isSelected(item.id);
-
-          const iconSource = getDriveItemIcon(item);
-
-          const isItemPreviewOpen = previewItemId === item.id;
-
-          return (
-            <div
-              key={item.id}
-              role="button"
-              tabIndex={0}
-              aria-selected={selected}
-              className={cn(
-                "group grid min-h-12 cursor-pointer grid-cols-[36px_minmax(0,1fr)_160px_120px_44px] items-center border-b px-3 text-sm transition-colors last:border-b-0",
-                "hover:bg-muted/50",
-                selected && "bg-primary/5"
-              )}
-              onClick={() => {
-                handleItemClick(item);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  handleItemClick(item);
-                }
-              }}
-              onPointerEnter={() => {
-                onPrefetchItem?.(item);
-              }}
-              onFocus={() => {
-                onPrefetchItem?.(item);
-              }}
-            >
-              <div className="mr-2 flex items-center justify-center">
-                {selectionMode && (
-                  <Checkbox
-                    checked={selected}
-                    aria-label={`Select ${item.name}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                    }}
-                    onCheckedChange={() => {
-                      toggleItem(item.id);
-                    }}
-                  />
-                )}
-              </div>
-
-              <div className="flex min-w-0 items-center gap-3">
-                <ThemedSvgIcon src={iconSource} className="size-5 bg-muted-foreground group-hover:bg-primary" />
-
-                <span className="truncate font-medium" title={item.name}>
-                  {item.name}
-                </span>
-              </div>
-
-              <span className="truncate text-xs text-muted-foreground">{formatModifiedDate(item.updatedAt)}</span>
-
-              <span className="text-xs text-muted-foreground">
-                {item.type === "folder" ? "â€”" : formatFileSize(Number(item.sizeBytes ?? 0))}
-              </span>
-
-              <div
-                className={cn(
-                  "flex justify-end transition-opacity",
-                  "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-                  isItemPreviewOpen && "opacity-100"
-                )}
-                onClick={(event) => {
-                  event.stopPropagation();
-                }}
-                onKeyDown={(event) => {
-                  event.stopPropagation();
-                }}
-              >
-                <FileActions
-                  item={item}
-                  isPreview={isItemPreviewOpen}
-                  onPreviewChange={(open) => {
-                    handlePreviewChange(item.id, open);
-                  }}
-                  onOpenItem={() => {
-                    onOpenItem?.(item);
-                  }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <Table<DriveItem>
+      rowKey="id"
+      columns={columns}
+      dataSource={items}
+      pagination={false}
+      tableLayout="fixed"
+      size="middle"
+      className="overflow-hidden rounded-xl"
+      rowClassName={(item) => cn("group cursor-pointer", isSelected(item.id) && "ant-table-row-selected")}
+      onRow={(item) => ({
+        tabIndex: 0,
+        "aria-selected": isSelected(item.id),
+        onClick: () => handleItemClick(item),
+        onKeyDown: (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleItemClick(item);
+          }
+        },
+        onPointerEnter: () => onPrefetchItem?.(item),
+        onFocus: () => onPrefetchItem?.(item),
+      })}
+    />
   );
 }

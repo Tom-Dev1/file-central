@@ -1,19 +1,13 @@
 ﻿import { Module, OnModuleInit, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CreateBucketCommand, HeadBucketCommand, PutBucketCorsCommand, S3Client } from "@aws-sdk/client-s3";
-import { S3Service } from "./s3.service";
-import { PresignController } from "./presign.controller";
-import { S3_CONFIG_TOKEN, S3ConfigShape } from "src/configs";
-import { S3StorageAdapter } from "./s3-storage.adapter";
+import { S3_CONFIG_TOKEN, S3ConfigShape } from "../../configs";
 
 /**
  * S3 module â€” provides S3Client + S3Service and ensures the bucket exists at startup.
  */
 @Module({
-  controllers: [PresignController],
   providers: [
-    S3Service,
-    S3StorageAdapter,
     {
       provide: S3Client,
       inject: [ConfigService],
@@ -31,7 +25,6 @@ import { S3StorageAdapter } from "./s3-storage.adapter";
       },
     },
   ],
-  exports: [S3Service, S3StorageAdapter],
 })
 export class S3Module implements OnModuleInit {
   private readonly logger = new Logger(S3Module.name);
@@ -78,7 +71,14 @@ export class S3Module implements OnModuleInit {
       );
       this.logger.log(`CORS configured for bucket "${cfg.bucket}"`);
     } catch (err) {
-      this.logger.error(`Failed to configure CORS for bucket "${cfg.bucket}": ${(err as Error).message}`);
+      const message = (err as Error).message;
+      if (message.toLowerCase().includes("not implemented")) {
+        this.logger.warn(
+          `Bucket CORS API is not supported by this provider; configure CORS externally`,
+        );
+      } else {
+        this.logger.error(`Failed to configure CORS for bucket "${cfg.bucket}": ${message}`);
+      }
     }
   }
 }

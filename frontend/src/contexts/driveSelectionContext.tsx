@@ -1,5 +1,20 @@
-import type { DriveSelectionContextValue } from "@/components/drive/selection/DriveSelectionContext";
 import { createContext, useContext } from "react";
+
+export interface DriveSelectionContextValue {
+  selectionMode: boolean;
+  selectedIds: ReadonlySet<string>;
+  selectedCount: number;
+  isSelected: (itemId: string) => boolean;
+  toggleSelectionMode: () => void;
+  enableSelectionMode: () => void;
+  disableSelectionMode: () => void;
+  toggleItem: (itemId: string) => void;
+  selectItem: (itemId: string) => void;
+  unselectItem: (itemId: string) => void;
+  selectAll: (itemIds: string[]) => void;
+  unselectItems: (itemIds: string[]) => void;
+  clearSelection: () => void;
+}
 
 export const DriveSelectionContext = createContext<DriveSelectionContextValue | null>(null);
 

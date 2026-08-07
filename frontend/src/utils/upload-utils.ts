@@ -1,5 +1,5 @@
 import type { UploadFolderProgress } from "@/apis/folder-upload";
-import type { ApiError } from "@/lib/api-error";
+import { ApiError } from "@/lib/api-error";
 import axios from "axios";
 
 export function getButtonLabel(progress: UploadFolderProgress | null): string {
@@ -96,21 +96,17 @@ function shortenFileName(fileName: string): string {
   return `…/${pathParts.slice(-3).join("/")}`;
 }
 
-export function getErrorMessage(error: ApiError): string {
-  if (axios.isAxiosError(error)) {
-    const message = error.messages;
-
-    if (Array.isArray(message)) {
-      return message.join(", ");
-    }
-
-    if (typeof message === "string") {
-      return message;
-    }
-
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
     if (error.errorType === "ERR_CANCELED") {
-      return "The folder upload was canceled.";
+      return "The upload was canceled.";
     }
+
+    return error.messages.join(", ");
+  }
+
+  if (axios.isCancel(error)) {
+    return "The upload was canceled.";
   }
 
   if (error instanceof Error) {

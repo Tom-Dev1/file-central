@@ -1,98 +1,188 @@
+import {
+  CheckCircleFilled,
+  CloudServerOutlined,
+  LockOutlined,
+  SafetyCertificateOutlined,
+  SyncOutlined,
+} from "@ant-design/icons";
+import { Flex, Grid, Space, Typography, theme } from "antd";
 import { Link, Outlet } from "react-router-dom";
-import { CheckCircle2, Cloud, FileLock2, ShieldCheck } from "lucide-react";
+
+import { ModeToggle } from "@/components/theme/ModeToggle";
 
 const features = [
   {
-    icon: FileLock2,
-    title: "Lưu trữ an toàn",
-    description: "Quản lý tập tin và thư mục tập trung.",
+    icon: <LockOutlined />,
+    title: "Private by default",
+    description: "Your workspace stays protected with secure authentication and controlled access.",
   },
   {
-    icon: ShieldCheck,
-    title: "Kiểm soát truy cập",
-    description: "Bảo vệ dữ liệu và quyền truy cập người dùng.",
+    icon: <SafetyCertificateOutlined />,
+    title: "Access you control",
+    description: "Keep files organized and share only with the people who should have access.",
   },
   {
-    icon: Cloud,
-    title: "Truy cập mọi nơi",
-    description: "Làm việc với dữ liệu trên nhiều thiết bị.",
+    icon: <SyncOutlined />,
+    title: "Available everywhere",
+    description: "Continue working with your files from any trusted device.",
   },
 ];
 
-function AuthLayout() {
+function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
-    <div className="grid min-h-svh bg-background lg:grid-cols-2">
-      {/* Left panel */}
-      <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/30 via-transparent to-violet-600/20" />
-
-        <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
-
-        <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
-
-        <div className="relative z-10">
-          <Link to="/" className="inline-flex items-center gap-3 font-semibold">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-white text-slate-950">
-              <Cloud className="size-5" />
-            </span>
-
-            <span className="text-xl">File Central</span>
-          </Link>
-        </div>
-
-        <div className="relative z-10 my-auto max-w-lg">
-          <p className="mb-4 text-sm font-medium uppercase tracking-[0.24em] text-blue-300">
-            Quản lý dữ liệu tập trung
-          </p>
-
-          <h1 className="text-4xl font-semibold leading-tight xl:text-5xl">
-            Không gian an toàn dành cho dữ liệu của bạn
-          </h1>
-
-          <p className="mt-5 text-base leading-7 text-slate-300">
-            Lưu trữ, quản lý và chia sẻ tập tin trong một hệ thống đơn giản, hiện đại và bảo mật.
-          </p>
-
-          <div className="mt-10 space-y-6">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-
-              return (
-                <div key={feature.title} className="flex items-start gap-4">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10">
-                    <Icon className="size-5 text-blue-300" />
-                  </div>
-
-                  <div>
-                    <h2 className="font-medium text-white">{feature.title}</h2>
-
-                    <p className="mt-1 text-sm leading-6 text-slate-400">{feature.description}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="relative z-10 flex items-center gap-2 text-sm text-slate-400">
-          <CheckCircle2 className="size-4 text-emerald-400" />
-          Dữ liệu của bạn luôn được bảo vệ
-        </div>
-      </section>
-
-      {/* Right panel */}
-      <section className="relative flex min-h-svh items-center justify-center px-5 py-10 sm:px-8">
-        <Link to="/" className="absolute left-5 top-5 flex items-center gap-2 font-semibold lg:hidden">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Cloud className="size-5" />
-          </span>
+    <Link
+      to="/"
+      aria-label="File Central home"
+      style={{ color: inverse ? "#ffffff" : "inherit", textDecoration: "none" }}
+    >
+      <Flex align="center" gap={12}>
+        <Flex
+          align="center"
+          justify="center"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            color: inverse ? "#0f3b72" : "#ffffff",
+            background: inverse ? "#ffffff" : "#1a73e8",
+            boxShadow: inverse ? "0 8px 30px rgba(0, 0, 0, 0.18)" : "0 8px 24px rgba(26, 115, 232, 0.24)",
+          }}
+        >
+          <CloudServerOutlined style={{ fontSize: 21 }} />
+        </Flex>
+        <Typography.Text strong style={{ color: "inherit", fontSize: 18 }}>
           File Central
-        </Link>
+        </Typography.Text>
+      </Flex>
+    </Link>
+  );
+}
 
-        <div className="w-full max-w-md">
+function AuthLayout() {
+  const screens = Grid.useBreakpoint();
+  const { token } = theme.useToken();
+  const isDesktop = Boolean(screens.lg);
+
+  return (
+    <div
+      className="min-h-svh"
+      style={{
+        display: "grid",
+        gridTemplateColumns: isDesktop ? "minmax(440px, 0.92fr) minmax(520px, 1.08fr)" : "1fr",
+        background: token.colorBgLayout,
+      }}
+    >
+      {isDesktop && (
+        <aside
+          aria-label="File Central security features"
+          style={{
+            position: "relative",
+            display: "flex",
+            minHeight: "100svh",
+            overflow: "hidden",
+            padding: "42px clamp(42px, 5vw, 76px)",
+            color: "#ffffff",
+            background:
+              "radial-gradient(circle at 12% 18%, rgba(85, 161, 255, 0.34), transparent 28%), radial-gradient(circle at 88% 82%, rgba(37, 99, 235, 0.32), transparent 34%), linear-gradient(145deg, #071a33 0%, #0d3262 52%, #0a2141 100%)",
+          }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0.18,
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px)",
+              backgroundSize: "44px 44px",
+              maskImage: "linear-gradient(to bottom, black, transparent 86%)",
+            }}
+          />
+
+          <Flex vertical style={{ position: "relative", zIndex: 1, width: "100%" }}>
+            <Brand inverse />
+
+            <div style={{ margin: "auto 0", maxWidth: 570, padding: "70px 0" }}>
+              <Typography.Text
+                style={{ color: "#8fc5ff", fontSize: 12, fontWeight: 700, letterSpacing: "0.18em" }}
+              >
+                SECURE CLOUD WORKSPACE
+              </Typography.Text>
+              <Typography.Title
+                level={1}
+                style={{ color: "#ffffff", fontSize: "clamp(38px, 4vw, 58px)", lineHeight: 1.06, margin: "18px 0 18px" }}
+              >
+                Your files, protected and always within reach.
+              </Typography.Title>
+              <Typography.Paragraph style={{ color: "#c8d9ee", fontSize: 16, lineHeight: 1.75, maxWidth: 530 }}>
+                A focused place to store, organize, and share important work without losing control of your data.
+              </Typography.Paragraph>
+
+              <Space direction="vertical" size={24} style={{ display: "flex", marginTop: 38 }}>
+                {features.map((feature) => (
+                  <Flex key={feature.title} align="flex-start" gap={16}>
+                    <Flex
+                      align="center"
+                      justify="center"
+                      style={{
+                        flex: "0 0 auto",
+                        width: 42,
+                        height: 42,
+                        border: "1px solid rgba(255,255,255,.16)",
+                        borderRadius: 12,
+                        color: "#8fc5ff",
+                        background: "rgba(255,255,255,.08)",
+                        fontSize: 18,
+                      }}
+                    >
+                      {feature.icon}
+                    </Flex>
+                    <div>
+                      <Typography.Text strong style={{ color: "#ffffff", fontSize: 15 }}>
+                        {feature.title}
+                      </Typography.Text>
+                      <Typography.Paragraph style={{ color: "#9fb7d2", lineHeight: 1.6, margin: "4px 0 0" }}>
+                        {feature.description}
+                      </Typography.Paragraph>
+                    </div>
+                  </Flex>
+                ))}
+              </Space>
+            </div>
+
+            <Flex align="center" gap={9} style={{ color: "#b7cae0", fontSize: 13 }}>
+              <CheckCircleFilled style={{ color: "#55d6a5" }} />
+              Your account data is encrypted in transit.
+            </Flex>
+          </Flex>
+        </aside>
+      )}
+
+      <main
+        style={{
+          position: "relative",
+          display: "flex",
+          minWidth: 0,
+          minHeight: "100svh",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: isDesktop ? "56px clamp(40px, 7vw, 96px)" : "84px 18px 34px",
+        }}
+      >
+        <div style={{ position: "absolute", right: isDesktop ? 28 : 16, top: isDesktop ? 24 : 14 }}>
+          <ModeToggle />
+        </div>
+
+        {!isDesktop && (
+          <div style={{ position: "absolute", left: 18, top: 16 }}>
+            <Brand />
+          </div>
+        )}
+
+        <div style={{ width: "100%", maxWidth: 470 }}>
           <Outlet />
         </div>
-      </section>
+      </main>
     </div>
   );
 }

@@ -1,10 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
-import { DriveItemType, FileStatus } from '../enums/drive-item.enum';
+import { DriveItemType, FileStatus } from '../../domain/enums/drive-item.enum';
 
 export type DriveItemDocument = HydratedDocument<DriveItem>;
-export { DriveItemType } from '../enums/drive-item.enum';
-export const MAX_FOLDER_DEPTH = 64;
 
 @Schema({ collection: 'drive_items', timestamps: true, versionKey: false })
 export class DriveItem {

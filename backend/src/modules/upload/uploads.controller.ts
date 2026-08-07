@@ -1,15 +1,24 @@
 import { Body, Controller, Get, HttpCode, Param, Post, UseGuards } from "@nestjs/common";
 import { Types } from "mongoose";
 
-import { UploadsService } from "./uploads.service";
 import { InitUploadDto, CompleteUploadDto, UploadStatusParamDto } from "./dto/upload.dto";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { AuthUser, CurrentUser } from "../../common/decorators/current-user.decorator";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import type { AuthUser } from "../../common/decorators/current-user.decorator";
+import { CompleteUploadUseCase } from "./application/complete-upload.use-case";
+import { GetUploadStatusUseCase } from "./application/get-upload-status.use-case";
+import { InitUploadUseCase } from "./application/init-upload.use-case";
+import { PauseUploadUseCase } from "./application/pause-upload.use-case";
 
 @UseGuards(JwtAuthGuard)
 @Controller("uploads")
 export class UploadsController {
-  constructor(private readonly uploadsService: UploadsService) { }
+  constructor(
+    private readonly initUpload: InitUploadUseCase,
+    private readonly getUploadStatus: GetUploadStatusUseCase,
+    private readonly completeUpload: CompleteUploadUseCase,
+    private readonly pauseUpload: PauseUploadUseCase,
+  ) {}
 
   /**
    * Khởi tạo upload. Server quyết single/multipart, trả presigned URL.
@@ -17,7 +26,7 @@ export class UploadsController {
    */
   @Post()
   async init(@CurrentUser() user: AuthUser, @Body() dto: InitUploadDto) {
-    return this.uploadsService.initUpload(new Types.ObjectId(user.userId), dto);
+    return this.initUpload.execute(new Types.ObjectId(user.userId), dto);
   }
 
   /**
@@ -26,7 +35,10 @@ export class UploadsController {
    */
   @Get(":id/status")
   async status(@CurrentUser() user: AuthUser, @Param() params: UploadStatusParamDto) {
-    return this.uploadsService.getStatus(new Types.ObjectId(user.userId), new Types.ObjectId(params.id));
+    return this.getUploadStatus.execute(
+      new Types.ObjectId(user.userId),
+      new Types.ObjectId(params.id),
+    );
   }
 
   /**
@@ -36,7 +48,11 @@ export class UploadsController {
   @Post(":id/complete")
   @HttpCode(200)
   async complete(@CurrentUser() user: AuthUser, @Param() params: UploadStatusParamDto, @Body() dto: CompleteUploadDto) {
-    return this.uploadsService.completeUpload(new Types.ObjectId(user.userId), new Types.ObjectId(params.id), dto);
+    return this.completeUpload.execute(
+      new Types.ObjectId(user.userId),
+      new Types.ObjectId(params.id),
+      dto,
+    );
   }
 
   /**
@@ -46,6 +62,9 @@ export class UploadsController {
   @Post(":id/abort")
   @HttpCode(200)
   async abort(@CurrentUser() user: AuthUser, @Param() params: UploadStatusParamDto) {
-    return this.uploadsService.abortUpload(new Types.ObjectId(user.userId), new Types.ObjectId(params.id));
+    return this.pauseUpload.execute(
+      new Types.ObjectId(user.userId),
+      new Types.ObjectId(params.id),
+    );
   }
 }

@@ -4,8 +4,12 @@ import { createReadStream } from "fs";
 import { open } from "fs/promises";
 import { unlink } from "fs/promises";
 import { Types } from "mongoose";
-import { DriveItemsService } from "../drive-items/drive-items.service";
-import { DriveItemType } from "../drive-items/enums/drive-item.enum";
+import { ActivateFileCommand } from "../drive-items/application/commands/files/activate-file.command";
+import { CreateFilePlaceholderCommand } from "../drive-items/application/commands/files/create-file-placeholder.command";
+import { RollbackFileActivationCommand } from "../drive-items/application/commands/files/rollback-file-activation.command";
+import { DriveItemLookupQuery } from "../drive-items/application/queries/drive-item-lookup.query";
+import { DriveItemParentService } from "../drive-items/application/services/drive-item-parent.service";
+import { DriveItemType } from "../drive-items/domain/enums/drive-item.enum";
 import { PermissionsService } from "../permissions/permissions.service";
 import { QuotaService } from "../quota/quota.service";
 import { SharePermission } from "../shares/schemas/share.schema";
@@ -18,7 +22,11 @@ export class FilesService {
   private readonly logger = new Logger(FilesService.name);
 
   constructor(
-    private readonly driveItems: DriveItemsService,
+    private readonly items: DriveItemLookupQuery,
+    private readonly parents: DriveItemParentService,
+    private readonly createPlaceholder: CreateFilePlaceholderCommand,
+    private readonly activateFile: ActivateFileCommand,
+    private readonly rollbackActivation: RollbackFileActivationCommand,
     private readonly minio: MinioService,
     private readonly storageObjects: StorageObjectsService,
     private readonly permissions: PermissionsService,
@@ -28,7 +36,7 @@ export class FilesService {
 
   async upload(ownerIdValue: string, parentIdValue: string | null | undefined, file: Express.Multer.File) {
     const ownerId = new Types.ObjectId(ownerIdValue);
-    const parentId = await this.driveItems.assertValidParent(ownerIdValue, parentIdValue);
+    const parentId = await this.parents.validate(ownerIdValue, parentIdValue);
     const bytes = BigInt(file.size);
     const operationId = randomUUID();
     const objectKey = `objects/${ownerIdValue}/${operationId}`;
@@ -41,7 +49,7 @@ export class FilesService {
       const metadata = await this.metadataResolver.resolveFromBuffer(file.originalname, file.mimetype, prefix);
       await this.quota.reserve(ownerId, bytes, `legacy-upload:${operationId}:reserve`);
       reserved = true;
-      const placeholder = await this.driveItems.createPlaceholder({ ownerId, parentId, name: metadata.name });
+      const placeholder = await this.createPlaceholder.execute({ ownerId, parentId, name: metadata.name });
       driveItemId = placeholder.id;
       const checksum = await this.calculateSha256(file.path);
       await this.minio.putObject(objectKey, createReadStream(file.path), file.size, metadata.mimeType);
@@ -53,23 +61,25 @@ export class FilesService {
         checksumSha256: checksum,
       });
       storageObjectId = storageObject.id;
-      await this.driveItems.activateFile({
+      await this.activateFile.execute({
         driveItemId,
         storageObjectId,
         mimeType: metadata.mimeType,
         sizeBytes: bytes,
         extension: metadata.detectedExtension ?? metadata.extension,
       });
+      const activatedItem = await this.items.findById(driveItemId);
+      if (!activatedItem) throw new NotFoundException("DRIVE_ITEM_NOT_FOUND");
       await this.quota.commit(ownerId, bytes, `legacy-upload:${operationId}:commit`, { driveItemId });
       reserved = false;
-      return this.driveItems.model.findById(driveItemId);
+      return activatedItem;
     } catch (error) {
       if (storageObjectId)
         await this.storageObjects
           .permanentDelete(storageObjectId)
           .catch((cleanup) => this.logger.error(String(cleanup)));
       else await this.minio.removeObject(objectKey).catch(() => undefined);
-      if (driveItemId) await this.driveItems.rollbackActivation(driveItemId);
+      if (driveItemId) await this.rollbackActivation.execute(driveItemId);
       if (reserved)
         await this.quota.release(ownerId, bytes, `legacy-upload:${operationId}:rollback`).catch(() => undefined);
       throw error;
@@ -78,21 +88,44 @@ export class FilesService {
     }
   }
 
-  async getDownloadUrl(userId: string, userEmail: string | undefined, fileId: string) {
-    return this.getUrl(userId, userEmail, fileId, SharePermission.DOWNLOAD);
+  async getDownloadStream(userId: string, userEmail: string | undefined, fileId: string) {
+    const item = await this.resolveActiveFile(
+      userId,
+      userEmail,
+      fileId,
+      SharePermission.DOWNLOAD,
+    );
+    const download = await this.storageObjects.getDownloadStream(
+      item.storageObjectId!,
+      item.ownerId,
+    );
+    return { ...download, fileName: item.name };
   }
 
   async getPreviewUrl(userId: string, userEmail: string | undefined, fileId: string) {
-    return this.getUrl(userId, userEmail, fileId, SharePermission.VIEW);
+    const item = await this.resolveActiveFile(
+      userId,
+      userEmail,
+      fileId,
+      SharePermission.VIEW,
+    );
+    return this.storageObjects.getPresignedPreviewUrl(
+      item.storageObjectId!,
+      item.ownerId,
+    );
   }
 
-  private async getUrl(userId: string, userEmail: string | undefined, fileId: string, permission: SharePermission) {
+  private async resolveActiveFile(
+    userId: string,
+    userEmail: string | undefined,
+    fileId: string,
+    permission: SharePermission,
+  ) {
     const itemId = new Types.ObjectId(fileId);
     await this.permissions.requireAccess(userId, userEmail, itemId, permission);
-    const item = await this.driveItems.model.findOne({ _id: itemId, type: DriveItemType.FILE, isTrashed: false });
+    const item = await this.items.findOne({ _id: itemId, type: DriveItemType.FILE, isTrashed: false });
     if (!item?.storageObjectId) throw new NotFoundException("FILE_NOT_ACTIVE");
-    const url = await this.storageObjects.getPresignedDownloadUrl(item.storageObjectId, item.ownerId);
-    return { url, expiresInSeconds: 3600 };
+    return item;
   }
 
   private async calculateSha256(path: string): Promise<Buffer> {

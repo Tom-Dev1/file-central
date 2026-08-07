@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
@@ -6,10 +6,12 @@ import { extname } from 'path';
 import { tmpdir } from 'os';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { CurrentUser, AuthUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthUser } from '../../common/decorators/current-user.decorator';
 import { FilesService } from './files.service';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { toDriveItemDto } from '../../common/mappers/response-mapper';
+import type { Response } from 'express';
 
 const UPLOAD_TMP_DIR = process.env.UPLOAD_TMP_DIR || `${tmpdir()}/file-central-uploads`;
 
@@ -35,8 +37,20 @@ export class FilesController {
   }
 
   @Get(':id/download')
-  download(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.filesService.getDownloadUrl(user.userId, user.email, id);
+  async download(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const file = await this.filesService.getDownloadStream(user.userId, user.email, id);
+    const safeName = file.fileName.replace(/["\\\r\n]/g, '_');
+    response.setHeader('Content-Type', file.contentType);
+    response.setHeader('Content-Length', file.contentLength);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`,
+    );
+    return new StreamableFile(file.stream);
   }
 
   @Get(':id/preview')

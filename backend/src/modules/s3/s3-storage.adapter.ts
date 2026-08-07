@@ -10,10 +10,12 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  HeadBucketCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3_CONFIG_TOKEN, S3ConfigShape } from "src/configs";
+import { S3_CONFIG_TOKEN, S3ConfigShape } from "../../configs";
+import { Readable } from "node:stream";
 
 export interface RemotePart {
   partNumber: number;
@@ -50,6 +52,10 @@ export class S3StorageAdapter {
 
   getBucketName(): string {
     return this.bucket;
+  }
+
+  async assertAvailable(): Promise<void> {
+    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 
   buildObjectKey(ownerId: string, uploadSessionId: string): string {
@@ -102,6 +108,23 @@ export class S3StorageAdapter {
       ContentType: contentType,
     });
     return getSignedUrl(this.client, command, { expiresIn });
+  }
+
+  async putObject(
+    objectKey: string,
+    body: Readable,
+    contentLength: number,
+    contentType: string,
+  ): Promise<void> {
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: objectKey,
+        Body: body,
+        ContentLength: contentLength,
+        ContentType: contentType,
+      }),
+    );
   }
 
   //** list parts upload. Auto pagination => ListParts return max 1000 part/1 time.
@@ -162,8 +185,21 @@ export class S3StorageAdapter {
           UploadId: providerUploadId,
         })
       );
-    } catch (err) {
-      this.logger.warn(`Abort multipart failed (likely already gone): ${err}`);
+    } catch (error) {
+      const providerError = error as {
+        name?: string;
+        Code?: string;
+        $metadata?: { httpStatusCode?: number };
+      };
+      if (
+        providerError.name === "NoSuchUpload" ||
+        providerError.Code === "NoSuchUpload" ||
+        providerError.$metadata?.httpStatusCode === 404
+      ) {
+        return;
+      }
+      this.logger.error(`Abort multipart failed for key ${objectKey}`);
+      throw error;
     }
   }
 
@@ -183,6 +219,21 @@ export class S3StorageAdapter {
     return getSignedUrl(this.client, command, {
       expiresIn: options.expiresIn ?? this.defaultPresignExpiry,
     });
+  }
+
+  async getObject(objectKey: string): Promise<{
+    stream: Readable;
+    contentLength?: number;
+    contentType?: string;
+  }> {
+    const result = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: objectKey }),
+    );
+    return {
+      stream: result.Body as Readable,
+      contentLength: result.ContentLength,
+      contentType: result.ContentType,
+    };
   }
 
   // read a part byte of object server Buffer

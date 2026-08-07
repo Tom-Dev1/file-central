@@ -29,16 +29,18 @@ export class StorageObjectDoc {
 
   @Prop({
     type: String,
-    required: true,
+    required: false,
+    default: null,
   })
   mimeType: string;
 
   @Prop({
     type: Buffer,
-    required: true,
+    required: false,
+    default: null,
     immutable: true,
     validate: {
-      validator: (value: Buffer): boolean => value.length === 32,
+      validator: (value: Buffer | null): boolean => value === null || value.length === 32,
       message: "checksumSha256 must contain exactly 32 bytes",
     },
   })

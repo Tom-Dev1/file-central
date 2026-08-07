@@ -183,7 +183,7 @@ export function getDriveItemIconType(item: DriveItem): FileIconType {
   return "file";
 }
 
-export function getDriveItemIcon(item: DriveItem): string {
+export function getDriveItemIcon(item: DriveItem): FileIconComponent | string {
   const iconType = getDriveItemIconType(item);
 
   return fileIcons[iconType] ?? fileIcons.file;

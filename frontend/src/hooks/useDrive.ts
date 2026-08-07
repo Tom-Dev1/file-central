@@ -6,7 +6,8 @@ import { driveListQueryOptions } from "./queries/drive-query-options";
 import { folderBreadcrumbQueryOptions } from "./queries/folder-query-options";
 
 function withoutCursor<T extends { cursor?: string }>(params: T): Omit<T, "cursor"> {
-  const { cursor: _cursor, ...query } = params;
+  const { cursor, ...query } = params;
+  void cursor;
   return query;
 }
 

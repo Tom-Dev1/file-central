@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'minio';
 import { Readable } from 'stream';
+import { S3_CONFIG_TOKEN, S3ConfigShape } from '../../configs';
 
 /**
  * Thin wrapper around the MinIO S3-compatible client.
@@ -19,13 +20,19 @@ export class MinioService implements OnModuleInit {
   private bucket: string;
 
   constructor(private configService: ConfigService) {
-    this.bucket = this.configService.get<string>('MINIO_BUCKET') || 'file-central';
+    const config = this.configService.getOrThrow<S3ConfigShape>(S3_CONFIG_TOKEN);
+    const endpoint = new URL(config.endpoint);
+    this.bucket = config.bucket;
     this.client = new Client({
-      endPoint: this.configService.get<string>('MINIO_ENDPOINT') || 'localhost',
-      port: parseInt(this.configService.get<string>('MINIO_PORT') || '9000', 10),
-      useSSL: this.configService.get<string>('MINIO_USE_SSL') === 'true',
-      accessKey: this.configService.get<string>('MINIO_ACCESS_KEY') || 'minioadmin',
-      secretKey: this.configService.get<string>('MINIO_SECRET_KEY') || 'minioadmin',
+      endPoint: endpoint.hostname,
+      port: endpoint.port
+        ? Number.parseInt(endpoint.port, 10)
+        : endpoint.protocol === 'https:'
+          ? 443
+          : 80,
+      useSSL: endpoint.protocol === 'https:',
+      accessKey: config.accessKey,
+      secretKey: config.secretKey,
     });
   }
 

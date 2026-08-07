@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Card, Skeleton, Space } from "antd";
 
 interface DriveContentSkeletonProps {
   viewMode: "grid" | "list";
@@ -7,13 +7,13 @@ interface DriveContentSkeletonProps {
 export function DriveContentSkeleton({ viewMode }: DriveContentSkeletonProps) {
   if (viewMode === "list") {
     return (
-      <div className="space-y-1 p-4 sm:p-6">
-        {Array.from({ length: 8 }).map((_, index) => (
+      <div className="space-y-1 p-4 sm:p-6" aria-label="Loading Drive items">
+        {Array.from({ length: 8 }, (_, index) => (
           <div key={index} className="flex h-14 items-center gap-3 rounded-lg px-3">
-            <Skeleton className="size-5 shrink-0 rounded" />
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="ml-auto h-4 w-24" />
-            <Skeleton className="h-4 w-16" />
+            <Skeleton.Avatar active shape="square" size="small" />
+            <Skeleton.Input active size="small" className="!w-48" />
+            <Skeleton.Input active size="small" className="ml-auto !hidden !w-24 sm:!inline-flex" />
+            <Skeleton.Input active size="small" className="!hidden !w-16 md:!inline-flex" />
           </div>
         ))}
       </div>
@@ -21,25 +21,16 @@ export function DriveContentSkeleton({ viewMode }: DriveContentSkeletonProps) {
   }
 
   return (
-    <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3 xl:grid-cols-4">
-      {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="rounded-xl border p-4">
-          <div className="flex justify-between">
-            <Skeleton className="size-5 rounded" />
-            <Skeleton className="size-7 rounded-full" />
-          </div>
-
-          <div className="flex justify-center py-8">
-            <Skeleton className="size-16 rounded-xl" />
-          </div>
-
-          <Skeleton className="h-4 w-3/4" />
-
-          <div className="mt-4 flex justify-between">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="h-3 w-12" />
-          </div>
-        </div>
+    <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-6 lg:grid-cols-3 xl:grid-cols-4" aria-label="Loading Drive items">
+      {Array.from({ length: 8 }, (_, index) => (
+        <Card key={index} styles={{ body: { padding: 16 } }}>
+          <Space direction="vertical" size={16} className="flex">
+            <div className="flex justify-between"><Skeleton.Avatar active shape="square" size="small" /><Skeleton.Avatar active size="small" /></div>
+            <div className="flex justify-center py-5"><Skeleton.Avatar active shape="square" size={64} /></div>
+            <Skeleton.Input active size="small" className="!w-3/4" />
+            <div className="flex justify-between"><Skeleton.Input active size="small" className="!w-20" /><Skeleton.Input active size="small" className="!w-12" /></div>
+          </Space>
+        </Card>
       ))}
     </div>
   );

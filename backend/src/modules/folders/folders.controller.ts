@@ -1,7 +1,8 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { CurrentUser, AuthUser } from "../../common/decorators/current-user.decorator";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import type { AuthUser } from "../../common/decorators/current-user.decorator";
 import { FoldersService } from "./folders.service";
 import { CreateFolderDto } from "./dto/create-folder.dto";
 import { toDriveItemDto } from "../../common/mappers/response-mapper";

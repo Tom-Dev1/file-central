@@ -1,26 +1,34 @@
+import { LoadingOutlined } from "@ant-design/icons";
+import { App, Avatar, Button, Dropdown, Input, Layout, Tooltip, Typography, type MenuProps } from "antd";
+import { Cloud, LogOut, Menu as MenuIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+
 import { ModeToggle } from "@/components/theme/ModeToggle";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu } from "@/components/ui/dropdown";
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { useLogout } from "@/hooks/useAuth";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
-import { tokenStorage } from "@/lib/token-storage";
-import { Cloud, HelpCircle, LogOut, Menu, MoreVertical, Search, Settings, User } from "lucide-react";
 
-import { NavLink, useNavigate } from "react-router-dom";
+interface DashboardHeaderProps {
+  onOpenNavigation: () => void;
+}
 
-function DashboardHeader() {
+function DashboardHeader({ onOpenNavigation }: DashboardHeaderProps) {
+  const location = useLocation();
   const navigate = useNavigate();
-
+  const logout = useLogout();
+  const { message } = App.useApp();
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(() => authUserStorage.getUser());
+  const urlSearchQuery = location.pathname === "/dashboard"
+    ? new URLSearchParams(location.search).get("q") ?? ""
+    : "";
+  const [searchState, setSearchState] = useState(() => ({
+    urlQuery: urlSearchQuery,
+    value: urlSearchQuery,
+  }));
+
+  if (searchState.urlQuery !== urlSearchQuery) {
+    setSearchState({ urlQuery: urlSearchQuery, value: urlSearchQuery });
+  }
 
   const displayName = currentUser?.name || currentUser?.username || currentUser?.email || "User";
   const initials = getInitials(displayName);
@@ -37,130 +45,125 @@ function DashboardHeader() {
     };
   }, []);
 
-  const handleLogout = () => {
-    tokenStorage.clear();
-    authUserStorage.clearUser();
-    setCurrentUser(null);
+  const handleSearch = (value: string) => {
+    const query = value.trim();
+    const searchParams = new URLSearchParams();
 
-    navigate("/auth/login", {
-      replace: true,
-    });
+    if (query) {
+      searchParams.set("q", query);
+    }
+
+    const target = query ? `/dashboard?${searchParams.toString()}` : "/dashboard";
+    const currentTarget = `${location.pathname}${location.search}`;
+
+    setSearchState({ urlQuery: urlSearchQuery, value: query });
+
+    if (target !== currentTarget) {
+      navigate(target);
+    }
   };
 
-  return (
-    <header className="h-16 shrink-0 border-b border-border/70 bg-background">
-      <div className="flex h-full items-center gap-3 px-4">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="rounded-full lg:hidden"
-          aria-label="Open navigation menu"
-          //   onClick={() => setMobileSidebarOpen(true)}
-        >
-          <Menu className="size-5" />
-        </Button>
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync();
+      setCurrentUser(null);
+      navigate("/auth/login", { replace: true });
+    } catch {
+      void message.error("Unable to sign out. Please try again.");
+    }
+  };
 
-        <NavLink to="/dashboard" className="flex shrink-0 items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+  const accountItems: MenuProps["items"] = [
+    {
+      key: "identity",
+      disabled: true,
+      label: (
+        <div className="min-w-48 py-1">
+          <Typography.Text strong className="block truncate">
+            {displayName}
+          </Typography.Text>
+          {currentUser?.email && (
+            <Typography.Text type="secondary" className="block truncate !text-xs">
+              {currentUser.email}
+            </Typography.Text>
+          )}
+        </div>
+      ),
+    },
+    { type: "divider" },
+    {
+      key: "logout",
+      danger: true,
+      disabled: logout.isPending,
+      icon: logout.isPending ? <LoadingOutlined spin /> : <LogOut className="size-4" />,
+      label: logout.isPending ? "Signing out…" : "Sign out",
+      onClick: () => void handleLogout(),
+    },
+  ];
+
+  return (
+    <Layout.Header className="z-30 !h-16 !shrink-0 border-b border-border/70 !bg-background !px-0 !leading-normal">
+      <div className="flex h-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+        <Tooltip title="Open navigation">
+          <Button
+            type="text"
+            shape="circle"
+            size="large"
+            className="!inline-flex !shrink-0 lg:!hidden"
+            aria-label="Open navigation menu"
+            icon={<MenuIcon className="size-5" />}
+            onClick={onOpenNavigation}
+          />
+        </Tooltip>
+
+        <NavLink to="/dashboard" className="flex shrink-0 items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Cloud className="size-5" />
           </span>
-
-          <span className="hidden text-[1.375rem] font-normal tracking-tight text-foreground sm:block">
+          <span className="hidden text-[1.375rem] font-normal tracking-tight text-foreground xl:block">
             File <span className="font-medium text-muted-foreground">Central</span>
           </span>
         </NavLink>
 
-        <div className="mx-auto w-full max-w-2xl">
-          <div className="relative">
-            <Search className="absolute inset-y-0 left-4 my-auto size-5 text-muted-foreground" />
-
-            <Input
-              type="search"
-              placeholder="Search in Drive"
-              className="h-11 rounded-full border-transparent bg-muted pl-12 pr-12 shadow-none focus-visible:border-primary/30 focus-visible:ring-primary/20"
-            />
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute inset-y-0 right-1 my-auto size-9 rounded-full transition-none "
-              aria-label="Search options"
-            >
-              <MoreVertical className="size-4" />
-            </Button>
-          </div>
+        <div className="mx-auto w-full min-w-0 max-w-2xl">
+          <Input.Search
+            allowClear
+            value={searchState.value}
+            placeholder="Search in Drive"
+            aria-label="Search in Drive"
+            className="[&_.ant-input-affix-wrapper]:!h-11 [&_.ant-input-affix-wrapper]:!rounded-l-full [&_.ant-input-affix-wrapper]:!border-transparent [&_.ant-input-affix-wrapper]:!bg-muted [&_.ant-input-affix-wrapper]:!pl-4 [&_.ant-input-search-button]:!h-11 [&_.ant-input-search-button]:!rounded-r-full [&_.ant-input-search-button]:!border-transparent [&_.ant-input-search-button]:!bg-muted focus-within:[&_.ant-input-affix-wrapper]:!border-primary/40"
+            onChange={(event) => setSearchState({ urlQuery: urlSearchQuery, value: event.target.value })}
+            onSearch={handleSearch}
+          />
         </div>
+
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="hidden rounded-full sm:inline-flex"
-            aria-label="Help"
-          >
-            <HelpCircle className="size-5" />
-          </Button>
+          <span className="inline-flex">
+            <ModeToggle />
+          </span>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="hidden rounded-full sm:inline-flex"
-            aria-label="Settings"
-            onClick={() => navigate("/dashboard/settings")}
-          >
-            <Settings className="size-5" />
-          </Button>
-
-          <ModeToggle />
-
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="ghost" className="size-10 rounded-full p-0" aria-label="Open account menu">
-                <Avatar className="size-9">
-                  <AvatarImage src={currentUser?.avatarUrl} alt={displayName} />
-
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
+          <Dropdown menu={{ items: accountItems }} placement="bottomRight" trigger={["click"]}>
+            <Tooltip title={logout.isPending ? "Signing out…" : "Account"}>
+              <Button
+                type="text"
+                shape="circle"
+                className="!size-10 !p-0"
+                aria-label="Open account menu"
+                disabled={logout.isPending}
+              >
+                {logout.isPending ? (
+                  <LoadingOutlined spin className="text-lg" />
+                ) : (
+                  <Avatar size={36} src={currentUser?.avatarUrl} className="!bg-primary !text-primary-foreground">
+                    {initials}
+                  </Avatar>
+                )}
               </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-64">
-              <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span className="truncate">{displayName}</span>
-
-                  {currentUser?.email && (
-                    <span className="truncate text-xs font-normal text-muted-foreground">{currentUser.email}</span>
-                  )}
-                </div>
-              </DropdownMenuLabel>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem>
-                <User className="mr-2 size-4" />
-                Profile
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => navigate("/dashboard/settings")}>
-                <Settings className="mr-2 size-4" />
-                Settings
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem variant="destructive" onClick={handleLogout}>
-                <LogOut className="mr-2 size-4" />
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </Tooltip>
+          </Dropdown>
         </div>
       </div>
-    </header>
+    </Layout.Header>
   );
 }
 

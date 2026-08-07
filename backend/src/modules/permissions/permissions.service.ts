@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
+import { DriveItemLookupQuery } from "../drive-items/application/queries/drive-item-lookup.query";
 import { Share, ShareDocument, SharePermission } from "../shares/schemas/share.schema";
-import { DriveItem, DriveItemDocument } from "../drive-items/schemas/drive-item.schema";
 
 const PERMISSION_RANK: Record<SharePermission, number> = {
   [SharePermission.VIEW]: 1,
@@ -20,7 +20,7 @@ export interface AccessResult {
 @Injectable()
 export class PermissionsService {
   constructor(
-    @InjectModel(DriveItem.name) private driveItemModel: Model<DriveItemDocument>,
+    private readonly driveItems: DriveItemLookupQuery,
     @InjectModel(Share.name) private shareModel: Model<ShareDocument>
   ) {}
 
@@ -30,14 +30,14 @@ export class PermissionsService {
    */
   async getAncestorChain(itemId: Types.ObjectId): Promise<Types.ObjectId[]> {
     const chain: Types.ObjectId[] = [];
-    let current = await this.driveItemModel.findById(itemId).select("_id parentId").lean();
+    let current = await this.driveItems.findById(itemId, "_id parentId");
     if (!current) return chain;
     chain.push(current._id);
 
     // Guard against pathological cycles with a max-depth cutoff.
     let depth = 0;
     while (current?.parentId && depth < 1000) {
-      const parent = await this.driveItemModel.findById(current.parentId).select("_id parentId").lean();
+      const parent = await this.driveItems.findById(current.parentId, "_id parentId");
       if (!parent) break;
       chain.push(parent._id);
       current = parent;
@@ -54,7 +54,7 @@ export class PermissionsService {
    *   and take the highest permission found.
    */
   async getAccess(userId: string, userEmail: string | undefined, itemId: Types.ObjectId): Promise<AccessResult> {
-    const item = await this.driveItemModel.findById(itemId);
+    const item = await this.driveItems.findById(itemId);
     if (!item || item.isTrashed) {
       throw new NotFoundException("Item not found");
     }

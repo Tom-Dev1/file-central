@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { DriveItemType } from '../../drive-items/schemas/drive-item.schema';
+import { DriveItemType } from '../../drive-items/domain/enums/drive-item.enum';
 
 export type ShareDocument = HydratedDocument<Share>;
 export enum SharePermission { VIEW = 'view', DOWNLOAD = 'download', EDIT = 'edit' }

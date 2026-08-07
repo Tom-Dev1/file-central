@@ -1,31 +1,31 @@
 ﻿import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { tokenStorage } from "../lib/token-storage";
-import type { AuthResponse, LoginRequest, RegisterRequest, User } from "../../../frontend/src/types/api.types";
+import type { AuthResponse, LoginRequest, RegisterRequest } from "@/types/api.types";
 import { authApi } from "@/apis/auth.api";
 import type { ApiError } from "@/lib/api-error";
+import { authUserStorage } from "@/lib/authUserStorage";
 
-const CURRENT_USER_KEY = "auth-user";
-
-function persistUser(user: User) {
-  window.localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+export interface LoginVariables {
+  credentials: LoginRequest;
+  remember: boolean;
 }
 
-function onAuthSuccess(data: AuthResponse) {
-  tokenStorage.setTokens(data.accessToken, data.refreshToken);
-  persistUser(data.user);
+function persistAuth(data: AuthResponse, persistent: boolean) {
+  tokenStorage.setTokens(data.accessToken, data.refreshToken, persistent);
+  authUserStorage.setUser(data.user, persistent);
 }
 
 export function useRegister() {
-  return useMutation({
+  return useMutation<AuthResponse, ApiError, RegisterRequest>({
     mutationFn: (body: RegisterRequest) => authApi.register(body),
-    onSuccess: onAuthSuccess,
+    onSuccess: (data) => persistAuth(data, true),
   });
 }
 
 export function useLogin() {
-  return useMutation<AuthResponse, ApiError, LoginRequest>({
-    mutationFn: (body: LoginRequest) => authApi.login(body),
-    onSuccess: onAuthSuccess,
+  return useMutation<AuthResponse, ApiError, LoginVariables>({
+    mutationFn: ({ credentials }) => authApi.login(credentials),
+    onSuccess: (data, { remember }) => persistAuth(data, remember),
   });
 }
 
@@ -39,7 +39,7 @@ export function useLogout() {
     },
     onSuccess: () => {
       tokenStorage.clear();
-      window.localStorage.removeItem(CURRENT_USER_KEY);
+      authUserStorage.clearUser();
       queryClient.clear();
     },
   });

@@ -27,7 +27,7 @@ export class AuthService {
     if (!valid) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    return this.buildAuthResponse(user._id.toString(), user.username, user.name, user.username);
+    return this.buildAuthResponse(user._id.toString(), user.email, user.name, user.username);
   }
 
   /** Exchanges a valid refresh token for a new access token (and rotates the refresh token). */

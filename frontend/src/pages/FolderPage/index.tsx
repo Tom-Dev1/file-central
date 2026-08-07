@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDriveList } from "@/hooks";
+import { Button } from "antd";
+import { useInfiniteDriveList } from "@/hooks";
 import DriveGridView from "../Dashboard/MyDrive/DriveGridView";
 import { DriveListView } from "../Dashboard/MyDrive/DriveListView";
 import type { DriveItem } from "@/types/api.types";
@@ -24,13 +25,12 @@ export default function FolderPage() {
   const listParams = useMemo(
     () => ({
       parentId: folderId,
-      page: 1,
       limit: 100,
     }),
     [folderId]
   );
-  const { data, isLoading, isFetching, isError, refetch } = useDriveList(listParams);
-  const itemsDrive = useMemo(() => data?.items ?? [], [data?.items]);
+  const { data, isLoading, isFetching, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteDriveList(listParams);
+  const itemsDrive = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
   const folders = useMemo(() => itemsDrive.filter((item) => item.type === "folder"), [itemsDrive]);
   const files = useMemo(() => itemsDrive.filter((item) => item.type === "file"), [itemsDrive]);
 
@@ -64,7 +64,6 @@ export default function FolderPage() {
       navigate(`/dashboard/folders/${item.id}`);
       return;
     }
-    console.log("Open file", item);
   };
 
   return (
@@ -73,7 +72,7 @@ export default function FolderPage() {
         <DriveSubHeader
           folderBreadcrumbs={<FolderBreadcrumbs folderId={folderId} />}
           title="My Drive"
-          // description={`${driveItems.length} ${driveItems.length === 1 ? "item" : "items"}`}
+          description={`${itemsDrive.length} ${itemsDrive.length === 1 ? "item" : "items"} loaded · ${hasNextPage ? "more available" : "all loaded"}`}
           icon={Folder}
           actions={
             <DriveViewActions
@@ -115,6 +114,14 @@ export default function FolderPage() {
         )}
 
         {itemsDrive.length === 0 && <EmptyFolderState parentId={folderId} />}
+
+        {hasNextPage && (
+          <div className="flex justify-center py-6">
+            <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+              Load more
+            </Button>
+          </div>
+        )}
       </div>
     </DrivePageShell>
   );

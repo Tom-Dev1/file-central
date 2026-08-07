@@ -12,8 +12,7 @@ import {
   Search,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-
-import { Button } from "@/components/ui/button";
+import { Button, Tag, Typography } from "antd";
 
 function NotFoundPage() {
   const navigate = useNavigate();
@@ -42,12 +41,9 @@ function NotFoundPage() {
 
       <section className="relative z-10 mx-auto grid min-h-[calc(100vh-5rem)] w-full max-w-7xl items-center gap-14 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-16">
         <div className="order-2 text-center lg:order-1 lg:text-left">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/70 px-4 py-2 text-sm text-muted-foreground shadow-sm backdrop-blur">
-            <FileQuestion className="size-4 text-primary" />
-            File location unavailable
-          </div>
+          <Tag icon={<FileQuestion className="size-4" />} className="!mb-6 !rounded-full !px-3 !py-1">File location unavailable</Tag>
 
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Error 404</p>
+          <Typography.Text className="!text-sm !font-semibold !uppercase !tracking-[0.3em] !text-primary">Error 404</Typography.Text>
 
           <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
             This file seems to be <span className="text-primary">missing</span>
@@ -59,17 +55,9 @@ function NotFoundPage() {
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-            <Button size="lg" asChild>
-              <Link to="/">
-                <Home className="mr-2 size-4" />
-                Return home
-              </Link>
-            </Button>
+            <Button type="primary" size="large" icon={<Home className="size-4" />} onClick={() => navigate("/")}>Return home</Button>
 
-            <Button type="button" size="lg" variant="outline" onClick={() => navigate(-1)}>
-              <ArrowLeft className="mr-2 size-4" />
-              Go back
-            </Button>
+            <Button size="large" icon={<ArrowLeft className="size-4" />} onClick={() => navigate(-1)}>Go back</Button>
           </div>
 
           <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground lg:justify-start">

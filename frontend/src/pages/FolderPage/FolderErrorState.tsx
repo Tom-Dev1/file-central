@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { AlertCircle } from "lucide-react";
+import { Button, Result } from "antd";
 
 interface FolderErrorStateProps {
   title: string;
@@ -10,16 +9,13 @@ interface FolderErrorStateProps {
 
 export default function FolderErrorState({ title, description, retryLabel, onRetry }: FolderErrorStateProps) {
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
-      <AlertCircle className="size-10 text-destructive" />
-
-      <h1 className="mt-4 text-xl font-semibold">{title}</h1>
-
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-
-      <Button className="mt-6" onClick={onRetry}>
-        {retryLabel}
-      </Button>
+    <div className="flex min-h-[60vh] items-center justify-center p-6 text-center">
+      <Result
+        status="error"
+        title={title}
+        subTitle={description}
+        extra={<Button type="primary" onClick={onRetry}>{retryLabel}</Button>}
+      />
     </div>
   );
 }

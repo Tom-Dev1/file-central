@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
-import { CurrentUser, AuthUser } from "../../common/decorators/current-user.decorator";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import type { AuthUser } from "../../common/decorators/current-user.decorator";
 import { DriveService } from "./drive.service";
 import { RenameDto } from "./dto/rename.dto";
 import { MoveDto } from "./dto/move.dto";

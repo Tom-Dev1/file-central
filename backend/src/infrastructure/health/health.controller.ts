@@ -1,12 +1,17 @@
 import { Controller, Get, VERSION_NEUTRAL } from "@nestjs/common";
 import { HealthCheck, HealthCheckService, MongooseHealthIndicator } from "@nestjs/terminus";
+import { StorageHealthIndicator } from "./storage-health.indicator";
 
 @Controller({
   path: "health",
   version: VERSION_NEUTRAL,
 })
 export class HealthController {
-  constructor(private readonly health: HealthCheckService, private readonly mongoose: MongooseHealthIndicator) {}
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly mongoose: MongooseHealthIndicator,
+    private readonly storage: StorageHealthIndicator,
+  ) {}
 
   @Get("live")
   liveness(): {
@@ -22,6 +27,9 @@ export class HealthController {
   @Get("ready")
   @HealthCheck()
   readiness() {
-    return this.health.check([() => this.mongoose.pingCheck("mongodb")]);
+    return this.health.check([
+      () => this.mongoose.pingCheck("mongodb"),
+      () => this.storage.check(),
+    ]);
   }
 }

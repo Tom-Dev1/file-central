@@ -1,18 +1,30 @@
 import "reflect-metadata";
 import { NestFactory, Reflector } from "@nestjs/core";
-import { ClassSerializerInterceptor, ValidationPipe } from "@nestjs/common";
+import { ClassSerializerInterceptor, Logger, ValidationPipe } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/http-exception.filter";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+  const corsOrigins = configService.get<string[]>("app.corsOrigins") ?? [];
+
+  app.enableCors({
+    origin: (requestOrigin, callback) => {
+      const isAllowed =
+        requestOrigin === undefined || corsOrigins.includes(requestOrigin);
+      callback(null, isAllowed);
+    },
+    credentials: true,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidNonWhitelisted: false,
+      forbidNonWhitelisted: true,
     })
   );
 
@@ -29,11 +41,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, document);
 
-  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+  const port = configService.getOrThrow<number>("app.port");
   await app.listen(port);
-  // eslint-disable-next-line no-console
-  console.log(`File Central API running on http://localhost:${port}`);
-  // eslint-disable-next-line no-console
-  console.log(`Swagger api on http://localhost:${port}/api`);
+  const logger = new Logger("Bootstrap");
+  logger.log(`File Central API running on http://localhost:${port}`);
+  logger.log(`Swagger API on http://localhost:${port}/api`);
 }
-bootstrap();
+void bootstrap();

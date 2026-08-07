@@ -1,307 +1,200 @@
 import {
-  ArrowRight,
-  Check,
-  Cloud,
-  Download,
-  FileLock2,
-  FolderOpen,
-  HardDrive,
-  Link2,
-  Share2,
-  ShieldCheck,
-  Upload,
-  Users,
-} from "lucide-react";
-import { Link } from "react-router-dom";
+  ArrowRightOutlined,
+  CheckCircleFilled,
+  CloudOutlined,
+  DownloadOutlined,
+  FolderOpenOutlined,
+  HddOutlined,
+  LinkOutlined,
+  LockOutlined,
+  SafetyCertificateOutlined,
+  ShareAltOutlined,
+  UploadOutlined,
+  UsergroupAddOutlined,
+} from "@ant-design/icons";
+import { Button, Card, Col, Flex, Row, Space, Statistic, Tag, Typography, theme } from "antd";
+import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
-import { BorderBeam } from "@/components/ui/border-beam";
+import { tokenStorage } from "@/lib/token-storage";
 
 const features = [
-  {
-    icon: Upload,
-    title: "Fast Uploads",
-    description: "Upload files to the system and manage all your data in one centralized workspace.",
-  },
-  {
-    icon: FolderOpen,
-    title: "Folder Management",
-    description: "Create folders, organize files, and build a storage structure that fits your workflow.",
-  },
-  {
-    icon: Share2,
-    title: "Easy Sharing",
-    description: "Share files or folders with others through their accounts or shareable links.",
-  },
-  {
-    icon: FileLock2,
-    title: "Access Control",
-    description: "Manage view, edit, and download permissions for each shared resource.",
-  },
-  {
-    icon: Download,
-    title: "Convenient Downloads",
-    description: "Access and download your data easily across multiple devices.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Data Protection",
-    description: "Keep your data secure with clear access control and reliable protection.",
-  },
+  { icon: <UploadOutlined />, title: "Fast uploads", description: "Upload files and keep every project in one centralized workspace." },
+  { icon: <FolderOpenOutlined />, title: "Folder management", description: "Create a structure that stays clear as your workspace grows." },
+  { icon: <ShareAltOutlined />, title: "Easy sharing", description: "Share resources with teammates or through controlled public links." },
+  { icon: <LockOutlined />, title: "Access control", description: "Choose who can view, download, edit, or manage shared content." },
+  { icon: <DownloadOutlined />, title: "Reliable access", description: "Preview and download the files you need from any trusted device." },
+  { icon: <SafetyCertificateOutlined />, title: "Data protection", description: "Keep sensitive work protected with clear authentication boundaries." },
 ];
 
 const benefits = [
   "Centralized file and folder management",
-  "File sharing through secure links",
-  "Clear user access permissions",
-  "Access your data across multiple devices",
+  "Secure links with clear permissions",
+  "Fast previews and resumable uploads",
+  "Access across desktop and mobile",
 ];
 
 function HomePage() {
+  const navigate = useNavigate();
+  const { token } = theme.useToken();
+  const authenticated = tokenStorage.hasAccessToken();
+  const primaryTarget = authenticated ? "/dashboard" : "/auth/register";
+
   return (
     <>
-      <BackgroundBeamsWithCollision className="h-full">
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.14),transparent_35%)]" />
+      <section className="relative overflow-hidden border-b border-border">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(circle at 12% 16%, ${token.colorPrimaryBg}, transparent 32%), radial-gradient(circle at 88% 74%, ${token.colorInfoBg}, transparent 30%), linear-gradient(180deg, ${token.colorBgContainer}, ${token.colorBgLayout})`,
+          }}
+        />
+        <div aria-hidden="true" className="absolute inset-0 opacity-30 [background-image:linear-gradient(var(--border)_1px,transparent_1px),linear-gradient(90deg,var(--border)_1px,transparent_1px)] [background-size:48px_48px] [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
 
-          <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
-            <div>
-              <Badge variant="secondary" className="mb-6 rounded-full px-4 py-2">
-                <Cloud className="mr-2 size-4" />
-                Modern cloud storage
-              </Badge>
+        <div className="relative mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-14 px-4 py-16 sm:px-6 lg:grid-cols-[1.02fr_.98fr] lg:px-8 lg:py-24">
+          <div>
+            <Tag color="blue" icon={<CloudOutlined />} className="!mb-6 !rounded-full !px-3 !py-1">
+              Secure cloud workspace
+            </Tag>
+            <Typography.Title className="!mb-0 max-w-3xl !text-4xl !leading-[1.08] sm:!text-5xl lg:!text-6xl">
+              Your files, organized <span style={{ color: token.colorPrimary }}>without the clutter.</span>
+            </Typography.Title>
+            <Typography.Paragraph type="secondary" className="!mb-0 !mt-6 max-w-xl !text-base !leading-7 sm:!text-lg">
+              File Central brings uploads, folders, previews, sharing, and access control into one focused workspace.
+            </Typography.Paragraph>
 
-              <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Manage all your files <span className="text-primary">in one place</span>
-              </h1>
+            <Space wrap size={12} className="mt-8">
+              <Button type="primary" size="large" icon={<ArrowRightOutlined />} iconPosition="end" onClick={() => navigate(primaryTarget)}>
+                {authenticated ? "Open Dashboard" : "Get started for free"}
+              </Button>
+              {!authenticated && <Button size="large" onClick={() => navigate("/auth/login")}>Sign in</Button>}
+            </Space>
 
-              <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                File Central helps you store, organize, and share files simply, securely, and conveniently across every
-                device.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" asChild>
-                  <Link to="/auth/register">
-                    Get started for free
-                    <ArrowRight className="ml-2 size-4" />
-                  </Link>
-                </Button>
-
-                <Button size="lg" variant="outline" asChild>
-                  <Link to="/auth/login">Sign in</Link>
-                </Button>
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Check className="size-4 text-primary" />
-                  Quick sign-up
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Check className="size-4 text-primary" />
-                  No installation required
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Check className="size-4 text-primary" />
-                  Access anywhere
-                </div>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="absolute -inset-10 -z-10 rounded-full bg-primary/10 blur-3xl" />
-
-              <Card className="overflow-hidden border-border/70 shadow-2xl shadow-primary/10">
-                <CardHeader className="border-b bg-muted/30">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base">My files</CardTitle>
-
-                      <CardDescription>Recently managed data</CardDescription>
-                    </div>
-
-                    <Button size="sm">
-                      <Upload className="mr-2 size-4" />
-                      Upload
-                    </Button>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-5">
-                  <div className="grid grid-cols-3 gap-3">
-                    <StorageSummary icon={HardDrive} label="Used" value="4.8 GB" />
-
-                    <StorageSummary icon={FolderOpen} label="Folders" value="24" />
-
-                    <StorageSummary icon={Link2} label="Shared" value="12" />
-                  </div>
-
-                  <div className="mt-6 space-y-3">
-                    <FileItem name="Project documents" type="Folder" icon={FolderOpen} />
-
-                    <FileItem name="July report.pdf" type="PDF · 3.2 MB" icon={FileLock2} />
-
-                    <FileItem name="Product design.fig" type="FIG · 18.5 MB" icon={Cloud} />
-
-                    <FileItem name="Staff list.xlsx" type="XLSX · 1.8 MB" icon={Users} />
-                  </div>
-                </CardContent>
-                <BorderBeam duration={8} size={100} />
-              </Card>
-            </div>
-          </div>
-        </section>
-      </BackgroundBeamsWithCollision>
-      <section id="features" className="border-y bg-muted/30 py-20 sm:py-24">
-        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <Badge variant="outline">Features</Badge>
-
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Every tool you need to manage your data
-            </h2>
-
-            <p className="mt-4 leading-7 text-muted-foreground">
-              File Central provides core features that make storing and sharing data effortless.
-            </p>
+            <Flex wrap gap={20} className="mt-8">
+              {["Quick setup", "No installation", "Available anywhere"].map((item) => (
+                <Flex key={item} align="center" gap={8}>
+                  <CheckCircleFilled style={{ color: token.colorPrimary }} />
+                  <Typography.Text type="secondary">{item}</Typography.Text>
+                </Flex>
+              ))}
+            </Flex>
           </div>
 
-          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-
-              return (
-                <Card
-                  key={feature.title}
-                  className="border-border/70 transition-all hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <CardHeader>
-                    <div className="mb-3 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="size-5" />
-                    </div>
-
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-
-                  <CardContent>
-                    <p className="text-sm leading-6 text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <ProductPreview />
         </div>
       </section>
 
-      <section id="security" className="py-20 sm:py-24">
+      <section id="features" className="scroll-mt-20 border-b border-border bg-muted/30 py-20 sm:py-24">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <Tag>Features</Tag>
+            <Typography.Title level={2} className="!mb-0 !mt-4 !text-3xl sm:!text-4xl">
+              Everything your file workflow needs
+            </Typography.Title>
+            <Typography.Paragraph type="secondary" className="!mt-4 !text-base !leading-7">
+              Purpose-built tools for storing, finding, and sharing work without switching contexts.
+            </Typography.Paragraph>
+          </div>
+
+          <Row gutter={[20, 20]} className="mt-10">
+            {features.map((feature) => (
+              <Col xs={24} md={12} lg={8} key={feature.title}>
+                <Card hoverable className="h-full" styles={{ body: { padding: 24 } }}>
+                  <Flex vertical gap={14}>
+                    <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-xl text-primary">{feature.icon}</span>
+                    <Typography.Title level={4} className="!mb-0">{feature.title}</Typography.Title>
+                    <Typography.Paragraph type="secondary" className="!mb-0 !leading-6">{feature.description}</Typography.Paragraph>
+                  </Flex>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
+      </section>
+
+      <section id="security" className="scroll-mt-20 py-20 sm:py-24">
         <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
-          <div className="rounded-3xl border bg-muted/30 p-6 sm:p-10">
-            <div className="mx-auto flex aspect-square max-w-sm items-center justify-center rounded-full border bg-background shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl border border-border bg-muted/30 p-8 sm:p-12">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--accent),transparent_58%)] opacity-70" />
+            <div className="relative mx-auto flex aspect-square max-w-sm items-center justify-center rounded-full border border-border bg-background shadow-xl">
               <div className="flex size-40 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <ShieldCheck className="size-20" />
+                <SafetyCertificateOutlined className="text-7xl" />
               </div>
             </div>
           </div>
-
           <div>
-            <Badge variant="outline">Safe and secure</Badge>
-
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Your data always stays under your control
-            </h2>
-
-            <p className="mt-5 leading-7 text-muted-foreground">
-              Manage resources, collaborators, and access permissions in one unified system.
-            </p>
-
-            <div className="mt-8 space-y-4">
+            <Tag>Safe by design</Tag>
+            <Typography.Title level={2} className="!mb-0 !mt-4 !text-3xl sm:!text-4xl">
+              Your data stays under your control
+            </Typography.Title>
+            <Typography.Paragraph type="secondary" className="!mt-5 !text-base !leading-7">
+              Manage resources, collaborators, public links, and download permissions from one consistent system.
+            </Typography.Paragraph>
+            <Space direction="vertical" size={15} className="mt-6 flex">
               {benefits.map((benefit) => (
-                <div key={benefit} className="flex items-center gap-3">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Check className="size-4" />
-                  </span>
-
-                  <span className="text-sm font-medium">{benefit}</span>
-                </div>
+                <Flex key={benefit} align="center" gap={12}>
+                  <CheckCircleFilled style={{ color: token.colorPrimary }} />
+                  <Typography.Text strong>{benefit}</Typography.Text>
+                </Flex>
               ))}
-            </div>
-
-            <Button className="mt-8" asChild>
-              <Link to="/auth/register">
-                Create an account
-                <ArrowRight className="ml-2 size-4" />
-              </Link>
+            </Space>
+            <Button type="primary" className="mt-8" icon={<ArrowRightOutlined />} iconPosition="end" onClick={() => navigate(primaryTarget)}>
+              {authenticated ? "Go to Dashboard" : "Create an account"}
             </Button>
           </div>
         </div>
       </section>
 
       <section className="px-4 pb-20 sm:px-6 sm:pb-24 lg:px-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-8 rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-10 lg:flex-row lg:text-left">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 rounded-3xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-10 lg:flex-row lg:text-left">
           <div>
-            <h2 className="text-3xl font-bold">Ready to manage your data better?</h2>
-
-            <p className="mt-3 text-primary-foreground/80">
-              Create an account and start building your own storage workspace.
-            </p>
+            <Typography.Title level={2} className="!mb-0 !text-white">Ready for a calmer file workflow?</Typography.Title>
+            <Typography.Text className="!mt-2 block !text-white/75">Start with a focused workspace that grows with your team.</Typography.Text>
           </div>
-
-          <Button size="lg" variant="secondary" asChild>
-            <Link to="/auth/register">
-              Get started now
-              <ArrowRight className="ml-2 size-4" />
-            </Link>
-          </Button>
+          <Button size="large" onClick={() => navigate(primaryTarget)}>{authenticated ? "Open Dashboard" : "Get started now"}</Button>
         </div>
       </section>
     </>
   );
 }
 
-interface StorageSummaryProps {
-  icon: typeof HardDrive;
-  label: string;
-  value: string;
-}
-
-function StorageSummary({ icon: Icon, label, value }: StorageSummaryProps) {
+function ProductPreview() {
+  const files = [
+    { name: "Project documents", detail: "Folder", icon: <FolderOpenOutlined /> },
+    { name: "Quarterly report.pdf", detail: "PDF · 3.2 MB", icon: <LockOutlined /> },
+    { name: "Product design.fig", detail: "FIG · 18.5 MB", icon: <CloudOutlined /> },
+    { name: "Team directory.xlsx", detail: "XLSX · 1.8 MB", icon: <UsergroupAddOutlined /> },
+  ];
   return (
-    <div className="rounded-xl border bg-background p-3">
-      <Icon className="size-4 text-primary" />
-
-      <p className="mt-3 text-lg font-semibold">{value}</p>
-
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="relative">
+      <div className="absolute -inset-10 rounded-full bg-primary/10 blur-3xl" />
+      <Card className="relative overflow-hidden shadow-2xl" styles={{ body: { padding: 0 } }}>
+        <Flex align="center" justify="space-between" className="border-b border-border bg-muted/30 px-5 py-4">
+          <div><Typography.Text strong>My Drive</Typography.Text><Typography.Text type="secondary" className="block !text-xs">Recently managed</Typography.Text></div>
+          <Tag color="processing" icon={<CloudOutlined />}>Synced</Tag>
+        </Flex>
+        <div className="p-5">
+          <Row gutter={10}>
+            <Col span={8}><Summary icon={<HddOutlined />} title="Used" value="4.8 GB" /></Col>
+            <Col span={8}><Summary icon={<FolderOpenOutlined />} title="Folders" value={24} /></Col>
+            <Col span={8}><Summary icon={<LinkOutlined />} title="Shared" value={12} /></Col>
+          </Row>
+          <Space direction="vertical" size={10} className="mt-5 flex">
+            {files.map((file) => (
+              <Flex key={file.name} align="center" gap={12} className="rounded-xl border border-border p-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-lg text-primary">{file.icon}</span>
+                <div className="min-w-0"><Typography.Text strong ellipsis className="block">{file.name}</Typography.Text><Typography.Text type="secondary" className="!text-xs">{file.detail}</Typography.Text></div>
+              </Flex>
+            ))}
+          </Space>
+        </div>
+      </Card>
     </div>
   );
 }
 
-interface FileItemProps {
-  name: string;
-  type: string;
-  icon: typeof FolderOpen;
-}
-
-function FileItem({ name, type, icon: Icon }: FileItemProps) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/50">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="size-5" />
-      </div>
-
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{name}</p>
-
-        <p className="text-xs text-muted-foreground">{type}</p>
-      </div>
-    </div>
-  );
+function Summary({ icon, title, value }: { icon: React.ReactNode; title: string; value: string | number }) {
+  return <Card size="small" className="h-full"><span className="text-primary">{icon}</span><Statistic title={title} value={value} valueStyle={{ fontSize: 17, fontWeight: 650 }} /></Card>;
 }
 
 export default HomePage;

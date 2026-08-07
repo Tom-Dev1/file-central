@@ -5,6 +5,7 @@ import { MimeDetectorService } from "./mime-detector.service";
 import { MongooseModule } from "@nestjs/mongoose";
 import { StorageObjectDoc, StorageObjectSchema } from "./schemas/storage-object.schema";
 import { S3StorageAdapter } from "../s3/s3-storage.adapter";
+import { StorageCleanupWorker } from "./storage-cleanup.worker";
 
 @Module({
   imports: [
@@ -15,7 +16,13 @@ import { S3StorageAdapter } from "../s3/s3-storage.adapter";
       },
     ]),
   ],
-  providers: [MinioService, StorageObjectsService, MimeDetectorService, S3StorageAdapter],
+  providers: [
+    MinioService,
+    StorageObjectsService,
+    MimeDetectorService,
+    S3StorageAdapter,
+    StorageCleanupWorker,
+  ],
   exports: [MinioService, StorageObjectsService, MimeDetectorService, S3StorageAdapter],
 })
 export class StorageModule {}

@@ -1,6 +1,6 @@
 import { Expose, Transform } from "class-transformer";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { DriveItemType, FileStatus } from "../../modules/drive-items/enums/drive-item.enum";
+import { DriveItemType, FileStatus } from "../../modules/drive-items/domain/enums/drive-item.enum";
 
 /**
  * Public-facing shape of a DriveItem. Deliberately does NOT expose

@@ -1,4 +1,4 @@
-import { LoaderCircle } from "lucide-react";
+import { Spin, Typography } from "antd";
 import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
@@ -18,13 +18,15 @@ export function LoadingState({ message = "Loading data...", className, fullHeigh
         className
       )}
     >
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <LoaderCircle className="size-6 animate-spin text-primary" />
-      </div>
+      <Spin size="large" />
 
       <div className="space-y-1 text-center">
-        <p className="text-sm font-medium text-foreground">{message}</p>
-        <p className="text-xs text-muted-foreground">Please wait while we fetch your data.</p>
+        <Typography.Text strong className="block !text-sm">
+          {message}
+        </Typography.Text>
+        <Typography.Text type="secondary" className="block !text-xs">
+          Please wait while we fetch your data.
+        </Typography.Text>
       </div>
 
       <span className="sr-only">{message}</span>

@@ -1,7 +1,6 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes/router";
 import { ThemeProvider } from "./components/theme/ThemeProvider";
-import { Toaster } from "./components/ui/sonner";
 import { AppLoadingScreen } from "./components/AppLoadingScreen";
 import { initialAppContext } from "./contexts";
 
@@ -48,12 +47,9 @@ function App() {
     return <AppLoadingScreen />;
   }
   return (
-    <>
-      <ThemeProvider defaultTheme="system" storageKey="file-central-theme">
-        <ThemedRouter />
-        <Toaster position="bottom-right" richColors closeButton />
-      </ThemeProvider>
-    </>
+    <ThemeProvider defaultTheme="system" storageKey="file-central-theme">
+      <ThemedRouter />
+    </ThemeProvider>
   );
 }
 

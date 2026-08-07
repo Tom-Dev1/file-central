@@ -2,7 +2,7 @@
 // import { Types } from "mongoose";
 
 // import { DriveItemsService } from "../drive-items/drive-items.service";
-// import { DriveItemType } from "../drive-items/schemas/drive-item.schema";
+// import { DriveItemType } from "../drive-items/domain/enums/drive-item.enum";
 // import { PermissionsService } from "../permissions/permissions.service";
 // import { SharePermission } from "../shares/schemas/share.schema";
 // import { classifyPreviewKind, PreviewKind } from "./previewkind";

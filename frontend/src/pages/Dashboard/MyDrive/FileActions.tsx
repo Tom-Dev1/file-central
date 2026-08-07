@@ -1,8 +1,22 @@
-import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
-import type { DriveItem } from "@/types/api.types";
-import { FolderOpen, LucideDelete, MoreVertical, SendToBack, Share2, Star } from "lucide-react";
-import { Button, Dropdown, type MenuProps } from "antd";
+import {
+  DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FolderOpenOutlined,
+  MoreOutlined,
+  ShareAltOutlined,
+  SwapOutlined,
+} from "@ant-design/icons";
+import { App, Button, Dropdown, type MenuProps } from "antd";
 import { useState } from "react";
+
+import { MoveItemModal } from "@/components/drive/actions/MoveItemModal";
+import { RenameItemModal } from "@/components/drive/actions/RenameItemModal";
+import { ShareItemModal } from "@/components/drive/actions/ShareItemModal";
+import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
+import { useDeleteItem, useDownloadFile } from "@/hooks";
+import type { DriveItem } from "@/types/api.types";
 
 interface FileActionsProps {
   item: DriveItem;
@@ -11,18 +25,19 @@ interface FileActionsProps {
   onOpenItem?: () => void;
 }
 
+type ActionModal = "rename" | "move" | "share" | null;
+
 export default function FileActions({ item, isPreview, onPreviewChange, onOpenItem }: FileActionsProps) {
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
-
+  const [activeModal, setActiveModal] = useState<ActionModal>(null);
+  const { message, modal } = App.useApp();
+  const downloadFile = useDownloadFile();
+  const deleteItem = useDeleteItem();
   const isControlled = isPreview !== undefined;
-
   const previewOpen = isControlled ? isPreview : internalPreviewOpen;
 
   const setPreviewOpen = (open: boolean) => {
-    if (!isControlled) {
-      setInternalPreviewOpen(open);
-    }
-
+    if (!isControlled) setInternalPreviewOpen(open);
     onPreviewChange?.(open);
   };
 
@@ -31,70 +46,58 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
       onOpenItem?.();
       return;
     }
-
     setPreviewOpen(true);
+  };
+
+  const handleDownload = () => {
+    downloadFile.mutate(
+      { fileId: item.id, fallbackName: item.name },
+      { onError: (error) => void message.error(error instanceof Error ? error.message : "Unable to download this file.") }
+    );
+  };
+
+  const confirmDelete = () => {
+    modal.confirm({
+      title: `Move “${item.name}” to trash?`,
+      content: "You can restore this item later from Trash.",
+      okText: "Move to trash",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await deleteItem.mutateAsync(item.id);
+          void message.success("Item moved to trash");
+        } catch (error) {
+          void message.error(error instanceof Error ? error.message : "Unable to move this item to trash.");
+          throw error;
+        }
+      },
+    });
   };
 
   const menuItems: MenuProps["items"] = [
     {
       key: "open",
-      icon: <FolderOpen className="size-4" />,
+      icon: item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />,
       label: item.type === "folder" ? "Open" : "Preview",
     },
-    {
-      key: "share",
-      icon: <Share2 className="size-4" />,
-      label: "Share with",
-    },
-    {
-      key: "star",
-      icon: <Star className="size-4" />,
-      label: "Add to starred",
-    },
-    {
-      key: "rename",
-      icon: <SendToBack className="size-4" />,
-      label: "Rename",
-    },
-    {
-      type: "divider",
-    },
-    {
-      key: "delete",
-      icon: <LucideDelete className="size-4" />,
-      label: "Delete",
-      danger: true,
-    },
+    ...(item.type === "file" ? [{ key: "download", icon: <DownloadOutlined />, label: "Download" }] : []),
+    { key: "share", icon: <ShareAltOutlined />, label: "Share" },
+    { key: "rename", icon: <EditOutlined />, label: "Rename" },
+    { key: "move", icon: <SwapOutlined />, label: "Move" },
+    { type: "divider" as const },
+    { key: "delete", icon: <DeleteOutlined />, label: "Move to trash", danger: true },
   ];
 
   const handleMenuClick: MenuProps["onClick"] = ({ key, domEvent }) => {
     domEvent.stopPropagation();
-
-    switch (key) {
-      case "open":
-        handleOpen();
-        break;
-
-      case "share":
-        break;
-
-      case "star":
-        break;
-
-      case "rename":
-        break;
-
-      case "delete":
-        break;
-
-      default:
-        break;
-    }
+    if (key === "open") handleOpen();
+    if (key === "download") handleDownload();
+    if (key === "share" || key === "rename" || key === "move") setActiveModal(key);
+    if (key === "delete") confirmDelete();
   };
 
-  const stopPropagation = (event: React.SyntheticEvent) => {
-    event.stopPropagation();
-  };
+  const stopPropagation = (event: React.SyntheticEvent) => event.stopPropagation();
 
   return (
     <>
@@ -102,24 +105,42 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
         <Dropdown
           trigger={["click"]}
           placement="bottomRight"
-          menu={{
-            items: menuItems,
-            onClick: handleMenuClick,
-            className: "min-w-52",
-          }}
+          menu={{ items: menuItems, onClick: handleMenuClick, className: "min-w-52" }}
         >
           <Button
             type="text"
             shape="circle"
             className="flex size-8 items-center justify-center"
             aria-label={`Open actions for ${item.name}`}
-            icon={<MoreVertical className="size-4" />}
+            icon={<MoreOutlined />}
+            loading={downloadFile.isPending || deleteItem.isPending}
             onClick={stopPropagation}
           />
         </Dropdown>
       </div>
 
       {item.type === "file" && <FilePreviewDialog item={item} open={previewOpen} onOpenChange={setPreviewOpen} />}
+      <RenameItemModal
+        open={activeModal === "rename"}
+        itemId={item.id}
+        currentName={item.name}
+        expectedMetadataVersion={item.metadataVersion}
+        onClose={() => setActiveModal(null)}
+      />
+      <MoveItemModal
+        open={activeModal === "move"}
+        itemId={item.id}
+        itemName={item.name}
+        currentParentId={item.parentId}
+        expectedMetadataVersion={item.metadataVersion}
+        onClose={() => setActiveModal(null)}
+      />
+      <ShareItemModal
+        open={activeModal === "share"}
+        itemId={item.id}
+        itemName={item.name}
+        onClose={() => setActiveModal(null)}
+      />
     </>
   );
 }
