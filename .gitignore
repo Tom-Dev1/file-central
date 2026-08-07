@@ -28,11 +28,6 @@ pnpm-debug.log*
 .vscode/
 .idea/
 
-# uploads / storage
-uploads/
-storage/
-tmp/
-temp/
 
 # docker
 *.log
