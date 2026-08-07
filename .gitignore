@@ -9,13 +9,7 @@ build/
 backend/dist/
 frontend/dist/
 
-# environment
-.env
-.env.local
-.env.development.local
-.env.production.local
-backend/.env
-frontend/.env
+
 
 # logs
 npm-debug.log*
