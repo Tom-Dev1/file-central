@@ -1,0 +1,7 @@
+.hiddenInput {
+  display: none;
+}
+
+.button {
+  justify-content: flex-start;
+}

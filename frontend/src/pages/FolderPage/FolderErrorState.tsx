@@ -1,4 +1,6 @@
 import { Button, Result } from "antd";
+import classes from "./FolderErrorState.module.css";
+
 
 interface FolderErrorStateProps {
   title: string;
@@ -9,7 +11,7 @@ interface FolderErrorStateProps {
 
 export default function FolderErrorState({ title, description, retryLabel, onRetry }: FolderErrorStateProps) {
   return (
-    <div className="flex min-h-[60vh] items-center justify-center p-6 text-center">
+    <div className={classes.centeredRow}>
       <Result
         status="error"
         title={title}

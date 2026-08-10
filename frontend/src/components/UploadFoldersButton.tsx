@@ -5,7 +5,7 @@ import { App, Button } from "antd";
 import type { UploadFolderProgress, UploadFolderResult } from "@/apis/folder-upload";
 import { UploadNotificationContent } from "@/components/upload/UploadNotificationContent";
 import { useUploadFolder } from "@/hooks/useFolderUpload";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import {
   getButtonLabel,
   getErrorMessage,
@@ -14,6 +14,8 @@ import {
   getRootFolderName,
   normalizeProgress,
 } from "@/utils/upload-utils";
+import classes from "./UploadFoldersButton.module.css";
+
 
 interface UploadFolderButtonProps {
   parentId?: string | null;
@@ -153,13 +155,13 @@ export function UploadFolderButton({
 
   return (
     <>
-      <input {...directoryInputProps} ref={inputRef} type="file" multiple className="hidden" onChange={handleFolderChange} />
+      <input {...directoryInputProps} ref={inputRef} type="file" multiple className={classes.hiddenInput} onChange={handleFolderChange} />
       <Button
         type={variant === "menu" ? "text" : "default"}
         block={variant === "menu"}
         loading={isUploading}
         disabled={disabled || isUploading}
-        className={cn(variant === "menu" && "justify-start", className)}
+        className={cn(variant === "menu" && classes.button, className)}
         icon={<FolderOpenOutlined />}
         onClick={openFolderPicker}
       >

@@ -4,6 +4,7 @@ import { InboxOutlined, CloudUploadOutlined, StopOutlined, ReloadOutlined } from
 import { uploadApi } from "@/apis/upload.api";
 import type { InitUploadResponse, CompletePart } from "@/types/upload.types";
 import axios from "axios";
+import classes from "./UploadTesting.module.css";
 
 const { Dragger } = Upload;
 const { Text, Paragraph } = Typography;
@@ -286,11 +287,11 @@ export default function UploadTester() {
                 maxCount={1}
                 disabled={uploading}
               >
-                <p className="ant-upload-drag-icon">
+                <p className={classes.dragIcon}>
                   <InboxOutlined />
                 </p>
-                <p className="ant-upload-text">Kéo thả hoặc bấm chọn file</p>
-                <p className="ant-upload-hint">File &lt; 8MB → single; ≥ 8MB → multipart</p>
+                <p className={classes.dragText}>Kéo thả hoặc bấm chọn file</p>
+                <p className={classes.dragHint}>File &lt; 8MB → single; ≥ 8MB → multipart</p>
               </Dragger>
               {file && (
                 <Text>

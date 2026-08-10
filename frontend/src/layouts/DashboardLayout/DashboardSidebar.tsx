@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import DropdownUpload from "@/components/PopoverUpload";
+import classes from "./DashboardSidebar.module.css";
 
 interface NavigationItem {
   title: string;
@@ -22,10 +23,11 @@ const navigationItems: NavigationItem[] = [
 ];
 
 interface DashboardSidebarProps {
+  collapsed?: boolean;
   onNavigate?: () => void;
 }
 
-export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) {
+export default function DashboardSidebar({ collapsed = false, onNavigate }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const selectedKey = location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard/folders/")
@@ -39,12 +41,12 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
 
     return {
       key: item.path,
-      icon: <Icon className="size-[18px]" />,
+      icon: <Icon className={classes.icon} />,
       disabled: !item.available,
       label: (
-        <span className="flex min-w-0 items-center justify-between gap-2">
-          <span className="truncate">{item.title}</span>
-          {!item.available && <span className="text-[10px] font-medium uppercase tracking-wide">Soon</span>}
+        <span className={classes.menuLabel}>
+          <span className={classes.menuTitle}>{item.title}</span>
+          {!item.available && <span className={classes.soonLabel}>Soon</span>}
         </span>
       ),
     };
@@ -56,63 +58,73 @@ export default function DashboardSidebar({ onNavigate }: DashboardSidebarProps) 
   };
 
   return (
-    <div className="flex h-full min-h-full flex-col bg-background">
-      <div className="p-4">
-        <DropdownUpload />
+    <div className={classes.sidebar} data-collapsed={collapsed || undefined}>
+      <div className={classes.createAction}>
+        <Tooltip title={collapsed ? "Create or upload" : undefined} placement="right">
+          <div>
+            <DropdownUpload compact={collapsed} />
+          </div>
+        </Tooltip>
       </div>
 
       <nav aria-label="Dashboard navigation">
         <Menu
           mode="inline"
+          inlineCollapsed={collapsed}
           selectedKeys={[selectedKey]}
           items={menuItems}
           onClick={handleMenuClick}
-          className="!border-e-0 !bg-transparent px-3 [&_.ant-menu-item]:!mx-0 [&_.ant-menu-item]:!mb-1 [&_.ant-menu-item]:!w-full [&_.ant-menu-item]:!rounded-full"
+          className={classes.menu}
+          classNames={{ item: classes.menuItem }}
         />
       </nav>
 
-      <Divider className="!my-4" />
+      {!collapsed && (
+        <>
+          <Divider className={classes.divider} />
 
-      <section className="px-6" aria-labelledby="storage-heading">
-        <div className="flex items-center gap-3">
-          <HardDrive className="size-5 text-muted-foreground" />
-          <Typography.Text id="storage-heading" strong>
-            Storage
-          </Typography.Text>
-        </div>
+          <section className={classes.storageSection} aria-labelledby="storage-heading">
+            <div className={classes.sectionHeading}>
+              <HardDrive className={classes.sectionIcon} />
+              <Typography.Text id="storage-heading" strong>
+                Storage
+              </Typography.Text>
+            </div>
 
-        <Progress percent={37} showInfo={false} size="small" className="!mb-0 !mt-3" />
-        <Typography.Text type="secondary" className="!text-xs">
-          5.6 GB of 15 GB used
-        </Typography.Text>
-
-        <Tooltip title="Storage upgrades are not available yet">
-          <span
-            role="note"
-            tabIndex={0}
-            aria-label="Get more storage. Storage upgrades are not available yet."
-            className="mt-4 block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            <Button type="default" size="small" block disabled>
-              Get more storage
-            </Button>
-          </span>
-        </Tooltip>
-      </section>
-
-      <div className="mt-auto p-4">
-        <div className="rounded-xl bg-muted/60 p-4">
-          <div className="flex items-center gap-2">
-            <FileClock className="size-4 text-muted-foreground" />
-            <Typography.Text strong className="!text-sm">
-              Activity
+            <Progress percent={37} showInfo={false} size="small" className={classes.progress} />
+            <Typography.Text type="secondary" className={classes.storageText}>
+              5.6 GB of 15 GB used
             </Typography.Text>
+
+            <Tooltip title="Storage upgrades are not available yet">
+              <span
+                role="note"
+                tabIndex={0}
+                aria-label="Get more storage. Storage upgrades are not available yet."
+                className={classes.storageUpgrade}
+              >
+                <Button type="default" size="small" block disabled>
+                  Get more storage
+                </Button>
+              </span>
+            </Tooltip>
+          </section>
+
+          <div className={classes.activityRegion}>
+            <div className={classes.activityCard}>
+              <div className={classes.activityHeading}>
+                <FileClock className={classes.activityIcon} />
+                <Typography.Text strong className={classes.activityTitle}>
+                  Activity
+                </Typography.Text>
+              </div>
+              <Typography.Paragraph type="secondary" className={classes.activityCopy}>
+                Your recent file activity will appear here.
+              </Typography.Paragraph>
+            </div>
           </div>
-          <Typography.Paragraph type="secondary" className="!mb-0 !mt-2 !text-xs !leading-5">
-            Your recent file activity will appear here.
-          </Typography.Paragraph>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

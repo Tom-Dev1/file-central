@@ -1,0 +1,35 @@
+.button {
+  justify-content: flex-start;
+}
+
+.description {
+  margin-bottom: 1rem;
+}
+
+.description {
+  font-size: 0.875rem;
+  line-height: var(--fc-leading, 1.25rem);
+}
+
+.description {
+  color: var(--muted-foreground);
+}
+
+.description\/40 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .description\/40 {
+    color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  }
+}
+.description\/60 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .description\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+}

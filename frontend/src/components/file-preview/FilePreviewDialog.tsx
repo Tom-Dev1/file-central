@@ -6,6 +6,8 @@ import { useDownloadFile, useFilePreviewLink } from "@/hooks/useFiles";
 import type { DriveItem } from "@/types/api.types";
 
 import { FilePreviewContent } from "./FilePreviewContent";
+import classes from "./FilePreviewDialog.module.css";
+
 
 interface FilePreviewDialogProps {
   item: DriveItem;
@@ -57,17 +59,17 @@ export function FilePreviewDialog({ item, open, onOpenChange, allowDownload = tr
   };
 
   const modalTitle = (
-    <div className="flex min-w-0 items-center justify-between gap-4">
-      <div className="min-w-0">
-        <Typography.Title level={5} ellipsis={{ tooltip: item.name }} className="mb-0!">
+    <div className={classes.spreadRow}>
+      <div className={classes.div}>
+        <Typography.Title level={5} ellipsis={{ tooltip: item.name }} className={classes.title}>
           {item.name}
         </Typography.Title>
-        <Typography.Text type="secondary" ellipsis className="block text-xs">
+        <Typography.Text type="secondary" ellipsis className={classes.text}>
           {item.mimeType ?? "Unknown file type"}
         </Typography.Text>
       </div>
 
-      <Space size={4} className="shrink-0">
+      <Space size={4} className={classes.space}>
         {data?.url && (
           <Button
             type="text"
@@ -107,12 +109,12 @@ export function FilePreviewDialog({ item, open, onOpenChange, allowDownload = tr
       }}
     >
       {isPending ? (
-        <div className="flex size-full flex-col items-center justify-center gap-3">
+        <div className={classes.centeredColumn}>
           <Spin size="large" />
           <Typography.Text type="secondary">Preparing preview...</Typography.Text>
         </div>
       ) : isError ? (
-        <div className="flex size-full items-center justify-center overflow-auto p-6">
+        <div className={classes.centeredRow}>
           <Result
             status="error"
             title="Unable to open preview"
@@ -133,7 +135,7 @@ export function FilePreviewDialog({ item, open, onOpenChange, allowDownload = tr
           onDownload={handleDownload}
         />
       ) : (
-        <div className="flex size-full items-center justify-center p-6">
+        <div className={classes.centeredRow2}>
           <Result status="info" title="No preview data is available" />
         </div>
       )}

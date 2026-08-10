@@ -1,0 +1,20 @@
+.div {
+  min-width: 0;
+}
+
+.text {
+  display: block;
+}
+
+.text {
+  font-size: 0.75rem !important;
+  line-height: var(--fc-leading, 1rem) !important;
+}
+
+.progress {
+  margin-bottom: 0 !important;
+}
+
+.progress {
+  margin-top: 0.25rem !important;
+}

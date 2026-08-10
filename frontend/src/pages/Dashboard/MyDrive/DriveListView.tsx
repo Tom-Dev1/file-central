@@ -5,11 +5,13 @@ import EmptyFolderState from "@/components/EmptyFolderState";
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
 import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
 
 import FileActions from "./FileActions";
+import classes from "./DriveListView.module.css";
+
 
 interface DriveListViewProps {
   items: DriveItem[];
@@ -57,17 +59,17 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
         const mobileSize = item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0));
 
         return (
-          <div className="flex min-w-0 items-center gap-3">
+          <div className={classes.row}>
             <ThemedSvgIcon
               src={iconSource}
               aria-hidden="true"
-              className="size-5 shrink-0 bg-muted-foreground transition-colors group-hover:bg-primary"
+              className={classes.icon}
             />
-            <div className="min-w-0">
-              <Typography.Text strong ellipsis={{ tooltip: item.name }} className="block">
+            <div className={classes.div}>
+              <Typography.Text strong ellipsis={{ tooltip: item.name }} className={classes.text}>
                 {item.name}
               </Typography.Text>
-              <Typography.Text type="secondary" className="block truncate text-xs md:hidden">
+              <Typography.Text type="secondary" className={classes.truncatedText}>
                 {formatModifiedDate(item.updatedAt)} · {mobileSize}
               </Typography.Text>
             </div>
@@ -95,7 +97,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
     },
     {
       key: "actions",
-      title: <span className="sr-only">Actions</span>,
+      title: <span className={classes.visuallyHidden}>Actions</span>,
       align: "right",
       width: 56,
       render: (_, item) => {
@@ -104,8 +106,8 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
         return (
           <div
             className={cn(
-              "flex justify-end transition-opacity md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100",
-              isPreviewOpen && "opacity-100"
+              classes.row2,
+              isPreviewOpen && classes.div2
             )}
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
@@ -134,8 +136,8 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
       pagination={false}
       tableLayout="fixed"
       size="middle"
-      className="overflow-hidden rounded-xl"
-      rowClassName={(item) => cn("group cursor-pointer", isSelected(item.id) && "ant-table-row-selected")}
+      className={classes.table}
+      rowClassName={(item) => cn(classes.interactiveRow, isSelected(item.id) && classes.selectedRow)}
       onRow={(item) => ({
         tabIndex: 0,
         "aria-selected": isSelected(item.id),

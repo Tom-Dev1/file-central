@@ -3,6 +3,8 @@ import { Button, Dropdown, Tooltip, type MenuProps } from "antd";
 import { Laptop, Moon, Sun } from "lucide-react";
 
 import { useTheme } from "@/contexts/themeContext";
+import classes from "./ModeToggle.module.css";
+
 
 const themes = [
   { value: "light", label: "Light", icon: Sun },
@@ -20,7 +22,7 @@ export function ModeToggle() {
 
     return {
       key: item.value,
-      icon: <Icon className="size-4" />,
+      icon: <Icon className={classes.icon} />,
       label: item.label,
       extra: isSelected ? <CheckOutlined aria-label="Selected" /> : undefined,
       onClick: () => setTheme(item.value),
@@ -39,7 +41,7 @@ export function ModeToggle() {
           shape="circle"
           size="large"
           aria-label={`Change theme. Current setting: ${theme}`}
-          icon={<ActiveIcon className="size-5" />}
+          icon={<ActiveIcon className={classes.icon2} />}
         />
       </Tooltip>
     </Dropdown>

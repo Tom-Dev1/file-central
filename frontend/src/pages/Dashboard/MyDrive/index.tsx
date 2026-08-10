@@ -11,6 +11,8 @@ import { DriveViewActions } from "@/components/drive/DriveViewActions";
 import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
 import { LoadingState } from "@/pages/FolderPage/LoadingStates";
 import type { DriveItem } from "@/types/api.types";
+import classes from "./index.module.css";
+
 
 type ViewMode = "grid" | "list";
 
@@ -82,13 +84,13 @@ export default function MyDrivePage() {
       }
     >
       {isSearchMode && driveItems.length === 0 ? (
-        <div className="flex min-h-80 items-center justify-center px-6 text-center">
+        <div className={classes.centeredRow}>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={
               <div>
                 <Typography.Text strong>No results for "{query}"</Typography.Text>
-                <Typography.Paragraph type="secondary" className="!mb-0 !mt-1 max-w-sm">
+                <Typography.Paragraph type="secondary" className={classes.paragraph}>
                   Check the spelling or try a different search term.
                 </Typography.Paragraph>
               </div>
@@ -104,7 +106,7 @@ export default function MyDrivePage() {
           )}
 
           {hasNextPage && (
-            <div className="flex justify-center px-4 py-6">
+            <div className={classes.centeredRow2}>
               <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
                 Load more
               </Button>

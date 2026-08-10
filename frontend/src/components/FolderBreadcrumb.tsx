@@ -11,8 +11,9 @@ import { useNavigate } from "react-router-dom";
 import { getBreadcrumbParts } from "@/constants/file-constants";
 import { useFolderBreadcrumbs } from "@/hooks/useDrive";
 import { driveKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import type { FolderBreadcrumbItem } from "@/types/drive.type";
+import styles from "./FolderBreadcrumb.module.css";
 
 interface FolderBreadcrumbsProps {
   folderId: string;
@@ -46,10 +47,10 @@ export function FolderBreadcrumbs({ folderId, className }: FolderBreadcrumbsProp
 
   if ((isLoading || isPending) && breadcrumbs.length === 0) {
     return (
-      <div className={cn("flex min-h-9 items-center gap-2", className)}>
-        <Skeleton.Button active size="small" className="w-24" />
-        <RightOutlined className="text-xs text-muted-foreground/40" />
-        <Skeleton.Button active size="small" className="w-36" />
+      <div className={cn(styles.loading, className)}>
+        <Skeleton.Button active size="small" className={styles.shortSkeleton} />
+        <RightOutlined className={styles.separatorMuted} />
+        <Skeleton.Button active size="small" className={styles.longSkeleton} />
       </div>
     );
   }
@@ -57,7 +58,7 @@ export function FolderBreadcrumbs({ folderId, className }: FolderBreadcrumbsProp
   const collapsedItems: MenuProps["items"] = hidden.map((item) => ({
     key: item.id,
     label: (
-      <span className="block max-w-52 truncate" title={item.name}>
+      <span className={styles.collapsedLabel} title={item.name}>
         {item.name}
       </span>
     ),
@@ -102,7 +103,7 @@ export function FolderBreadcrumbs({ folderId, className }: FolderBreadcrumbsProp
           <Typography.Text
             strong
             aria-current="page"
-            className="block max-w-64 truncate text-xl"
+            className={styles.current}
             title={item.name}
           >
             {item.name}
@@ -116,24 +117,24 @@ export function FolderBreadcrumbs({ folderId, className }: FolderBreadcrumbsProp
       title: (
         <Button
           type="text"
-          className="h-auto max-w-48 px-1 text-xl font-normal text-muted-foreground"
+          className={styles.ancestor}
           title={item.name}
           onClick={() => handleNavigate(item)}
         >
-          <span className="truncate">{item.name}</span>
+          <span className={styles.ancestorLabel}>{item.name}</span>
         </Button>
       ),
     };
   });
 
   return (
-    <nav aria-label="Folder breadcrumb" className={cn("flex min-h-9 min-w-0 items-center", className)}>
+    <nav aria-label="Folder breadcrumb" className={cn(styles.root, className)}>
       <Breadcrumb
-        separator={<RightOutlined className="text-xs text-muted-foreground/60" />}
+        separator={<RightOutlined className={styles.separatorMuted} />}
         items={items}
-        className="min-w-0 overflow-hidden"
+        className={styles.breadcrumb}
       />
-      <span className="ml-2 flex size-5 shrink-0 items-center justify-center">
+      <span className={styles.spinner}>
         {isFetching && breadcrumbs.length > 0 && (
           <Spin
             size="small"

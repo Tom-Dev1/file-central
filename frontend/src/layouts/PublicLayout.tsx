@@ -27,6 +27,8 @@ import { ModeToggle } from "@/components/theme/ModeToggle";
 import { useLogout } from "@/hooks/useAuth";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
 import { tokenStorage } from "@/lib/token-storage";
+import classes from "./PublicLayout.module.css";
+
 
 const publicNavigation = [
   { key: "home", label: "Home", target: "/" },
@@ -85,9 +87,9 @@ function PublicLayout() {
   };
 
   return (
-    <Layout className="min-h-screen !bg-background !text-foreground">
-      <Layout.Header className="sticky top-0 z-50 !h-16 border-b border-border/70 !bg-background/95 !px-0 !leading-normal backdrop-blur">
-        <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <Layout className={classes.layout}>
+      <Layout.Header className={classes.header}>
+        <div className={classes.spreadRow}>
           <Brand />
 
           <Menu
@@ -95,10 +97,10 @@ function PublicLayout() {
             items={navigationItems}
             selectedKeys={location.pathname === "/" && !location.hash ? ["home"] : []}
             onClick={handleNavigation}
-            className="!hidden min-w-0 flex-1 justify-center !border-0 !bg-transparent md:!flex"
+            className={classes.centeredRow}
           />
 
-          <Space size={6} className="!hidden md:!flex">
+          <Space size={6} className={classes.space}>
             <ModeToggle />
             {isAuthenticated ? (
               <UserMenu user={currentUser} pending={logout.isPending} onNavigate={navigate} onSignOut={handleSignOut} />
@@ -114,7 +116,7 @@ function PublicLayout() {
             )}
           </Space>
 
-          <Space size={2} className="md:!hidden">
+          <Space size={2} className={classes.space2}>
             <ModeToggle />
             {isAuthenticated && (
               <UserMenu user={currentUser} pending={logout.isPending} onNavigate={navigate} onSignOut={handleSignOut} compact />
@@ -131,7 +133,7 @@ function PublicLayout() {
         </div>
       </Layout.Header>
 
-      <Layout.Content className="relative !bg-background">
+      <Layout.Content className={classes.content}>
         <Outlet />
       </Layout.Content>
 
@@ -150,9 +152,9 @@ function PublicLayout() {
           items={navigationItems}
           selectedKeys={location.pathname === "/" ? ["home"] : []}
           onClick={handleNavigation}
-          className="!border-0"
+          className={classes.menu}
         />
-        <Space direction="vertical" size={10} className="mt-auto w-full border-t border-border pt-4">
+        <Space direction="vertical" size={10} className={classes.fullWidth}>
           {isAuthenticated ? (
             <>
               <Button block icon={<DashboardOutlined />} onClick={() => navigateTo("/dashboard")}>
@@ -180,12 +182,12 @@ function PublicLayout() {
 
 function Brand() {
   return (
-    <Link to="/" aria-label="File Central home" className="flex shrink-0 items-center gap-2.5 text-foreground">
-      <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <CloudOutlined className="text-lg" />
+    <Link to="/" aria-label="File Central home" className={classes.row}>
+      <span className={classes.centeredRow2}>
+        <CloudOutlined className={classes.icon} />
       </span>
-      <Typography.Text className="!text-lg">
-        File <span className="font-medium text-muted-foreground">Central</span>
+      <Typography.Text className={classes.text}>
+        File <span className={classes.span}>Central</span>
       </Typography.Text>
     </Link>
   );
@@ -206,9 +208,9 @@ function UserMenu({ user, pending, compact = false, onNavigate, onSignOut }: Use
       key: "identity",
       disabled: true,
       label: (
-        <div className="min-w-48 py-1">
-          <Typography.Text strong className="block truncate">{displayName}</Typography.Text>
-          {user?.email && <Typography.Text type="secondary" className="block truncate !text-xs">{user.email}</Typography.Text>}
+        <div className={classes.div}>
+          <Typography.Text strong className={classes.truncatedText}>{displayName}</Typography.Text>
+          {user?.email && <Typography.Text type="secondary" className={classes.truncatedText2}>{user.email}</Typography.Text>}
         </div>
       ),
     },
@@ -231,10 +233,10 @@ function UserMenu({ user, pending, compact = false, onNavigate, onSignOut }: Use
 
   return (
     <Dropdown menu={{ items, onClick: handleMenuClick }} placement="bottomRight" trigger={["click"]}>
-      <Button type="text" className={compact ? "!size-10 !p-0" : "!h-10 !px-2"} aria-label="Open account menu">
+      <Button type="text" className={compact ? classes.button : classes.button2} aria-label="Open account menu">
         <Flex align="center" gap={8}>
-          <Avatar size={32} src={user?.avatarUrl} className="!bg-primary">{getInitials(displayName)}</Avatar>
-          {!compact && <Typography.Text strong className="max-w-28 truncate">{displayName}</Typography.Text>}
+          <Avatar size={32} src={user?.avatarUrl} className={classes.avatar}>{getInitials(displayName)}</Avatar>
+          {!compact && <Typography.Text strong className={classes.truncatedText3}>{displayName}</Typography.Text>}
         </Flex>
       </Button>
     </Dropdown>
@@ -243,34 +245,34 @@ function UserMenu({ user, pending, compact = false, onNavigate, onSignOut }: Use
 
 function PublicFooter({ authenticated, onNavigate, onSignOut }: { authenticated: boolean; onNavigate: (to: string) => void; onSignOut: () => Promise<void> }) {
   return (
-    <Layout.Footer className="border-t border-border !bg-muted/30 !px-0 !py-0">
-      <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-        <div className="lg:col-span-2">
+    <Layout.Footer className={classes.footer}>
+      <div className={classes.responsiveGrid}>
+        <div className={classes.div2}>
           <Brand />
-          <Typography.Paragraph type="secondary" className="!mt-4 max-w-md !leading-6">
+          <Typography.Paragraph type="secondary" className={classes.paragraph}>
             A centralized workspace for storing, organizing, sharing, and protecting your files.
           </Typography.Paragraph>
         </div>
         <FooterGroup title="Product" links={[{ label: "Features", target: "/#features" }, { label: "Security", target: "/#security" }]} onNavigate={onNavigate} />
         <div>
           <Typography.Text strong>Account</Typography.Text>
-          <Space direction="vertical" size={10} className="mt-4 flex">
+          <Space direction="vertical" size={10} className={classes.row2}>
             {authenticated ? (
               <>
-                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/dashboard")}>Dashboard</Button>
-                <Button type="link" danger className="!h-auto !p-0" onClick={() => void onSignOut()}>Sign out</Button>
+                <Button type="link" className={classes.button3} onClick={() => onNavigate("/dashboard")}>Dashboard</Button>
+                <Button type="link" danger className={classes.button3} onClick={() => void onSignOut()}>Sign out</Button>
               </>
             ) : (
               <>
-                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/auth/login")}>Sign in</Button>
-                <Button type="link" className="!h-auto !p-0" onClick={() => onNavigate("/auth/register")}>Create an account</Button>
+                <Button type="link" className={classes.button3} onClick={() => onNavigate("/auth/login")}>Sign in</Button>
+                <Button type="link" className={classes.button3} onClick={() => onNavigate("/auth/register")}>Create an account</Button>
               </>
             )}
           </Space>
         </div>
       </div>
-      <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:justify-between lg:px-8">
+      <div className={classes.div3}>
+        <div className={classes.column}>
           <span>© 2026 File Central. All rights reserved.</span>
           <span>Store and share your files securely.</span>
         </div>
@@ -283,9 +285,9 @@ function FooterGroup({ title, links, onNavigate }: { title: string; links: Array
   return (
     <div>
       <Typography.Text strong>{title}</Typography.Text>
-      <Space direction="vertical" size={10} className="mt-4 flex">
+      <Space direction="vertical" size={10} className={classes.row2}>
         {links.map((link) => (
-          <Button key={link.target} type="link" className="!h-auto !p-0" onClick={() => onNavigate(link.target)}>{link.label}</Button>
+          <Button key={link.target} type="link" className={classes.button3} onClick={() => onNavigate(link.target)}>{link.label}</Button>
         ))}
       </Space>
     </div>

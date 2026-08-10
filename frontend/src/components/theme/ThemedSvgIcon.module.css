@@ -1,0 +1,11 @@
+.span {
+  display: inline-block;
+}
+
+.span {
+  flex-shrink: 0;
+}
+
+.span {
+  background-color: var(--muted-foreground);
+}

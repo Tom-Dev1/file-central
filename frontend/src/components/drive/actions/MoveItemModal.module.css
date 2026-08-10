@@ -1,0 +1,139 @@
+.space {
+  margin-bottom: 0.75rem !important;
+}
+
+.space {
+  width: 100% !important;
+}
+
+.icon {
+  color: var(--primary);
+}
+
+.icon-foreground {
+  color: var(--primary-foreground);
+}
+
+.div {
+  min-height: 16rem;
+}
+
+.div {
+  max-height: 45vh;
+}
+
+.div {
+  overflow-y: auto;
+}
+
+.div {
+  border-radius: calc(var(--radius) + 4px);
+}
+
+.div {
+  border-style: var(--fc-border-style);
+  border-width: 1px;
+}
+
+.div-0 {
+  border-style: var(--fc-border-style);
+  border-width: 0;
+}
+
+.div-4 {
+  border-style: var(--fc-border-style);
+  border-width: 4px;
+}
+
+.div-t {
+  border-top-style: var(--fc-border-style);
+  border-top-width: 1px;
+}
+
+.div-r {
+  border-right-style: var(--fc-border-style);
+  border-right-width: 1px;
+}
+
+.div-b {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 1px;
+}
+
+.div-b-0 {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 0;
+}
+
+.div-dashed {
+  --fc-border-style:dashed;
+  border-style: dashed;
+}
+
+.div-background {
+  border-color: var(--background);
+}
+
+.div-border {
+  border-color: var(--border);
+}
+
+.div-border\/70 {
+  border-color: var(--border);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div-border\/70 {
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+}
+.div-primary {
+  border-color: var(--primary);
+}
+
+.div-primary\/20 {
+  border-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div-primary\/20 {
+    border-color: color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+}
+.div2 {
+  padding: 1rem;
+}
+
+.empty {
+  margin-block: 3rem !important;
+}
+
+.listitem {
+  padding-inline: 1rem !important;
+}
+
+.icon2 {
+  font-size: 1.25rem;
+  line-height: var(--fc-leading, 1.75rem);
+}
+
+.icon2 {
+  color: var(--primary);
+}
+
+.icon2-foreground {
+  color: var(--primary-foreground);
+}
+
+.text {
+  margin-top: 0.75rem !important;
+}
+
+.text {
+  display: block;
+}
+
+.text {
+  font-size: 0.75rem !important;
+  line-height: var(--fc-leading, 1rem) !important;
+}

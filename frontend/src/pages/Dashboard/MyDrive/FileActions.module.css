@@ -1,0 +1,32 @@
+.menu {
+  min-width: 13rem;
+}
+
+.button {
+  display: flex;
+}
+
+.button-1 {
+  flex: 1;
+}
+
+.button-col {
+  flex-direction: column;
+}
+
+.button-wrap {
+  flex-wrap: wrap;
+}
+
+.button {
+  width: 2rem;
+  height: 2rem;
+}
+
+.button {
+  align-items: center;
+}
+
+.button {
+  justify-content: center;
+}

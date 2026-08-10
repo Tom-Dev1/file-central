@@ -1,0 +1,35 @@
+.centeredRow {
+  display: flex;
+}
+
+.centeredRow-1 {
+  flex: 1;
+}
+
+.centeredRow-col {
+  flex-direction: column;
+}
+
+.centeredRow-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow {
+  min-height: 60vh;
+}
+
+.centeredRow {
+  align-items: center;
+}
+
+.centeredRow {
+  justify-content: center;
+}
+
+.centeredRow {
+  padding: 1.5rem;
+}
+
+.centeredRow {
+  text-align: center;
+}

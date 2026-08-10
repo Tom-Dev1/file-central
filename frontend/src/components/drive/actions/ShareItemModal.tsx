@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { useCreateShare } from "@/hooks";
 import type { SharePermission, ShareType } from "@/types/api.types";
+import classes from "./ShareItemModal.module.css";
+
 
 interface ShareItemModalProps {
   open: boolean;
@@ -81,7 +83,7 @@ export function ShareItemModal({ open, itemId, itemName, onClose }: ShareItemMod
       destroyOnHidden
     >
       {publicUrl ? (
-        <div className="py-2">
+        <div className={classes.div}>
           <Typography.Paragraph type="secondary">
             Anyone with this link can access the item with the permission you selected.
           </Typography.Paragraph>
@@ -128,7 +130,7 @@ export function ShareItemModal({ open, itemId, itemName, onClose }: ShareItemMod
           </Form.Item>
 
           <Form.Item name="expiresAt" label="Expiry (optional)">
-            <DatePicker showTime className="!w-full" placeholder="No expiry" />
+            <DatePicker showTime className={classes.datepicker} placeholder="No expiry" />
           </Form.Item>
         </Form>
       )}

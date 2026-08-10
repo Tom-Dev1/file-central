@@ -6,6 +6,8 @@ import { initialAppContext } from "./contexts";
 
 import { App as AntdApp, ConfigProvider, theme as antdTheme } from 'antd';
 import { useTheme } from './contexts/themeContext';
+import classes from "./App.module.css";
+
 
 function ThemedRouter() {
   const { resolvedTheme } = useTheme();
@@ -35,7 +37,7 @@ function ThemedRouter() {
         },
       }}
     >
-      <AntdApp className='h-full'>
+      <AntdApp className={classes.antdapp}>
         <RouterProvider router={router} />
       </AntdApp>
     </ConfigProvider>

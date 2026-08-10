@@ -1,7 +1,10 @@
 import { Empty, Space, Typography } from "antd";
+import { clsx as cn } from "clsx";
 import { UploadFileButton } from "./UploadFileButton";
 import { UploadFolderButton } from "./UploadFoldersButton";
 import { CreateFolderButton } from "./CreateFolder";
+import classes from "./EmptyFolderState.module.css";
+
 
 interface EmptyFolderStateProps {
   parentId?: string | null;
@@ -10,7 +13,7 @@ interface EmptyFolderStateProps {
 
 export default function EmptyFolderState({ parentId, className }: EmptyFolderStateProps) {
   return (
-    <div className={`flex min-h-[400px] flex-col items-center justify-center px-4 text-center ${className ?? ""}`}>
+    <div className={cn(classes.centeredColumn, className ?? "")}>
       <Empty
         image={Empty.PRESENTED_IMAGE_SIMPLE}
         description={
@@ -22,7 +25,7 @@ export default function EmptyFolderState({ parentId, className }: EmptyFolderSta
           </Space>
         }
       >
-        <Space wrap className="justify-center">
+        <Space wrap className={classes.centeredRow}>
           <CreateFolderButton parentId={parentId} variant="button" />
           <UploadFileButton parentId={parentId} variant="button" />
           <UploadFolderButton parentId={parentId} variant="button" />

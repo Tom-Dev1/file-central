@@ -1,0 +1,332 @@
+.centeredRow {
+  display: flex;
+}
+
+.centeredRow-1 {
+  flex: 1;
+}
+
+.centeredRow-col {
+  flex-direction: column;
+}
+
+.centeredRow-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow {
+  height: 100dvh;
+}
+
+.centeredRow {
+  align-items: center;
+}
+
+.centeredRow {
+  justify-content: center;
+}
+
+.centeredRow {
+  background-color: var(--background);
+}
+
+.centeredRow\/80 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow\/80 {
+    background-color: color-mix(in oklab, var(--background) 80%, transparent);
+  }
+}
+.centeredRow\/90 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow\/90 {
+    background-color: color-mix(in oklab, var(--background) 90%, transparent);
+  }
+}
+.centeredRow\/95 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow\/95 {
+    background-color: color-mix(in oklab, var(--background) 95%, transparent);
+  }
+}
+.centeredColumn {
+  display: flex;
+}
+
+.centeredColumn-1 {
+  flex: 1;
+}
+
+.centeredColumn-col {
+  flex-direction: column;
+}
+
+.centeredColumn-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredColumn {
+  flex-direction: column;
+}
+
+.centeredColumn {
+  align-items: center;
+}
+
+.centeredColumn {
+  text-align: center;
+}
+
+.centeredRow2 {
+  display: flex;
+}
+
+.centeredRow2-1 {
+  flex: 1;
+}
+
+.centeredRow2-col {
+  flex-direction: column;
+}
+
+.centeredRow2-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow2 {
+  width: 4rem;
+  height: 4rem;
+}
+
+.centeredRow2 {
+  align-items: center;
+}
+
+.centeredRow2 {
+  justify-content: center;
+}
+
+.centeredRow2 {
+  border-radius: 1rem;
+}
+
+.centeredRow2 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow2 {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+}
+.centeredRow2 {
+  color: var(--primary);
+}
+
+.centeredRow2-foreground {
+  color: var(--primary-foreground);
+}
+
+.icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.title {
+  margin-top: 1rem;
+}
+
+.title\! {
+  margin-top: 1rem !important;
+}
+
+.title {
+  font-size: 1.125rem;
+  line-height: var(--fc-leading, 1.75rem);
+}
+
+.title {
+  --fc-font-weight:600;
+  font-weight: 600;
+}
+
+.description {
+  margin-top: 0.25rem;
+}
+
+.description0 {
+  margin-top: 2.5rem;
+}
+
+.description {
+  font-size: 0.875rem;
+  line-height: var(--fc-leading, 1.25rem);
+}
+
+.description {
+  color: var(--muted-foreground);
+}
+
+.description\/40 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .description\/40 {
+    color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  }
+}
+.description\/60 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .description\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+}
+.div {
+  margin-top: 1.25rem;
+}
+
+.div {
+  height: 0.25rem;
+}
+
+.div2 {
+  height: 3rem;
+}
+
+.div4 {
+  height: 3.5rem;
+}
+
+.div {
+  width: 10rem;
+}
+
+.div {
+  overflow: hidden;
+}
+
+.div {
+  border-radius: 2147483647px;
+}
+
+.div {
+  background-color: var(--muted);
+}
+
+.div-foreground {
+  background-color: var(--muted-foreground);
+}
+
+.div\/20 {
+  background-color: var(--muted);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div\/20 {
+    background-color: color-mix(in oklab, var(--muted) 20%, transparent);
+  }
+}
+.div\/30 {
+  background-color: var(--muted);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div\/30 {
+    background-color: color-mix(in oklab, var(--muted) 30%, transparent);
+  }
+}
+.div\/50 {
+  background-color: var(--muted);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div\/50 {
+    background-color: color-mix(in oklab, var(--muted) 50%, transparent);
+  }
+}
+.div\/60 {
+  background-color: var(--muted);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div\/60 {
+    background-color: color-mix(in oklab, var(--muted) 60%, transparent);
+  }
+}
+.div2 {
+  height: 100%;
+}
+
+.div2 {
+  width: 50%;
+}
+
+.div2 {
+  animation: 1s ease-in-out infinite loading;
+}
+
+.div2 {
+  border-radius: 2147483647px;
+}
+
+.div2 {
+  background-color: var(--primary);
+}
+
+.div2\/5 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2\/5 {
+    background-color: color-mix(in oklab, var(--primary) 5%, transparent);
+  }
+}
+.div2\/10 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2\/10 {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+}
+.div2\/30 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2\/30 {
+    background-color: color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+}
+.div2\/40 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2\/40 {
+    background-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  }
+}
+.div2\/50 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2\/50 {
+    background-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  }
+}

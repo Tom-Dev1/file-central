@@ -1,6 +1,8 @@
 import { Checkbox } from "antd";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
+import classes from "./DriveSelectAll.module.css";
+
 
 interface DriveSelectAllProps {
   itemIds: string[];
@@ -29,7 +31,7 @@ export function DriveSelectAll({ itemIds, className, showLabel = true }: DriveSe
   };
 
   return (
-    <div className={cn("flex h-7 items-center gap-2", className)}>
+    <div className={cn(classes.row, className)}>
       <Checkbox
         id="drive-select-all"
         checked={allSelected}
@@ -43,8 +45,8 @@ export function DriveSelectAll({ itemIds, className, showLabel = true }: DriveSe
         <label
           htmlFor="drive-select-all"
           className={cn(
-            "cursor-pointer whitespace-nowrap text-sm font-normal mt-0.5 px-1",
-            !hasItems && "cursor-not-allowed text-muted-foreground"
+            classes.label,
+            !hasItems && classes.label2
           )}
         >
           {allSelected

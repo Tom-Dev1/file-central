@@ -1,0 +1,136 @@
+.column {
+  display: flex;
+}
+
+.column-1 {
+  flex: 1;
+}
+
+.column-col {
+  flex-direction: column;
+}
+
+.column-wrap {
+  flex-wrap: wrap;
+}
+
+.column {
+  height: 100%;
+}
+
+.column {
+  min-height: 0;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.column {
+  overflow: hidden;
+}
+
+.div {
+  position: relative;
+}
+
+.div {
+  z-index: 20;
+}
+
+.div {
+  flex-shrink: 0;
+}
+
+.div {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 1px;
+}
+
+.div-0 {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 0;
+}
+
+.divackground {
+  border-color: var(--background);
+}
+
+.divorder {
+  border-color: var(--border);
+}
+
+.divorder\/70 {
+  border-color: var(--border);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .divorder\/70 {
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+}
+.div {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div {
+    background-color: color-mix(in oklab, var(--background) 95%, transparent);
+  }
+}
+.div {
+  --fc-backdrop-blur:blur(8px);
+  -webkit-backdrop-filter: var(--fc-backdrop-blur, ) var(--fc-backdrop-brightness, ) var(--fc-backdrop-contrast, ) var(--fc-backdrop-grayscale, ) var(--fc-backdrop-hue-rotate, ) var(--fc-backdrop-invert, ) var(--fc-backdrop-opacity, ) var(--fc-backdrop-saturate, ) var(--fc-backdrop-sepia, );
+  backdrop-filter: var(--fc-backdrop-blur, ) var(--fc-backdrop-brightness, ) var(--fc-backdrop-contrast, ) var(--fc-backdrop-grayscale, ) var(--fc-backdrop-hue-rotate, ) var(--fc-backdrop-invert, ) var(--fc-backdrop-opacity, ) var(--fc-backdrop-saturate, ) var(--fc-backdrop-sepia, );
+}
+
+.div2 {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.div2::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.div2::-webkit-scrollbar-track {
+  background: 0 0;
+}
+
+.div2::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+  border: 2px solid rgba(0, 0, 0, 0);
+  border-radius: 9999px;
+  min-height: 40px;
+}
+
+.div2::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .div2::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in oklch, var(--scrollbar-thumb), var(--foreground) 25%);
+  }
+}
+.div2::-webkit-scrollbar-corner {
+  background: 0 0;
+}
+
+.div2 {
+  min-height: 0;
+}
+
+.div2 {
+  flex: 1;
+}
+
+.div2 {
+  overflow-y: auto;
+}
+
+.div2 {
+  overscroll-behavior: contain;
+}

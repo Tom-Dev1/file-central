@@ -1,8 +1,10 @@
 import { CheckSquareOutlined, CloseOutlined } from "@ant-design/icons";
 
 import { Button } from "antd";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import classes from "./DriveSelectionToggle.module.css";
+
 
 interface DriveSelectionToggleProps {
   className?: string;
@@ -17,7 +19,7 @@ export function DriveSelectionToggle({ className, showLabel = false }: DriveSele
       type={selectionMode ? "default" : "text"}
       size="small"
       shape={showLabel ? "default" : "circle"}
-      className={cn(showLabel ? "h-8" : "size-8", className)}
+      className={cn(showLabel ? classes.button : classes.button2, className)}
       aria-label={selectionMode ? "Disable selection mode" : "Enable selection mode"}
       aria-pressed={selectionMode}
       onClick={toggleSelectionMode}

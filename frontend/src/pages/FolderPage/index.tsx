@@ -14,6 +14,8 @@ import { DriveViewActions } from "@/components/drive/DriveViewActions";
 import { Folder } from "lucide-react";
 import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
 import { LoadingState } from "./LoadingStates";
+import classes from "./index.module.css";
+
 
 type ViewMode = "grid" | "list";
 
@@ -90,10 +92,10 @@ export default function FolderPage() {
       }
     >
       {/* CONTENT */}
-      <div className="flex-1 p-4">
+      <div className={classes.div}>
         {folders.length > 0 && (
           <section>
-            <h2 className="mb-3 text-sm font-semibold">Folders</h2>
+            <h2 className={classes.title}>Folders</h2>
             {viewMode === "grid" ? (
               <DriveGridView items={folders} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
             ) : (
@@ -103,8 +105,8 @@ export default function FolderPage() {
         )}
 
         {files.length > 0 && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-sm font-semibold">Files</h2>
+          <section className={classes.section}>
+            <h2 className={classes.title}>Files</h2>
             {viewMode === "grid" ? (
               <DriveGridView items={files} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
             ) : (
@@ -116,7 +118,7 @@ export default function FolderPage() {
         {itemsDrive.length === 0 && <EmptyFolderState parentId={folderId} />}
 
         {hasNextPage && (
-          <div className="flex justify-center py-6">
+          <div className={classes.centeredRow}>
             <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
               Load more
             </Button>

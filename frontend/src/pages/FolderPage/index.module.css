@@ -1,0 +1,49 @@
+.div {
+  flex: 1;
+}
+
+.div {
+  padding: 1rem;
+}
+
+.title {
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 0.875rem;
+  line-height: var(--fc-leading, 1.25rem);
+}
+
+.title {
+  --fc-font-weight:600;
+  font-weight: 600;
+}
+
+.section {
+  margin-top: 2rem;
+}
+
+.centeredRow {
+  display: flex;
+}
+
+.centeredRow-1 {
+  flex: 1;
+}
+
+.centeredRow-col {
+  flex-direction: column;
+}
+
+.centeredRow-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow {
+  justify-content: center;
+}
+
+.centeredRow {
+  padding-block: 1.5rem;
+}

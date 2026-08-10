@@ -1,0 +1,83 @@
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.centeredColumn {
+  display: flex;
+}
+
+.centeredColumn-1 {
+  flex: 1;
+}
+
+.centeredColumn-col {
+  flex-direction: column;
+}
+
+.centeredColumn-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredColumn {
+  width: 100%;
+}
+
+.centeredColumn {
+  flex-direction: column;
+}
+
+.centeredColumn {
+  align-items: center;
+}
+
+.centeredColumn {
+  justify-content: center;
+}
+
+.centeredColumn {
+  gap: 0.75rem;
+}
+
+.div {
+  min-height: calc(100vh - 160px);
+}
+
+.div2 {
+  min-height: 300px;
+}
+
+:where(.div3 > :not(:last-child)) {
+  --fc-space-y-reverse:0;
+  margin-block-start: calc(0.25rem * var(--fc-space-y-reverse));
+  margin-block-end: calc(0.25rem * (1 - var(--fc-space-y-reverse)));
+}
+
+.div3 {
+  text-align: center;
+}
+
+.text {
+  display: block;
+}
+
+.text {
+  font-size: 0.875rem !important;
+  line-height: var(--fc-leading, 1.25rem) !important;
+}
+
+.text2 {
+  display: block;
+}
+
+.text2 {
+  font-size: 0.75rem !important;
+  line-height: var(--fc-leading, 1rem) !important;
+}

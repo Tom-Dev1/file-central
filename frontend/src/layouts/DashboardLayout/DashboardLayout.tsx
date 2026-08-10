@@ -8,29 +8,67 @@ import { DriveNProgress } from "@/components/DriveNProgress";
 import { useTheme } from "@/contexts/themeContext";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSidebar from "./DashboardSidebar";
+import styles from "./DashboardLayout.module.css";
 
 const { Content, Sider } = Layout;
+const DASHBOARD_SIDEBAR_ID = "dashboard-primary-navigation";
+const SIDEBAR_PREFERENCE_KEY = "file-central-dashboard-sidebar-collapsed";
+
+function getInitialSidebarState() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(SIDEBAR_PREFERENCE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
 
 export default function DashboardLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(getInitialSidebarState);
   const { resolvedTheme } = useTheme();
 
-  return (
-    <Layout className="h-dvh overflow-hidden !bg-background">
-      <DriveNProgress />
-      <DashboardHeader onOpenNavigation={() => setMobileSidebarOpen(true)} />
+  const toggleSidebar = () => {
+    const nextCollapsed = !sidebarCollapsed;
+    setSidebarCollapsed(nextCollapsed);
 
-      <Layout className="min-h-0 flex-1 !bg-background">
+    try {
+      window.localStorage.setItem(SIDEBAR_PREFERENCE_KEY, String(nextCollapsed));
+    } catch {
+      // Keep the in-memory preference when storage is unavailable.
+    }
+  };
+
+  return (
+    <Layout className={styles.root}>
+      <DriveNProgress />
+      <DashboardHeader
+        onOpenMobileNavigation={() => setMobileSidebarOpen(true)}
+        onToggleSidebar={toggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+        sidebarId={DASHBOARD_SIDEBAR_ID}
+      />
+
+      <Layout className={styles.body} hasSider>
         <Sider
+          id={DASHBOARD_SIDEBAR_ID}
           width={256}
+          collapsedWidth={80}
+          collapsible
+          collapsed={sidebarCollapsed}
+          onCollapse={setSidebarCollapsed}
+          trigger={null}
           theme={resolvedTheme}
-          className="!hidden overflow-y-auto border-r border-border/70 !bg-background lg:!block"
+          className={styles.sider}
         >
-          <DashboardSidebar />
+          <DashboardSidebar collapsed={sidebarCollapsed} />
         </Sider>
 
-        <Content className="min-w-0 overflow-hidden !bg-background">
-          <main className="mx-auto h-full min-w-0 max-w-[1600px] overflow-hidden">
+        <Content className={styles.content}>
+          <main className={styles.main}>
             <DriveSelectionProvider>
               <Outlet />
             </DriveSelectionProvider>
@@ -42,20 +80,20 @@ export default function DashboardLayout() {
         placement="left"
         open={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
-        width="min(304px, calc(100vw - 32px))"
+        size="min(304px, calc(100vw - 32px))"
         styles={{ body: { padding: 0 } }}
         title={
-          <div className="flex items-center gap-2.5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Cloud className="size-5" />
+          <div className={styles.drawerTitle}>
+            <span className={styles.brandMark}>
+              <Cloud className={styles.brandIcon} />
             </span>
-            <Typography.Title level={4} className="!mb-0 !font-medium">
-              File <span className="text-muted-foreground">Central</span>
+            <Typography.Title level={4} className={styles.brandTitle}>
+              File <span className={styles.muted}>Central</span>
             </Typography.Title>
           </div>
         }
       >
-        <DashboardSidebar onNavigate={() => setMobileSidebarOpen(false)} />
+        <DashboardSidebar collapsed={false} onNavigate={() => setMobileSidebarOpen(false)} />
       </Drawer>
     </Layout>
   );

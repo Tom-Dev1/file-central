@@ -10,6 +10,8 @@ import { DriveSelectionToggle } from "../DriveSelectionToggle";
 import { DriveSelectAll } from "./selection/DriveSelectAll";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { useDeleteItem } from "@/hooks";
+import classes from "./DriveViewActions.module.css";
+
 
 export type ViewMode = "grid" | "list";
 
@@ -62,11 +64,11 @@ export function DriveViewActions({
 
   return (
     <Space size={8} wrap>
-      <PopoverUpload parentId={parentId} className="h-9 rounded-xl" />
+      <PopoverUpload parentId={parentId} className={classes.popoverupload} />
 
       {selectionMode && (
         <Space size={6}>
-          <Typography.Text type="secondary" className="whitespace-nowrap !text-xs">
+          <Typography.Text type="secondary" className={classes.text}>
             {selectedCount} selected
           </Typography.Text>
           <Tooltip title={selectedCount === 0 ? "Select items first" : "Move selected items to Trash"}>
@@ -84,8 +86,8 @@ export function DriveViewActions({
         </Space>
       )}
 
-      <Space.Compact className="rounded-xl border border-border bg-background p-0.5">
-        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel={false} className="px-1" />}
+      <Space.Compact className={classes.spacecompact}>
+        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel={false} className={classes.driveselectall} />}
 
         <DriveSelectionToggle showLabel />
         <Tooltip title="Refresh files">
@@ -105,8 +107,8 @@ export function DriveViewActions({
           value={viewMode}
           aria-label="Choose file view"
           options={[
-            { value: "list", icon: <UnorderedListOutlined />, label: <span className="sr-only">List view</span> },
-            { value: "grid", icon: <AppstoreOutlined />, label: <span className="sr-only">Grid view</span> },
+            { value: "list", icon: <UnorderedListOutlined />, label: <span className={classes.visuallyHidden}>List view</span> },
+            { value: "grid", icon: <AppstoreOutlined />, label: <span className={classes.visuallyHidden}>Grid view</span> },
           ]}
           onChange={(value) => onViewModeChange(value as ViewMode)}
         />

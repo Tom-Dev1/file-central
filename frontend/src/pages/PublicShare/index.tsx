@@ -7,6 +7,8 @@ import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDownloadPublicShare, usePublicShareMetadata } from "@/hooks";
 import type { SharePermission } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
+import classes from "./index.module.css";
+
 
 const permissionLabels: Record<SharePermission, string> = {
   view: "View only",
@@ -31,11 +33,11 @@ export default function PublicSharePage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] w-full max-w-3xl items-center justify-center px-4 py-12 sm:px-6">
+    <div className={classes.centeredRow}>
       {metadataQuery.isLoading ? (
-        <Card className="w-full"><Skeleton active avatar paragraph={{ rows: 5 }} /></Card>
+        <Card className={classes.card}><Skeleton active avatar paragraph={{ rows: 5 }} /></Card>
       ) : metadataQuery.isError || !metadata ? (
-        <Card className="w-full">
+        <Card className={classes.card}>
           <Result
             status="error"
             title="This shared link is unavailable"
@@ -44,18 +46,18 @@ export default function PublicSharePage() {
           />
         </Card>
       ) : (
-        <Card className="w-full" styles={{ body: { padding: 0 } }}>
-          <div className="flex flex-col items-center border-b p-6 text-center sm:p-8">
-            <span className="mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-              {metadata.item ? <ThemedSvgIcon src={getDriveItemIcon(metadata.item)} className="size-9 bg-primary" /> : <FileOutlined />}
+        <Card className={classes.card} styles={{ body: { padding: 0 } }}>
+          <div className={classes.centeredColumn}>
+            <span className={classes.centeredRow2}>
+              {metadata.item ? <ThemedSvgIcon src={getDriveItemIcon(metadata.item)} className={classes.icon} /> : <FileOutlined />}
             </span>
-            <Typography.Title level={3} ellipsis={{ tooltip: metadata.item.name }} className="!mb-2 max-w-full">
+            <Typography.Title level={3} ellipsis={{ tooltip: metadata.item.name }} className={classes.title}>
               {metadata.item.name}
             </Typography.Title>
             <Tag color="blue">{permissionLabels[metadata.permission]}</Tag>
           </div>
 
-          <div className="p-6 sm:p-8">
+          <div className={classes.div}>
             <Descriptions column={1} size="small" bordered>
               <Descriptions.Item label="Type">{metadata.item.type === "folder" ? "Folder" : metadata.item.mimeType ?? "File"}</Descriptions.Item>
               <Descriptions.Item label="Size">{metadata.item.type === "folder" ? "—" : formatFileSize(Number(metadata.item.sizeBytes ?? 0))}</Descriptions.Item>
@@ -63,7 +65,7 @@ export default function PublicSharePage() {
               <Descriptions.Item label="Access">{permissionLabels[metadata.permission]}</Descriptions.Item>
             </Descriptions>
 
-            <Typography.Paragraph type="secondary" className="!mb-5 !mt-5 !text-sm">
+            <Typography.Paragraph type="secondary" className={classes.paragraph}>
               This item was shared through File Central. Public preview is not available on shared links.
             </Typography.Paragraph>
 
@@ -73,7 +75,7 @@ export default function PublicSharePage() {
               </Button>
             ) : (
               <Result
-                className="!p-0"
+                className={classes.result}
                 status="info"
                 title={metadata.item.type === "folder" ? "Folder access" : "View-only access"}
                 subTitle={metadata.item.type === "folder" ? "Open this link from a signed-in shared workspace to browse the folder." : "The owner has not enabled downloads for this link."}

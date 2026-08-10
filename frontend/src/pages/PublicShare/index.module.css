@@ -1,0 +1,254 @@
+.centeredRow {
+  margin-inline: auto;
+}
+
+.centeredRow {
+  display: flex;
+}
+
+.centeredRow-1 {
+  flex: 1;
+}
+
+.centeredRow-col {
+  flex-direction: column;
+}
+
+.centeredRow-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow {
+  min-height: calc(100vh - 8rem);
+}
+
+.centeredRow {
+  width: 100%;
+}
+
+.centeredRow {
+  max-width: 48rem;
+}
+
+.centeredRow {
+  align-items: center;
+}
+
+.centeredRow {
+  justify-content: center;
+}
+
+.centeredRow {
+  padding-inline: 1rem;
+}
+
+.centeredRow {
+  padding-block: 3rem;
+}
+
+@media (width >= 40rem) {
+  .centeredRow {
+    padding-inline: 1.5rem;
+  }
+}
+.card {
+  width: 100%;
+}
+
+.centeredColumn {
+  display: flex;
+}
+
+.centeredColumn-1 {
+  flex: 1;
+}
+
+.centeredColumn-col {
+  flex-direction: column;
+}
+
+.centeredColumn-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredColumn {
+  flex-direction: column;
+}
+
+.centeredColumn {
+  align-items: center;
+}
+
+.centeredColumn {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 1px;
+}
+
+.centeredColumn-0 {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 0;
+}
+
+.centeredColumnackground {
+  border-color: var(--background);
+}
+
+.centeredColumnorder {
+  border-color: var(--border);
+}
+
+.centeredColumnorder\/70 {
+  border-color: var(--border);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredColumnorder\/70 {
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+}
+.centeredColumn {
+  padding: 1.5rem;
+}
+
+.centeredColumn {
+  text-align: center;
+}
+
+@media (width >= 40rem) {
+  .centeredColumn {
+    padding: 2rem;
+  }
+}
+.centeredRow2 {
+  margin-bottom: 1rem;
+}
+
+.centeredRow2 {
+  display: flex;
+}
+
+.centeredRow2-1 {
+  flex: 1;
+}
+
+.centeredRow2-col {
+  flex-direction: column;
+}
+
+.centeredRow2-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow2 {
+  width: 4rem;
+  height: 4rem;
+}
+
+.centeredRow2 {
+  align-items: center;
+}
+
+.centeredRow2 {
+  justify-content: center;
+}
+
+.centeredRow2 {
+  border-radius: 1rem;
+}
+
+.centeredRow2 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow2 {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+}
+.icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.icon {
+  background-color: var(--primary);
+}
+
+.icon\/5 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon\/5 {
+    background-color: color-mix(in oklab, var(--primary) 5%, transparent);
+  }
+}
+.icon\/10 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon\/10 {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+}
+.icon\/30 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon\/30 {
+    background-color: color-mix(in oklab, var(--primary) 30%, transparent);
+  }
+}
+.icon\/40 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon\/40 {
+    background-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  }
+}
+.icon\/50 {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon\/50 {
+    background-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  }
+}
+.title {
+  margin-bottom: 0.5rem !important;
+}
+
+.title {
+  max-width: 100%;
+}
+
+.div {
+  padding: 1.5rem;
+}
+
+@media (width >= 40rem) {
+  .div {
+    padding: 2rem;
+  }
+}
+.paragraph {
+  margin-bottom: 1.25rem !important;
+}
+
+.paragraph {
+  margin-top: 1.25rem !important;
+}
+
+.paragraph {
+  font-size: 0.875rem !important;
+  line-height: var(--fc-leading, 1.25rem) !important;
+}
+
+.result {
+  padding: 0 !important;
+}

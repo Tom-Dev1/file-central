@@ -1,4 +1,4 @@
-import { LoadingOutlined } from "@ant-design/icons";
+import { LoadingOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { App, Avatar, Button, Dropdown, Input, Layout, Tooltip, Typography, type MenuProps } from "antd";
 import { Cloud, LogOut, Menu as MenuIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -7,12 +7,21 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { useLogout } from "@/hooks/useAuth";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
+import classes from "./DashboardHeader.module.css";
 
 interface DashboardHeaderProps {
-  onOpenNavigation: () => void;
+  onOpenMobileNavigation: () => void;
+  onToggleSidebar: () => void;
+  sidebarCollapsed: boolean;
+  sidebarId: string;
 }
 
-function DashboardHeader({ onOpenNavigation }: DashboardHeaderProps) {
+function DashboardHeader({
+  onOpenMobileNavigation,
+  onToggleSidebar,
+  sidebarCollapsed,
+  sidebarId,
+}: DashboardHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useLogout();
@@ -78,12 +87,12 @@ function DashboardHeader({ onOpenNavigation }: DashboardHeaderProps) {
       key: "identity",
       disabled: true,
       label: (
-        <div className="min-w-48 py-1">
-          <Typography.Text strong className="block truncate">
+        <div className={classes.accountIdentity}>
+          <Typography.Text strong className={classes.truncatedText}>
             {displayName}
           </Typography.Text>
           {currentUser?.email && (
-            <Typography.Text type="secondary" className="block truncate !text-xs">
+            <Typography.Text type="secondary" className={classes.accountEmail}>
               {currentUser.email}
             </Typography.Text>
           )}
@@ -95,50 +104,70 @@ function DashboardHeader({ onOpenNavigation }: DashboardHeaderProps) {
       key: "logout",
       danger: true,
       disabled: logout.isPending,
-      icon: logout.isPending ? <LoadingOutlined spin /> : <LogOut className="size-4" />,
+      icon: logout.isPending ? <LoadingOutlined spin /> : <LogOut className={classes.icon} />,
       label: logout.isPending ? "Signing out…" : "Sign out",
       onClick: () => void handleLogout(),
     },
   ];
 
+  const sidebarToggleLabel = sidebarCollapsed ? "Expand navigation" : "Collapse navigation";
+
   return (
-    <Layout.Header className="z-30 !h-16 !shrink-0 border-b border-border/70 !bg-background !px-0 !leading-normal">
-      <div className="flex h-full min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-4">
+    <Layout.Header className={classes.header}>
+      <div className={classes.row}>
         <Tooltip title="Open navigation">
           <Button
             type="text"
             shape="circle"
             size="large"
-            className="!inline-flex !shrink-0 lg:!hidden"
+            className={classes.mobileNavigationButton}
             aria-label="Open navigation menu"
-            icon={<MenuIcon className="size-5" />}
-            onClick={onOpenNavigation}
+            icon={<MenuIcon className={classes.navigationIcon} />}
+            onClick={onOpenMobileNavigation}
           />
         </Tooltip>
 
-        <NavLink to="/dashboard" className="flex shrink-0 items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Cloud className="size-5" />
+        <Tooltip title={sidebarToggleLabel}>
+          <Button
+            type="text"
+            shape="circle"
+            size="large"
+            className={classes.desktopNavigationButton}
+            aria-label={sidebarToggleLabel}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls={sidebarId}
+            icon={sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={onToggleSidebar}
+          />
+        </Tooltip>
+
+        <NavLink to="/dashboard" className={classes.brandLink} aria-label="File Central dashboard">
+          <span className={classes.brandMark}>
+            <Cloud className={classes.brandIcon} />
           </span>
-          <span className="hidden text-[1.375rem] font-normal tracking-tight text-foreground xl:block">
-            File <span className="font-medium text-muted-foreground">Central</span>
+          <span className={classes.brandName}>
+            File <span className={classes.brandNameMuted}>Central</span>
           </span>
         </NavLink>
 
-        <div className="mx-auto w-full min-w-0 max-w-2xl">
+        <div className={classes.searchRegion}>
           <Input.Search
             allowClear
             value={searchState.value}
             placeholder="Search in Drive"
             aria-label="Search in Drive"
-            className="[&_.ant-input-affix-wrapper]:!h-11 [&_.ant-input-affix-wrapper]:!rounded-l-full [&_.ant-input-affix-wrapper]:!border-transparent [&_.ant-input-affix-wrapper]:!bg-muted [&_.ant-input-affix-wrapper]:!pl-4 [&_.ant-input-search-button]:!h-11 [&_.ant-input-search-button]:!rounded-r-full [&_.ant-input-search-button]:!border-transparent [&_.ant-input-search-button]:!bg-muted focus-within:[&_.ant-input-affix-wrapper]:!border-primary/40"
+            className={classes.search}
+            classNames={{
+              input: classes.searchInput,
+              button: { root: classes.searchButton },
+            }}
             onChange={(event) => setSearchState({ urlQuery: urlSearchQuery, value: event.target.value })}
             onSearch={handleSearch}
           />
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
-          <span className="inline-flex">
+        <div className={classes.headerActions}>
+          <span className={classes.themeAction}>
             <ModeToggle />
           </span>
 
@@ -147,14 +176,14 @@ function DashboardHeader({ onOpenNavigation }: DashboardHeaderProps) {
               <Button
                 type="text"
                 shape="circle"
-                className="!size-10 !p-0"
+                className={classes.accountButton}
                 aria-label="Open account menu"
                 disabled={logout.isPending}
               >
                 {logout.isPending ? (
-                  <LoadingOutlined spin className="text-lg" />
+                  <LoadingOutlined spin className={classes.loadingIcon} />
                 ) : (
-                  <Avatar size={36} src={currentUser?.avatarUrl} className="!bg-primary !text-primary-foreground">
+                  <Avatar size={36} src={currentUser?.avatarUrl} className={classes.avatar}>
                     {initials}
                   </Avatar>
                 )}

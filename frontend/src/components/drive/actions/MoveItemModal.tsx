@@ -3,6 +3,8 @@ import { App, Button, Empty, List, Modal, Result, Skeleton, Space, Typography } 
 import { useMemo, useState } from "react";
 
 import { useDriveList, useMoveItem } from "@/hooks";
+import classes from "./MoveItemModal.module.css";
+
 
 interface MoveItemModalProps {
   open: boolean;
@@ -72,7 +74,7 @@ export function MoveItemModal({
       onCancel={handleClose}
       destroyOnHidden
     >
-      <Space className="!mb-3 !w-full" size="small">
+      <Space className={classes.space} size="small">
         <Button
           type="text"
           aria-label="Go to parent folder"
@@ -80,15 +82,15 @@ export function MoveItemModal({
           disabled={locations.length === 1}
           onClick={() => setLocations((current) => current.slice(0, -1))}
         />
-        <HomeOutlined className="text-primary" />
+        <HomeOutlined className={classes.icon} />
         <Typography.Text strong ellipsis={{ tooltip: currentLocation.name }}>
           {currentLocation.name}
         </Typography.Text>
       </Space>
 
-      <div className="min-h-64 max-h-[45vh] overflow-y-auto rounded-xl border">
+      <div className={classes.div}>
         {foldersQuery.isLoading ? (
-          <div className="p-4"><Skeleton active paragraph={{ rows: 4 }} /></div>
+          <div className={classes.div2}><Skeleton active paragraph={{ rows: 4 }} /></div>
         ) : foldersQuery.isError ? (
           <Result
             status="error"
@@ -96,7 +98,7 @@ export function MoveItemModal({
             extra={<Button onClick={() => void foldersQuery.refetch()}>Try again</Button>}
           />
         ) : folders.length === 0 ? (
-          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No folders here" className="!my-12" />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No folders here" className={classes.empty} />
         ) : (
           <List
             dataSource={folders}
@@ -104,7 +106,7 @@ export function MoveItemModal({
               const isItemItself = folder.id === itemId;
               return (
                 <List.Item
-                  className="!px-4"
+                  className={classes.listitem}
                   actions={[
                     <Button
                       key="open"
@@ -117,7 +119,7 @@ export function MoveItemModal({
                   ]}
                 >
                   <List.Item.Meta
-                    avatar={<FolderOutlined className="text-xl text-primary" />}
+                    avatar={<FolderOutlined className={classes.icon2} />}
                     title={<Typography.Text disabled={isItemItself} ellipsis={{ tooltip: folder.name }}>{folder.name}</Typography.Text>}
                     description={isItemItself ? "An item cannot be moved into itself" : `${folder.childCount ?? 0} items`}
                   />
@@ -128,7 +130,7 @@ export function MoveItemModal({
         )}
       </div>
       {destinationUnchanged && (
-        <Typography.Text type="secondary" className="!mt-3 block !text-xs">
+        <Typography.Text type="secondary" className={classes.text}>
           This item is already in {currentLocation.name}.
         </Typography.Text>
       )}

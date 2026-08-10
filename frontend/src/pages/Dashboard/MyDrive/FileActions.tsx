@@ -17,6 +17,8 @@ import { ShareItemModal } from "@/components/drive/actions/ShareItemModal";
 import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
 import { useDeleteItem, useDownloadFile } from "@/hooks";
 import type { DriveItem } from "@/types/api.types";
+import classes from "./FileActions.module.css";
+
 
 interface FileActionsProps {
   item: DriveItem;
@@ -105,12 +107,12 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
         <Dropdown
           trigger={["click"]}
           placement="bottomRight"
-          menu={{ items: menuItems, onClick: handleMenuClick, className: "min-w-52" }}
+          menu={{ items: menuItems, onClick: handleMenuClick, className: classes.menu }}
         >
           <Button
             type="text"
             shape="circle"
-            className="flex size-8 items-center justify-center"
+            className={classes.button}
             aria-label={`Open actions for ${item.name}`}
             icon={<MoreOutlined />}
             loading={downloadFile.isPending || deleteItem.isPending}

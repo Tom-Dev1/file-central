@@ -1,0 +1,158 @@
+.popoverupload {
+  height: 2.25rem;
+}
+
+.popoverupload6 {
+  height: 24rem;
+}
+
+.popoverupload {
+  border-radius: calc(var(--radius) + 4px);
+}
+
+.text {
+  white-space: nowrap;
+}
+
+.text {
+  font-size: 0.75rem !important;
+  line-height: var(--fc-leading, 1rem) !important;
+}
+
+.spacecompact {
+  border-radius: calc(var(--radius) + 4px);
+}
+
+.spacecompact {
+  border-style: var(--fc-border-style);
+  border-width: 1px;
+}
+
+.spacecompact-0 {
+  border-style: var(--fc-border-style);
+  border-width: 0;
+}
+
+.spacecompact-4 {
+  border-style: var(--fc-border-style);
+  border-width: 4px;
+}
+
+.spacecompact-t {
+  border-top-style: var(--fc-border-style);
+  border-top-width: 1px;
+}
+
+.spacecompact-r {
+  border-right-style: var(--fc-border-style);
+  border-right-width: 1px;
+}
+
+.spacecompact-b {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 1px;
+}
+
+.spacecompact-b-0 {
+  border-bottom-style: var(--fc-border-style);
+  border-bottom-width: 0;
+}
+
+.spacecompact-dashed {
+  --fc-border-style:dashed;
+  border-style: dashed;
+}
+
+.spacecompact-background {
+  border-color: var(--background);
+}
+
+.spacecompact-border {
+  border-color: var(--border);
+}
+
+.spacecompact-border\/70 {
+  border-color: var(--border);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact-border\/70 {
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+}
+.spacecompact-primary {
+  border-color: var(--primary);
+}
+
+.spacecompact-primary\/20 {
+  border-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact-primary\/20 {
+    border-color: color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+}
+.spacecompact {
+  border-color: var(--border);
+}
+
+.spacecompact\/70 {
+  border-color: var(--border);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact\/70 {
+    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  }
+}
+.spacecompact {
+  background-color: var(--background);
+}
+
+.spacecompact\/80 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact\/80 {
+    background-color: color-mix(in oklab, var(--background) 80%, transparent);
+  }
+}
+.spacecompact\/90 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact\/90 {
+    background-color: color-mix(in oklab, var(--background) 90%, transparent);
+  }
+}
+.spacecompact\/95 {
+  background-color: var(--background);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .spacecompact\/95 {
+    background-color: color-mix(in oklab, var(--background) 95%, transparent);
+  }
+}
+.spacecompact {
+  padding: 0.125rem;
+}
+
+.driveselectall {
+  padding-inline: 0.25rem;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

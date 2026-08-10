@@ -2,6 +2,8 @@ import { Button, Card } from "antd";
 import type { DriveItem } from "@/types/api.types";
 import { fileIcons } from "@/types/file-type";
 import { MoreVertical, Share2, Star } from "lucide-react";
+import classes from "./QuickAccessCard.module.css";
+
 
 interface QuickAccessCardProps {
   item: DriveItem;
@@ -11,23 +13,23 @@ export default function QuickAccessCard({ item }: QuickAccessCardProps) {
   const Icon = fileIcons[item.type];
 
   return (
-    <Card hoverable className="group cursor-pointer" styles={{ body: { padding: 16 } }}>
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-5" />
+    <Card hoverable className={classes.card} styles={{ body: { padding: 16 } }}>
+      <div className={classes.row}>
+        <span className={classes.centeredRow}>
+          <Icon className={classes.icon} />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-sm font-medium" title={item.name}>{item.name}</span>
-            {item.sizeBytes && <Share2 className="size-3.5 shrink-0 text-muted-foreground" />}
-            {item.ownerId && <Star className="size-3.5 shrink-0 fill-current text-muted-foreground" />}
+        <div className={classes.div}>
+          <div className={classes.row2}>
+            <span className={classes.truncatedValue} title={item.name}>{item.name}</span>
+            {item.sizeBytes && <Share2 className={classes.icon2} />}
+            {item.ownerId && <Star className={classes.icon3} />}
           </div>
-          <div className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-            <span className="truncate">{item.createdAt}</span>
-            {item.sizeBytes && <><span aria-hidden="true">·</span><span className="shrink-0">{item.sizeBytes}</span></>}
+          <div className={classes.row3}>
+            <span className={classes.truncatedValue2}>{item.createdAt}</span>
+            {item.sizeBytes && <><span aria-hidden="true">·</span><span className={classes.span}>{item.sizeBytes}</span></>}
           </div>
         </div>
-        <Button type="text" shape="circle" size="small" aria-label={`Open actions for ${item.name}`} icon={<MoreVertical className="size-4" />} />
+        <Button type="text" shape="circle" size="small" aria-label={`Open actions for ${item.name}`} icon={<MoreVertical className={classes.icon4} />} />
       </div>
     </Card>
   );

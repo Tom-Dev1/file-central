@@ -3,7 +3,9 @@ import { App, Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 
 import { useCreateFolder } from "@/hooks";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
+import classes from "./CreateFolder.module.css";
+
 
 interface CreateFolderButtonProps {
   parentId?: string | null;
@@ -63,7 +65,7 @@ export function CreateFolderButton({
       <Button
         type={variant === "menu" ? "text" : "default"}
         block={variant === "menu"}
-        className={cn(variant === "menu" && "justify-start", className)}
+        className={cn(variant === "menu" && classes.button, className)}
         icon={<FolderAddOutlined />}
         onClick={() => setDialogOpen(true)}
       >
@@ -84,7 +86,7 @@ export function CreateFolderButton({
         onOk={() => form.submit()}
         onCancel={handleCancel}
       >
-        <p className="mb-4 text-sm text-muted-foreground">Enter a name for the new folder.</p>
+        <p className={classes.description}>Enter a name for the new folder.</p>
         <Form<CreateFolderFormValues>
           form={form}
           layout="vertical"

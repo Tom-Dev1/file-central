@@ -5,8 +5,9 @@ import { App, Button } from "antd";
 import { UploadNotificationContent } from "@/components/upload/UploadNotificationContent";
 import { formatFileSize } from "@/constants/file-constants";
 import { useUploadFile } from "@/hooks";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import { getErrorMessage } from "@/utils/upload-utils";
+import styles from "./UploadFileButton.module.css";
 
 interface UploadFileButtonProps {
   parentId?: string | null;
@@ -86,14 +87,14 @@ export function UploadFileButton({ parentId, className, variant = "menu" }: Uplo
 
   return (
     <>
-      <input ref={inputRef} type="file" className="hidden" onChange={handleFileChange} />
+      <input ref={inputRef} type="file" className={styles.input} onChange={handleFileChange} />
       <Button
         type={variant === "menu" ? "text" : "default"}
         block={variant === "menu"}
         loading={uploadFile.isPending}
         disabled={uploadFile.isPending}
         onClick={() => inputRef.current?.click()}
-        className={cn(variant === "menu" && "justify-start", className)}
+        className={cn(variant === "menu" && styles.menuButton, className)}
         icon={<UploadOutlined />}
       >
         {uploadFile.isPending ? "Uploading..." : "File upload"}

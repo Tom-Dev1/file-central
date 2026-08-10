@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
+import classes from "./DrivePageShell.module.css";
+
 
 interface DrivePageShellProps {
   header: ReactNode;
@@ -11,10 +13,10 @@ interface DrivePageShellProps {
 
 export function DrivePageShell({ header, children, className, contentClassName }: DrivePageShellProps) {
   return (
-    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}>
-      <div className="relative z-20 shrink-0 border-b bg-background/95 backdrop-blur">{header}</div>
+    <div className={cn(classes.column, className)}>
+      <div className={classes.div}>{header}</div>
 
-      <div className={cn("custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain", contentClassName)}>
+      <div className={cn(classes.div2, contentClassName)}>
         {children}
       </div>
     </div>

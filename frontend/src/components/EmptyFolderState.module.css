@@ -1,0 +1,43 @@
+.centeredColumn {
+  display: flex;
+}
+
+.centeredColumn-1 {
+  flex: 1;
+}
+
+.centeredColumn-col {
+  flex-direction: column;
+}
+
+.centeredColumn-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredColumn {
+  min-height: 400px;
+}
+
+.centeredColumn {
+  flex-direction: column;
+}
+
+.centeredColumn {
+  align-items: center;
+}
+
+.centeredColumn {
+  justify-content: center;
+}
+
+.centeredColumn {
+  padding-inline: 1rem;
+}
+
+.centeredColumn {
+  text-align: center;
+}
+
+.centeredRow {
+  justify-content: center;
+}

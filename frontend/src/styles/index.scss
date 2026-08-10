@@ -1,0 +1,221 @@
+:root {
+  --radius: 0.75rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.216 0.006 285.9);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.216 0.006 285.9);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.216 0.006 285.9);
+  --primary: oklch(0.546 0.189 262.88);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.982 0.002 247.84);
+  --secondary-foreground: oklch(0.216 0.006 285.9);
+  --muted: oklch(0.967 0.003 264.54);
+  --muted-foreground: oklch(0.506 0.012 264);
+  --accent: oklch(0.952 0.025 264.05);
+  --accent-foreground: oklch(0.503 0.177 262.9);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.896 0.005 264.53);
+  --input: oklch(0.967 0.003 264.54);
+  --ring: oklch(0.546 0.189 262.88);
+  --scrollbar-thumb: oklch(0.506 0.012 264 / 35%);
+  --color-1: 0 100% 63%;
+  --color-2: 270 100% 63%;
+  --color-3: 210 100% 63%;
+  --color-4: 195 100% 63%;
+  --color-5: 90 100% 63%;
+}
+
+.dark {
+  --background: oklch(0.216 0.006 285.9);
+  --foreground: oklch(0.928 0.003 264);
+  --card: oklch(0.248 0.008 264);
+  --card-foreground: oklch(0.928 0.003 264);
+  --popover: oklch(0.248 0.008 264);
+  --popover-foreground: oklch(0.928 0.003 264);
+  --primary: oklch(0.757 0.104 264.05);
+  --primary-foreground: oklch(0.216 0.006 285.9);
+  --secondary: oklch(0.285 0.01 264);
+  --secondary-foreground: oklch(0.928 0.003 264);
+  --muted: oklch(0.285 0.01 264);
+  --muted-foreground: oklch(0.684 0.012 264);
+  --accent: oklch(0.32 0.04 264);
+  --accent-foreground: oklch(0.757 0.104 264.05);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.373 0.012 264);
+  --input: oklch(0.285 0.01 264);
+  --ring: oklch(0.757 0.104 264.05);
+  --scrollbar-thumb: oklch(0.684 0.012 264 / 45%);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Roboto", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, optgroup, select, textarea {
+  color: inherit;
+  font: inherit;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, [role=button] {
+  cursor: pointer;
+}
+
+button:disabled, [aria-disabled=true] {
+  cursor: default;
+}
+
+@keyframes rainbow {
+  0% {
+    background-position: 0%;
+  }
+  100% {
+    background-position: 200%;
+  }
+}
+@keyframes loading {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+@keyframes file-central-float-one {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-6deg);
+  }
+  50% {
+    transform: translate3d(12px, -18px, 0) rotate(2deg);
+  }
+}
+@keyframes file-central-float-two {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(7deg);
+  }
+  50% {
+    transform: translate3d(-14px, 16px, 0) rotate(-2deg);
+  }
+}
+@keyframes file-central-float-three {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(5deg);
+  }
+  50% {
+    transform: translate3d(16px, -12px, 0) rotate(-4deg);
+  }
+}
+@keyframes file-central-float-four {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(-5deg);
+  }
+  50% {
+    transform: translate3d(-12px, -16px, 0) rotate(4deg);
+  }
+}
+@keyframes file-central-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes file-central-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  min-height: 40px;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklch, var(--scrollbar-thumb), var(--foreground) 25%);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 6px;
+  background: var(--primary);
+}
+
+#nprogress .peg {
+  position: absolute;
+  right: 0;
+  display: block;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+  opacity: 1;
+  transform: rotate(3deg) translate(0, -4px);
+}
+
+#nprogress .spinner {
+  display: none;
+}

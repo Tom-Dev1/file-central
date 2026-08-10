@@ -1,0 +1,307 @@
+.card {
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+}
+
+.row-1 {
+  flex: 1;
+}
+
+.row-col {
+  flex-direction: column;
+}
+
+.row-wrap {
+  flex-wrap: wrap;
+}
+
+.row {
+  min-width: 0;
+}
+
+.row {
+  align-items: center;
+}
+
+.row {
+  gap: 0.75rem;
+}
+
+.centeredRow {
+  display: flex;
+}
+
+.centeredRow-1 {
+  flex: 1;
+}
+
+.centeredRow-col {
+  flex-direction: column;
+}
+
+.centeredRow-wrap {
+  flex-wrap: wrap;
+}
+
+.centeredRow {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.centeredRow {
+  flex-shrink: 0;
+}
+
+.centeredRow {
+  align-items: center;
+}
+
+.centeredRow {
+  justify-content: center;
+}
+
+.centeredRow {
+  border-radius: var(--radius);
+}
+
+.centeredRow {
+  background-color: var(--primary);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .centeredRow {
+    background-color: color-mix(in oklab, var(--primary) 10%, transparent);
+  }
+}
+.centeredRow {
+  color: var(--primary);
+}
+
+.centeredRow-foreground {
+  color: var(--primary-foreground);
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.div {
+  min-width: 0;
+}
+
+.div {
+  flex: 1;
+}
+
+.row2 {
+  display: flex;
+}
+
+.row2-1 {
+  flex: 1;
+}
+
+.row2-col {
+  flex-direction: column;
+}
+
+.row2-wrap {
+  flex-wrap: wrap;
+}
+
+.row2 {
+  min-width: 0;
+}
+
+.row2 {
+  align-items: center;
+}
+
+.row2 {
+  gap: 0.375rem;
+}
+
+.truncatedValue {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.truncatedValue {
+  font-size: 0.875rem;
+  line-height: var(--fc-leading, 1.25rem);
+}
+
+.truncatedValue {
+  --fc-font-weight:500;
+  font-weight: 500;
+}
+
+.icon2 {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.icon2 {
+  flex-shrink: 0;
+}
+
+.icon2 {
+  color: var(--muted-foreground);
+}
+
+.icon2\/40 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon2\/40 {
+    color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  }
+}
+.icon2\/60 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon2\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+}
+.icon3 {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.icon3 {
+  flex-shrink: 0;
+}
+
+.icon3 {
+  fill: currentColor;
+}
+
+.icon3 {
+  color: var(--muted-foreground);
+}
+
+.icon3\/40 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon3\/40 {
+    color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  }
+}
+.icon3\/60 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .icon3\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+}
+.row3 {
+  margin-top: 0.25rem;
+}
+
+.row30 {
+  margin-top: 2.5rem;
+}
+
+.row3 {
+  display: flex;
+}
+
+.row3-1 {
+  flex: 1;
+}
+
+.row3-col {
+  flex-direction: column;
+}
+
+.row3-wrap {
+  flex-wrap: wrap;
+}
+
+.row3 {
+  min-width: 0;
+}
+
+.row3 {
+  align-items: center;
+}
+
+.row3 {
+  gap: 0.25rem;
+}
+
+.row3\.5 {
+  gap: 0.375rem;
+}
+
+.row30 {
+  gap: 2.5rem;
+}
+
+.row32 {
+  gap: 3rem;
+}
+
+.row34 {
+  gap: 3.5rem;
+}
+
+.row3 {
+  font-size: 0.75rem;
+  line-height: var(--fc-leading, 1rem);
+}
+
+.row3 {
+  color: var(--muted-foreground);
+}
+
+.row3\/40 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .row3\/40 {
+    color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+  }
+}
+.row3\/60 {
+  color: var(--muted-foreground);
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .row3\/60 {
+    color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
+}
+.truncatedValue2 {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.span {
+  flex-shrink: 0;
+}
+
+.icon4 {
+  width: 1rem;
+  height: 1rem;
+}
+
+.icon40 {
+  width: 10rem;
+  height: 10rem;
+}

@@ -1,4 +1,6 @@
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
+import classes from "./ThemedSvgIcon.module.css";
+
 
 interface ThemedSvgIconProps {
   src: string;
@@ -9,7 +11,7 @@ export function ThemedSvgIcon({ src, className }: ThemedSvgIconProps) {
   return (
     <span
       aria-hidden="true"
-      className={cn("inline-block shrink-0 bg-muted-foreground", className)}
+      className={cn(classes.span, className)}
       style={{
         WebkitMaskImage: `url("${src}")`,
         maskImage: `url("${src}")`,

@@ -9,13 +9,14 @@ import { MoveDto } from "./dto/move.dto";
 import { PaginationQueryDto } from "./dto/pagination-query.dto";
 import { SearchQueryDto } from "./dto/search-query.dto";
 import { toDriveItemDto, toDriveItemDtoList } from "../../common/mappers/response-mapper";
+import { DriveDriveItemsDto } from "./dto/drive-item-query.dto";
 
 @ApiTags("drive")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller("drive")
 export class DriveController {
-  constructor(private driveService: DriveService) {}
+  constructor(private driveService: DriveService) { }
 
   // NOTE: /drive/search must be declared before /drive/:id-style routes
   // in the same controller to avoid Express matching "search" as an :id.
@@ -35,13 +36,13 @@ export class DriveController {
   async list(
     @CurrentUser() user: AuthUser,
     @Query("parentId") parentId: string | undefined,
-    @Query() pagination: PaginationQueryDto
+    @Query() query: DriveDriveItemsDto
   ) {
     const result = await this.driveService.list(
       user.userId,
-      parentId || null,
-      pagination.cursor,
-      pagination.limit ?? 50
+      query.parentId ?? null,
+      query.cursor,
+      query.limit ?? 50
     );
     return { ...result, items: toDriveItemDtoList(result.items) };
   }

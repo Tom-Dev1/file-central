@@ -9,6 +9,8 @@ import { Flex, Grid, Space, Typography, theme } from "antd";
 import { Link, Outlet } from "react-router-dom";
 
 import { ModeToggle } from "@/components/theme/ModeToggle";
+import classes from "./AuthLayout.module.css";
+
 
 const features = [
   {
@@ -65,7 +67,7 @@ function AuthLayout() {
 
   return (
     <div
-      className="min-h-svh"
+      className={classes.div}
       style={{
         display: "grid",
         gridTemplateColumns: isDesktop ? "minmax(440px, 0.92fr) minmax(520px, 1.08fr)" : "1fr",

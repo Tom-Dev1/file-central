@@ -12,6 +12,8 @@ import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDownloadFile, useMyShares, useRevokeShare, useSharedWithMe } from "@/hooks";
 import type { DriveItem, Share, SharePermission, SharedWithMeRow } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
+import classes from "./index.module.css";
+
 
 const permissionLabels: Record<SharePermission, string> = {
   view: "View only",
@@ -60,13 +62,13 @@ export default function SharedPage() {
       key: "name",
       title: "Name",
       render: (_, row) => (
-        <div className="flex min-w-0 items-center gap-3">
-          <ThemedSvgIcon src={getDriveItemIcon(row.item)} className="size-5 shrink-0" />
-          <div className="min-w-0">
-            <Typography.Text strong ellipsis={{ tooltip: row.item.name }} className="block">{row.item.name}</Typography.Text>
-            <div className="mt-1 flex items-center gap-2 md:hidden">
-              <Tag color="blue" className="!m-0">{permissionLabels[row.share.permission]}</Tag>
-              <Typography.Text type="secondary" className="!text-xs">{formatModifiedDate(row.share.createdAt)}</Typography.Text>
+        <div className={classes.row}>
+          <ThemedSvgIcon src={getDriveItemIcon(row.item)} className={classes.icon} />
+          <div className={classes.div}>
+            <Typography.Text strong ellipsis={{ tooltip: row.item.name }} className={classes.text}>{row.item.name}</Typography.Text>
+            <div className={classes.row2}>
+              <Tag color="blue" className={classes.tag}>{permissionLabels[row.share.permission]}</Tag>
+              <Typography.Text type="secondary" className={classes.text2}>{formatModifiedDate(row.share.createdAt)}</Typography.Text>
             </div>
           </div>
         </div>
@@ -95,7 +97,7 @@ export default function SharedPage() {
     },
     {
       key: "actions",
-      title: <span className="sr-only">Actions</span>,
+      title: <span className={classes.visuallyHidden}>Actions</span>,
       width: 92,
       align: "right",
       render: (_, row) => (
@@ -127,11 +129,11 @@ export default function SharedPage() {
       key: "item",
       title: "Item",
       render: (_, share) => (
-        <div className="min-w-0">
-          <Typography.Text strong className="block" copyable={{ text: share.itemId }}>
+        <div className={classes.div}>
+          <Typography.Text strong className={classes.text} copyable={{ text: share.itemId }}>
             {share.itemType === "folder" ? "Folder" : "File"}
           </Typography.Text>
-          <Typography.Text type="secondary" ellipsis={{ tooltip: share.itemId }} className="block !text-xs">
+          <Typography.Text type="secondary" ellipsis={{ tooltip: share.itemId }} className={classes.text3}>
             {share.itemId}
           </Typography.Text>
         </div>
@@ -164,7 +166,7 @@ export default function SharedPage() {
     },
     {
       key: "actions",
-      title: <span className="sr-only">Actions</span>,
+      title: <span className={classes.visuallyHidden}>Actions</span>,
       width: 64,
       align: "right",
       render: (_, share) => (
@@ -204,7 +206,7 @@ export default function SharedPage() {
         />
       }
     >
-      <div className="p-4 sm:p-6">
+      <div className={classes.div2}>
         <Tabs
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key as "shared" | "mine")}
@@ -224,7 +226,7 @@ export default function SharedPage() {
               extra={<Button icon={<ReloadOutlined />} onClick={() => void sharedQuery.refetch()}>Try again</Button>}
             />
           ) : rows.length === 0 ? (
-            <div className="flex min-h-80 items-center justify-center">
+            <div className={classes.centeredRow}>
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Nothing has been shared with you yet" />
             </div>
           ) : (
@@ -234,8 +236,8 @@ export default function SharedPage() {
               dataSource={rows}
               pagination={false}
               tableLayout="fixed"
-              className="overflow-hidden rounded-xl"
-              rowClassName="cursor-pointer"
+              className={classes.table}
+              rowClassName={classes.clickableRow}
               onRow={(row) => ({
                 tabIndex: 0,
                 onClick: () => openItem(row),
@@ -258,7 +260,7 @@ export default function SharedPage() {
             extra={<Button icon={<ReloadOutlined />} onClick={() => void mySharesQuery.refetch()}>Try again</Button>}
           />
         ) : myShares.length === 0 ? (
-          <div className="flex min-h-80 items-center justify-center">
+          <div className={classes.centeredRow}>
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="You have not shared any items yet" />
           </div>
         ) : (
@@ -268,7 +270,7 @@ export default function SharedPage() {
             dataSource={myShares}
             pagination={false}
             tableLayout="fixed"
-            className="overflow-hidden rounded-xl"
+            className={classes.table}
           />
         )}
       </div>

@@ -3,6 +3,8 @@ import { Button, Space, Typography } from "antd";
 
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
 import { resolvePreviewKind } from "@/utils/resolve-preview-kind";
+import classes from "./FilePreviewContent.module.css";
+
 
 interface FilePreviewContentProps {
   preview: PreviewLinkResponse;
@@ -22,48 +24,48 @@ export function FilePreviewContent({
   switch (resolvePreviewKind(fileName)) {
     case "image":
       return (
-        <div className="flex size-full items-center justify-center overflow-auto bg-muted/20 p-6">
-          <img src={preview.url} alt={fileName} className="max-h-full max-w-full object-contain" />
+        <div className={classes.centeredRow}>
+          <img src={preview.url} alt={fileName} className={classes.imgPreview} />
         </div>
       );
 
     case "pdf":
-      return <iframe src={preview.url} title={fileName} className="size-full border-0 bg-background" />;
+      return <iframe src={preview.url} title={fileName} className={classes.iframePreview} />;
 
     case "video":
       return (
-        <div className="flex size-full items-center justify-center bg-black p-4">
-          <video src={preview.url} controls preload="metadata" className="max-h-full max-w-full" />
+        <div className={classes.centeredRow2}>
+          <video src={preview.url} controls preload="metadata" className={classes.videoPreview} />
         </div>
       );
 
     case "audio":
       return (
-        <div className="flex size-full items-center justify-center bg-muted/20 p-8">
-          <div className="w-full max-w-xl rounded-xl border bg-card p-6">
-            <Typography.Text strong ellipsis={{ tooltip: fileName }} className="mb-4 block text-center">
+        <div className={classes.centeredRow3}>
+          <div className={classes.fullWidth}>
+            <Typography.Text strong ellipsis={{ tooltip: fileName }} className={classes.text}>
               {fileName}
             </Typography.Text>
-            <audio src={preview.url} controls preload="metadata" className="w-full" />
+            <audio src={preview.url} controls preload="metadata" className={classes.audioPreview} />
           </div>
         </div>
       );
 
     case "text":
-      return <iframe src={preview.url} title={fileName} className="size-full border-0 bg-background" />;
+      return <iframe src={preview.url} title={fileName} className={classes.iframePreview} />;
 
     default:
       return (
-        <div className="flex size-full items-center justify-center overflow-auto p-6">
-          <div className="max-w-md text-center">
-            <FileUnknownOutlined className="text-5xl text-muted-foreground" />
-            <Typography.Title level={4} className="mt-4!">
+        <div className={classes.centeredRow4}>
+          <div className={classes.div}>
+            <FileUnknownOutlined className={classes.icon} />
+            <Typography.Title level={4} className={classes.title}>
               Preview is not available
             </Typography.Title>
             <Typography.Paragraph type="secondary">
               This file type cannot be previewed in the browser.
             </Typography.Paragraph>
-            <Space wrap className="justify-center">
+            <Space wrap className={classes.centeredRow5}>
               <Button
                 icon={<ExportOutlined />}
                 onClick={() => window.open(preview.url, "_blank", "noopener,noreferrer")}

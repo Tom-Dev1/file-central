@@ -9,6 +9,8 @@ import { usePurgeAllTrash, usePurgeItem, useRestoreItem, useTrashList } from "@/
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
 import { Trash2 } from "lucide-react";
+import classes from "./index.module.css";
+
 
 export default function TrashPage() {
   const { message } = App.useApp();
@@ -44,11 +46,11 @@ export default function TrashPage() {
       key: "name",
       title: "Name",
       render: (_, item) => (
-        <div className="flex min-w-0 items-center gap-3">
-          <ThemedSvgIcon src={getDriveItemIcon(item)} className="size-5 shrink-0" />
-          <div className="min-w-0">
-            <Typography.Text strong ellipsis={{ tooltip: item.name }} className="block">{item.name}</Typography.Text>
-            <Typography.Text type="secondary" className="block text-xs md:hidden">
+        <div className={classes.row}>
+          <ThemedSvgIcon src={getDriveItemIcon(item)} className={classes.icon} />
+          <div className={classes.div}>
+            <Typography.Text strong ellipsis={{ tooltip: item.name }} className={classes.text}>{item.name}</Typography.Text>
+            <Typography.Text type="secondary" className={classes.text2}>
               Deleted {formatModifiedDate(item.trashedAt ?? item.updatedAt)} · {item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0))}
             </Typography.Text>
           </div>
@@ -78,7 +80,7 @@ export default function TrashPage() {
     },
     {
       key: "actions",
-      title: <span className="sr-only">Actions</span>,
+      title: <span className={classes.visuallyHidden}>Actions</span>,
       width: 110,
       align: "right",
       render: (_, item) => (
@@ -140,7 +142,7 @@ export default function TrashPage() {
       }
     >
       {trashQuery.isLoading ? (
-        <div className="p-6"><Skeleton active paragraph={{ rows: 7 }} /></div>
+        <div className={classes.div2}><Skeleton active paragraph={{ rows: 7 }} /></div>
       ) : trashQuery.isError ? (
         <Result
           status="error"
@@ -149,12 +151,12 @@ export default function TrashPage() {
           extra={<Button icon={<ReloadOutlined />} onClick={() => void trashQuery.refetch()}>Try again</Button>}
         />
       ) : items.length === 0 ? (
-        <div className="flex min-h-80 items-center justify-center p-6">
+        <div className={classes.centeredRow}>
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Trash is empty" />
         </div>
       ) : (
-        <div className="p-4 sm:p-6">
-          <Table rowKey="id" columns={columns} dataSource={items} pagination={false} tableLayout="fixed" className="overflow-hidden rounded-xl" />
+        <div className={classes.div3}>
+          <Table rowKey="id" columns={columns} dataSource={items} pagination={false} tableLayout="fixed" className={classes.table} />
         </div>
       )}
     </DrivePageShell>

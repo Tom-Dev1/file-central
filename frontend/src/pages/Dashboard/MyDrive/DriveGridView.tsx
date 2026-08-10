@@ -4,12 +4,14 @@ import { useState } from "react";
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
 import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import { cn } from "@/lib/utils";
+import { clsx as cn } from "clsx";
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
 
 import EmptyState from "./EmptyState";
 import FileActions from "./FileActions";
+import classes from "./DriveGridView.module.css";
+
 
 interface DriveGridViewProps {
   items: DriveItem[];
@@ -40,7 +42,7 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
   };
 
   return (
-    <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+    <div className={classes.responsiveGrid}>
       {items.map((item) => {
         const iconSource = getDriveItemIcon(item);
         const selected = isSelected(item.id);
@@ -54,8 +56,8 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
             tabIndex={0}
             aria-selected={selected}
             className={cn(
-              "group cursor-pointer overflow-hidden transition-colors",
-              selected && "border-primary bg-primary/5 ring-1 ring-primary"
+              classes.card,
+              selected && classes.card2
             )}
             styles={{ body: { padding: 16 } }}
             onClick={() => handleItemClick(item)}
@@ -68,8 +70,8 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
             onPointerEnter={() => onPrefetchItem?.(item)}
             onFocus={() => onPrefetchItem?.(item)}
           >
-            <div className="flex h-8 items-center justify-between">
-              <div className="flex size-8 items-center justify-center">
+            <div className={classes.spreadRow}>
+              <div className={classes.centeredRow}>
                 {selectionMode && (
                   <Checkbox
                     checked={selected}
@@ -94,32 +96,32 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
               </div>
             </div>
 
-            <div className="my-6 flex justify-center">
-              <div className="flex size-20 items-center justify-center rounded-2xl bg-muted/50">
+            <div className={classes.centeredRow2}>
+              <div className={classes.centeredRow3}>
                 <ThemedSvgIcon
                   src={iconSource}
                   aria-hidden="true"
-                  className="size-12 bg-muted-foreground transition-colors group-hover:bg-primary"
+                  className={classes.icon}
                 />
               </div>
             </div>
 
-            <div className="flex min-w-0 items-center gap-2">
+            <div className={classes.row}>
               <ThemedSvgIcon
                 src={iconSource}
                 aria-hidden="true"
-                className="size-5 shrink-0 bg-muted-foreground transition-colors group-hover:bg-primary"
+                className={classes.icon2}
               />
-              <Typography.Text strong ellipsis={{ tooltip: item.name }} className="min-w-0 flex-1">
+              <Typography.Text strong ellipsis={{ tooltip: item.name }} className={classes.text}>
                 {item.name}
               </Typography.Text>
             </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <Typography.Text type="secondary" className="truncate text-xs">
+            <div className={classes.spreadRow2}>
+              <Typography.Text type="secondary" className={classes.truncatedText}>
                 {formatModifiedDate(item.updatedAt)}
               </Typography.Text>
-              <Typography.Text type="secondary" className="shrink-0 text-xs">
+              <Typography.Text type="secondary" className={classes.text2}>
                 {item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0))}
               </Typography.Text>
             </div>
