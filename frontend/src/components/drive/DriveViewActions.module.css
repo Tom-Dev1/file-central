@@ -1,158 +1,351 @@
-.popoverupload {
-  height: 2.25rem;
+.driveViewActions {
+  display: flex;
+  min-width: 0;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 0.625rem;
 }
 
-.popoverupload6 {
-  height: 24rem;
-}
+/* =========================================================
+   SELECTION STATUS
+   ========================================================= */
 
-.popoverupload {
-  border-radius: calc(var(--radius) + 4px);
-}
+.driveViewActionsSelectionText {
+  flex-shrink: 0;
 
-.text {
+  color: var(--text-secondary) !important;
+
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+
   white-space: nowrap;
 }
 
-.text {
-  font-size: 0.75rem !important;
-  line-height: var(--fc-leading, 1rem) !important;
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.driveViewActionsToolbar {
+  display: inline-flex !important;
+
+  align-items: center;
+
+  gap: 0.25rem;
+
+  border: 0 !important;
+
+  background: transparent;
 }
 
-.spacecompact {
-  border-radius: calc(var(--radius) + 4px);
+/*
+ * Space.Compact normally removes gaps and connects buttons.
+ * Restore independent controls for a Drive-like toolbar.
+ */
+.driveViewActionsToolbar
+  :global(.ant-space-compact-item) {
+  border-radius: 9999px !important;
 }
 
-.spacecompact {
-  border-style: var(--fc-border-style);
-  border-width: 1px;
+.driveViewActionsToolbar
+  :global(.ant-space-compact-item:not(:first-child)) {
+  margin-inline-start: 0 !important;
 }
 
-.spacecompact-0 {
-  border-style: var(--fc-border-style);
-  border-width: 0;
+/* =========================================================
+   GENERIC TOOLBAR BUTTON
+   ========================================================= */
+
+.driveViewActionsToolbar :global(.ant-btn) {
+  display: inline-flex !important;
+
+  min-width: 36px;
+  height: 36px;
+
+  align-items: center;
+  justify-content: center;
+
+  padding-inline: 0.625rem;
+
+  border: 0 !important;
+  border-radius: 9999px !important;
+
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+
+  box-shadow: none !important;
+
+  font-size: 0.8125rem;
+  font-weight: 500;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 
-.spacecompact-4 {
-  border-style: var(--fc-border-style);
-  border-width: 4px;
-}
-
-.spacecompact-t {
-  border-top-style: var(--fc-border-style);
-  border-top-width: 1px;
-}
-
-.spacecompact-r {
-  border-right-style: var(--fc-border-style);
-  border-right-width: 1px;
-}
-
-.spacecompact-b {
-  border-bottom-style: var(--fc-border-style);
-  border-bottom-width: 1px;
-}
-
-.spacecompact-b-0 {
-  border-bottom-style: var(--fc-border-style);
-  border-bottom-width: 0;
-}
-
-.spacecompact-dashed {
-  --fc-border-style:dashed;
-  border-style: dashed;
-}
-
-.spacecompact-background {
-  border-color: var(--background);
-}
-
-.spacecompact-border {
-  border-color: var(--border);
-}
-
-.spacecompact-border\/70 {
-  border-color: var(--border);
-}
-
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact-border\/70 {
-    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+@media (hover: hover) {
+  .driveViewActionsToolbar
+    :global(.ant-btn:not(:disabled):hover) {
+    background: var(--surface-3) !important;
+    color: var(--text-primary) !important;
   }
 }
-.spacecompact-primary {
-  border-color: var(--primary);
+
+.driveViewActionsToolbar
+  :global(.ant-btn:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
-.spacecompact-primary\/20 {
-  border-color: var(--primary);
+/* =========================================================
+   DISABLED
+   ========================================================= */
+
+.driveViewActionsToolbar
+  :global(.ant-btn:disabled) {
+  color: var(--text-disabled) !important;
+
+  background: transparent !important;
+
+  opacity: 0.72;
 }
 
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact-primary\/20 {
-    border-color: color-mix(in oklab, var(--primary) 20%, transparent);
+/* =========================================================
+   REFRESH / ICON BUTTON
+   ========================================================= */
+
+.driveViewActionsToolbar
+  :global(.ant-btn-circle) {
+  width: 36px !important;
+  min-width: 36px !important;
+
+  padding: 0 !important;
+}
+
+.driveViewActionsToolbar
+  :global(.ant-btn-circle .anticon) {
+  font-size: 1rem;
+}
+
+/* =========================================================
+   SELECT ALL
+   ========================================================= */
+
+.driveViewActionsSelectAll {
+  flex-shrink: 0;
+}
+
+/*
+ * If DriveSelectAll renders an Ant button,
+ * keep it consistent with toolbar controls.
+ */
+.driveViewActionsSelectAll :global(.ant-btn) {
+  border-radius: 9999px !important;
+}
+
+/* =========================================================
+   VIEW MODE SEGMENTED
+   ========================================================= */
+
+.driveViewActionsViewMode {
+  display: inline-flex;
+
+  height: 36px;
+
+  align-items: center;
+
+  padding: 2px !important;
+
+  border: 1px solid var(--outline-variant);
+
+  border-radius: 9999px !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+}
+
+/*
+ * Remove Ant Design's sliding selection block appearance.
+ */
+.driveViewActionsViewMode
+  :global(.ant-segmented-thumb) {
+  border-radius: 9999px !important;
+
+  background: var(--selection) !important;
+
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   VIEW MODE ITEM
+   ========================================================= */
+
+.driveViewActionsViewModeItem {
+  display: inline-flex !important;
+
+  min-width: 32px;
+  height: 30px;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9999px !important;
+
+  color: var(--text-secondary) !important;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+@media (hover: hover) {
+  .driveViewActionsViewModeItem:hover {
+    background: var(--surface-3) !important;
+
+    color: var(--text-primary) !important;
   }
 }
-.spacecompact {
-  border-color: var(--border);
+
+/* =========================================================
+   SELECTED VIEW MODE
+   ========================================================= */
+
+.driveViewActionsViewMode
+  :global(.ant-segmented-item-selected) {
+  background: var(--selection) !important;
+
+  color: var(--selection-foreground) !important;
+
+  box-shadow: none !important;
 }
 
-.spacecompact\/70 {
-  border-color: var(--border);
+.driveViewActionsViewMode
+  :global(
+    .ant-segmented-item-selected:hover
+  ) {
+  background: var(--selection-hover) !important;
+
+  color: var(--selection-foreground) !important;
 }
 
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact\/70 {
-    border-color: color-mix(in oklab, var(--border) 70%, transparent);
+/* =========================================================
+   VIEW MODE LABEL / ICON
+   ========================================================= */
+
+.driveViewActionsViewModeLabel {
+  display: inline-flex !important;
+
+  align-items: center;
+  justify-content: center;
+
+  padding-inline: 0 !important;
+
+  line-height: 1;
+}
+
+.driveViewActionsViewModeIcon {
+  display: inline-flex !important;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.9375rem;
+
+  line-height: 1;
+}
+
+.driveViewActionsViewModeIcon
+  :global(.anticon) {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+/* =========================================================
+   SEGMENTED FOCUS
+   ========================================================= */
+
+.driveViewActionsViewMode
+  :global(.ant-segmented-item:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* =========================================================
+   SELECTION MODE DESTRUCTIVE ACTION
+   ========================================================= */
+
+.driveViewActions
+  > :global(.ant-btn-dangerous) {
+  display: inline-flex;
+
+  height: 36px;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.375rem;
+
+  padding-inline: 0.75rem;
+
+  border: 1px solid transparent !important;
+  border-radius: 9999px !important;
+
+  background: transparent !important;
+
+  color: var(--destructive) !important;
+
+  box-shadow: none !important;
+
+  font-size: 0.8125rem;
+  font-weight: 500;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+@media (hover: hover) {
+  .driveViewActions
+    > :global(
+      .ant-btn-dangerous:not(:disabled):hover
+    ) {
+    background: var(--destructive-container) !important;
+
+    color: var(--destructive) !important;
   }
 }
-.spacecompact {
-  background-color: var(--background);
+
+.driveViewActions
+  > :global(.ant-btn-dangerous:disabled) {
+  background: transparent !important;
+
+  color: var(--text-disabled) !important;
+
+  opacity: 0.72;
 }
 
-.spacecompact\/80 {
-  background-color: var(--background);
+/* =========================================================
+   FETCHING STATE
+   ========================================================= */
+
+.driveViewActionsToolbar[aria-busy="true"] {
+  cursor: progress;
 }
 
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact\/80 {
-    background-color: color-mix(in oklab, var(--background) 80%, transparent);
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .driveViewActionsToolbar :global(.ant-btn),
+  .driveViewActionsViewModeItem,
+  .driveViewActions
+    > :global(.ant-btn-dangerous) {
+    transition: none;
   }
-}
-.spacecompact\/90 {
-  background-color: var(--background);
-}
-
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact\/90 {
-    background-color: color-mix(in oklab, var(--background) 90%, transparent);
-  }
-}
-.spacecompact\/95 {
-  background-color: var(--background);
-}
-
-@supports (color: color-mix(in lab, red, red)) {
-  .spacecompact\/95 {
-    background-color: color-mix(in oklab, var(--background) 95%, transparent);
-  }
-}
-.spacecompact {
-  padding: 0.125rem;
-}
-
-.driveselectall {
-  padding-inline: 0.25rem;
-}
-
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

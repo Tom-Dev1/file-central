@@ -1,152 +1,402 @@
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.row {
-  display: flex;
-}
-
-.row-1 {
-  flex: 1;
-}
-
-.row-col {
-  flex-direction: column;
-}
-
-.row-wrap {
-  flex-wrap: wrap;
-}
-
-.row {
+.table {
+  width: 100%;
   min-width: 0;
+
+  background: transparent;
 }
 
-.row {
-  align-items: center;
+/* =========================================================
+   ANT TABLE ROOT
+   ========================================================= */
+
+.table :global(.ant-table) {
+  background: transparent !important;
+
+  color: var(--text-primary);
 }
 
-.row {
-  gap: 0.75rem;
+.table :global(.ant-table-container) {
+  border: 0 !important;
+  border-radius: 0 !important;
 }
 
-.icon {
-  width: 1.25rem;
-  height: 1.25rem;
+.table :global(.ant-table-content) {
+  overflow-x: auto;
 }
 
-.icon {
-  flex-shrink: 0;
-}
+/* =========================================================
+   TABLE HEADER
+   ========================================================= */
 
-.icon {
-  background-color: var(--muted-foreground);
-}
+.table :global(.ant-table-thead > tr > th) {
+  height: 44px;
 
-.icon {
-  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --fc-gradient-from, --fc-gradient-via, --fc-gradient-to;
-  transition-timing-function: var(--fc-ease, cubic-bezier(0.4, 0, 0.2, 1));
-  transition-duration: var(--fc-duration, 150ms);
-}
+  padding-block: 0.5rem !important;
+  padding-inline: 0.75rem !important;
 
-@media (hover: hover) {
-  .icon:is(:where(.group):hover *) {
-    background-color: var(--primary);
-  }
-}
-.div {
-  min-width: 0;
-}
+  border-bottom: 1px solid var(--outline-subtle) !important;
 
-.text {
-  display: block;
-}
+  background: var(--content-background) !important;
+  color: var(--text-secondary) !important;
 
-.truncatedText {
-  display: block;
-}
-
-.truncatedText {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.truncatedText {
   font-size: 0.75rem;
-  line-height: var(--fc-leading, 1rem);
+  line-height: 1rem;
+  font-weight: 500;
+
+  white-space: nowrap;
 }
 
-@media (width >= 48rem) {
-  .truncatedText {
-    display: none;
-  }
-}
-.row2 {
-  display: flex;
+.table :global(.ant-table-thead > tr > th::before) {
+  display: none !important;
 }
 
-.row2-1 {
-  flex: 1;
+/* =========================================================
+   TABLE BODY
+   ========================================================= */
+
+.table :global(.ant-table-tbody > tr > td) {
+  height: 56px;
+
+  padding-block: 0.5rem !important;
+  padding-inline: 0.75rem !important;
+
+  border-bottom: 1px solid var(--outline-subtle) !important;
+
+  background: transparent;
+
+  color: var(--text-primary);
+
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
-.row2-col {
-  flex-direction: column;
-}
-
-.row2-wrap {
-  flex-wrap: wrap;
-}
-
-.row2 {
-  justify-content: flex-end;
-}
-
-.row2 {
-  transition-property: opacity;
-  transition-timing-function: var(--fc-ease, cubic-bezier(0.4, 0, 0.2, 1));
-  transition-duration: var(--fc-duration, 150ms);
-}
-
-@media (width >= 48rem) {
-  .row2 {
-    opacity: 0;
-  }
-}
-@media (width >= 48rem) {
-  .row2:is(:where(.group):focus-within *) {
-    opacity: 1;
-  }
-}
-@media (width >= 48rem) and (hover: hover) {
-  .row2:is(:where(.group):hover *) {
-    opacity: 1;
-  }
-}
-.div2 {
-  opacity: 1;
-}
-
-.table {
-  overflow: hidden;
-}
-
-.table {
-  border-radius: calc(var(--radius) + 4px);
-}
+/* =========================================================
+   INTERACTIVE ROW
+   ========================================================= */
 
 .interactiveRow {
   cursor: pointer;
+
+  outline: none;
 }
 
-.selectedRow > td {
-  background: var(--accent) !important;
+@media (hover: hover) {
+  .table :global(.ant-table-tbody > tr.interactiveRow:hover > td) {
+    background: var(--surface-2) !important;
+  }
+}
+
+/* =========================================================
+   KEYBOARD FOCUS
+   ========================================================= */
+
+.table :global(.ant-table-tbody > tr.interactiveRow:focus-visible > td) {
+  background: var(--surface-2) !important;
+}
+
+.table :global(.ant-table-tbody > tr.interactiveRow:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* =========================================================
+   SELECTED ROW
+   ========================================================= */
+
+.table :global(.ant-table-tbody > tr.selectedRow > td) {
+  background: var(--selection) !important;
+
+  color: var(--selection-foreground) !important;
+}
+
+@media (hover: hover) {
+  .table :global(.ant-table-tbody > tr.selectedRow:hover > td) {
+    background: var(--selection-hover) !important;
+
+    color: var(--selection-foreground) !important;
+  }
+}
+
+.table :global(.ant-table-tbody > tr.selectedRow:focus-visible > td) {
+  background: var(--selection-hover) !important;
+}
+
+/* 
+   NAME CELL
+    */
+
+.nameCell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* FILE / FOLDER ICON */
+
+.icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   FILE INFORMATION
+   ========================================================= */
+
+.fileName {
+  display: block;
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: var(--text-primary) !important;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.selectedRow .fileName {
+  color: var(--selection-foreground) !important;
+}
+
+/* =========================================================
+   MOBILE / SECONDARY METADATA
+   ========================================================= */
+
+.truncatedText {
+  display: none;
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: var(--text-secondary) !important;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.selectedRow .truncatedText {
+  color: var(--selection-foreground) !important;
+
+  opacity: 0.72;
+}
+
+/* =========================================================
+   TABLE SECONDARY TEXT
+   ========================================================= */
+
+.table :global(.ant-table-tbody .ant-typography-secondary) {
+  color: var(--text-secondary) !important;
+
+  font-size: 0.8125rem;
+}
+
+.table :global(.ant-table-tbody > tr.selectedRow .ant-typography-secondary) {
+  color: var(--selection-foreground) !important;
+
+  opacity: 0.72;
+}
+
+/* =========================================================
+   CHECKBOX
+   ========================================================= */
+
+.table :global(.ant-checkbox-wrapper) {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.table :global(.ant-checkbox-inner) {
+  border-color: var(--outline) !important;
+
+  background: transparent;
+}
+
+.table :global(.ant-checkbox-checked .ant-checkbox-inner) {
+  border-color: var(--primary) !important;
+
+  background: var(--primary) !important;
+}
+
+.table :global(.ant-checkbox-wrapper:hover .ant-checkbox-inner) {
+  border-color: var(--primary) !important;
+}
+
+/* =========================================================
+   ACTIONS CELL
+   ========================================================= */
+
+.actions {
+  display: flex;
+
+  align-items: center;
+  justify-content: flex-end;
+
+  opacity: 0;
+
+  transition: opacity 120ms ease;
+}
+
+/*
+ * Preview/menu is currently open.
+ * Keep actions visible even when row loses hover.
+ */
+.actionsVisible {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .interactiveRow:hover .actions {
+    opacity: 1;
+  }
+}
+
+.interactiveRow:focus-within .actions {
+  opacity: 1;
+}
+
+/* =========================================================
+   SELECTED ACTIONS
+   ========================================================= */
+
+.selectedRow .actions {
+  opacity: 1;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+   ========================================================= */
+
+.actions :global(.ant-btn) {
+  color: var(--text-secondary);
+
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+@media (hover: hover) {
+  .actions :global(.ant-btn:hover) {
+    background: var(--surface-3) !important;
+
+    color: var(--text-primary) !important;
+  }
+}
+
+.selectedRow .actions :global(.ant-btn) {
+  color: var(--selection-foreground);
+}
+
+@media (hover: hover) {
+  .selectedRow .actions :global(.ant-btn:hover) {
+    background: color-mix(in srgb, var(--selection-foreground) 10%, transparent) !important;
+
+    color: var(--selection-foreground) !important;
+  }
+}
+
+/* =========================================================
+   EMPTY TABLE DEFAULT CONTENT
+   ========================================================= */
+
+.table :global(.ant-table-placeholder > td) {
+  border-bottom: 0 !important;
+
+  background: transparent !important;
+}
+
+/* =========================================================
+   HIDE DEFAULT ANT TABLE HOVER OVERRIDE
+   ========================================================= */
+
+.table :global(.ant-table-tbody > tr.ant-table-row:hover > td) {
+  background: var(--surface-2);
+}
+
+/* =========================================================
+   VISUALLY HIDDEN
+   ========================================================= */
+
+.visuallyHidden {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+
+  padding: 0;
+  margin: -1px;
+
+  overflow: hidden;
+
+  clip: rect(0 0 0 0);
+
+  white-space: nowrap;
+
+  border: 0;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+.table :global(.ant-table-content) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.table :global(.ant-table-content::-webkit-scrollbar) {
+  height: 8px;
+}
+
+.table :global(.ant-table-content::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.table :global(.ant-table-content::-webkit-scrollbar-thumb) {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+
+  background: var(--scrollbar-thumb);
+
+  background-clip: padding-box;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (width < 48rem) {
+  .table :global(.ant-table-thead) {
+    display: none;
+  }
+
+  .table :global(.ant-table-tbody > tr > td) {
+    height: 64px;
+
+    padding-block: 0.625rem !important;
+  }
+
+  .truncatedText {
+    display: block;
+  }
+
+  .icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--text-secondary);
+  }
+  .interactiveRow:hover .icon {
+    color: var(--text-primary);
+  }
+
+  .selectedRow .icon {
+    color: var(--selection-foreground);
+  }
 }

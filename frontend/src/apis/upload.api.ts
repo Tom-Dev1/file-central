@@ -8,16 +8,7 @@ import type {
 } from "@/types/upload.types";
 import { api } from "../lib/axios";
 
-/**
- * uploadApi — theo đúng pattern authApi của bạn.
- *
- * LƯU Ý QUAN TRỌNG:
- * - init/status/complete/abort: gọi backend NestJS qua instance `api`
- *   (interceptor tự gắn Authorization + baseURL).
- * - putToStorage: PUT byte THẲNG lên MinIO. Phải dùng `axios` TRẦN, KHÔNG dùng
- *   instance `api` — vì interceptor của `api` gắn Authorization/baseURL sẽ phá
- *   chữ ký presigned của MinIO (gây 403). Presigned URL đã tự chứa chữ ký rồi.
- */
+// putToStorage: PUT byte to MinIO.
 export const uploadApi = {
   init: (body: InitUploadRequest) => api.post<InitUploadResponse>("/uploads", body).then((res) => res.data),
 
@@ -30,12 +21,6 @@ export const uploadApi = {
   abort: (uploadSessionId: string) =>
     api.post<{ status: string }>(`/uploads/${uploadSessionId}/abort`).then((res) => res.data),
 
-  /**
-   * PUT một chunk (hoặc cả file với single) thẳng lên MinIO qua presigned URL.
-   * Trả về ETag để dùng ở bước complete.
-   *
-   * @param onProgress callback tiến trình (0-100) cho riêng request này.
-   */
   putToStorage: async (
     presignedUrl: string,
     data: Blob,
@@ -45,9 +30,7 @@ export const uploadApi = {
     }
   ): Promise<string> => {
     const res = await axios.put(presignedUrl, data, {
-      // KHÔNG kèm Authorization. Chỉ Content-Type nếu presigned ký kèm.
       headers: options?.contentType ? { "Content-Type": options.contentType } : undefined,
-      // Tắt transform để axios không đụng vào Blob.
       transformRequest: [(d) => d],
       onUploadProgress: (evt) => {
         if (options?.onProgress && evt.total) {
@@ -56,7 +39,6 @@ export const uploadApi = {
       },
     });
 
-    // axios chuẩn hoá header về lowercase. Cần MinIO CORS ExposeHeaders: ["ETag"].
     const etag = res.headers["etag"] as string | undefined;
     if (!etag) {
       throw new Error('Không đọc được ETag — kiểm tra MinIO CORS ExposeHeaders: ["ETag"]');

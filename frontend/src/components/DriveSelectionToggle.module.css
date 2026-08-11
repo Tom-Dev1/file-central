@@ -1,8 +1,122 @@
-.button {
-  height: 2rem;
+.toggle {
+  display: inline-flex !important;
+  height: 36px !important;
+  min-width: 36px;
+
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 0.5rem;
+
+  border: 0 !important;
+  border-radius: 9999px !important;
+
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+
+  box-shadow: none !important;
+
+  font-size: 0.8125rem;
+  font-weight: 500;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 
-.button2 {
-  width: 2rem;
-  height: 2rem;
+
+.toggle :global(.ant-btn-icon) {
+  display: inline-flex;
+
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 !important;
+
+  line-height: 1;
+}
+
+.toggle :global(.anticon) {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.withLabel {
+  width: auto !important;
+  max-width: 180px;
+
+  padding-inline: 0.75rem !important;
+}
+
+
+.label {
+  display: block;
+  min-width: 0;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  line-height: 1.25rem;
+}
+.iconOnly {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  padding: 0 !important;
+}
+
+@media (hover: hover) {
+  .toggle:not(.active):not(:disabled):hover {
+    background: var(--surface-3) !important;
+
+    color: var(--text-primary) !important;
+  }
+}
+.active {
+  background: var(--selection) !important;
+
+  color:
+    var(--selection-foreground) !important;
+}
+
+@media (hover: hover) {
+  .active:not(:disabled):hover {
+    background:
+      var(--selection-hover) !important;
+
+    color:
+      var(--selection-foreground) !important;
+  }
+}
+.active :global(.anticon) {
+  color:
+    var(--selection-foreground);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.toggle:disabled {
+  background: transparent !important;
+
+  color: var(--text-disabled) !important;
+
+  opacity: 0.72;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toggle {
+    transition: none;
+  }
 }

@@ -1,9 +1,10 @@
 import { Button, Divider, Menu, Progress, Tooltip, Typography, type MenuProps } from "antd";
-import { Clock3, FileClock, HardDrive, Settings, Share2, Star, Trash2 } from "lucide-react";
+import { Clock3, Cloud, FileClock, HardDrive, Settings, Share2, Star, Trash2 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import DropdownUpload from "@/components/PopoverUpload";
+
 import classes from "./DashboardSidebar.module.css";
 
 interface NavigationItem {
@@ -14,12 +15,42 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
-  { title: "My Drive", path: "/dashboard", icon: HardDrive, available: true },
-  { title: "Shared with me", path: "/dashboard/shared", icon: Share2, available: true },
-  { title: "Recent", path: "/dashboard/recent", icon: Clock3, available: false },
-  { title: "Starred", path: "/dashboard/starred", icon: Star, available: false },
-  { title: "Trash", path: "/dashboard/trash", icon: Trash2, available: true },
-  { title: "Settings", path: "/dashboard/settings", icon: Settings, available: false },
+  {
+    title: "My Drive",
+    path: "/dashboard",
+    icon: HardDrive,
+    available: true,
+  },
+  {
+    title: "Shared with me",
+    path: "/dashboard/shared",
+    icon: Share2,
+    available: true,
+  },
+  {
+    title: "Recent",
+    path: "/dashboard/recent",
+    icon: Clock3,
+    available: false,
+  },
+  {
+    title: "Starred",
+    path: "/dashboard/starred",
+    icon: Star,
+    available: false,
+  },
+  {
+    title: "Trash",
+    path: "/dashboard/trash",
+    icon: Trash2,
+    available: true,
+  },
+  {
+    title: "Settings",
+    path: "/dashboard/settings",
+    icon: Settings,
+    available: false,
+  },
 ];
 
 interface DashboardSidebarProps {
@@ -30,9 +61,11 @@ interface DashboardSidebarProps {
 export default function DashboardSidebar({ collapsed = false, onNavigate }: DashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const selectedKey = location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard/folders/")
-    ? "/dashboard"
-    : location.pathname.startsWith("/dashboard/shared/folders/")
+
+  const selectedKey =
+    location.pathname === "/dashboard" || location.pathname.startsWith("/dashboard/folders/")
+      ? "/dashboard"
+      : location.pathname.startsWith("/dashboard/shared/folders/")
       ? "/dashboard/shared"
       : location.pathname;
 
@@ -46,6 +79,7 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
       label: (
         <span className={classes.menuLabel}>
           <span className={classes.menuTitle}>{item.title}</span>
+
           {!item.available && <span className={classes.soonLabel}>Soon</span>}
         </span>
       ),
@@ -59,15 +93,27 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
 
   return (
     <div className={classes.sidebar} data-collapsed={collapsed || undefined}>
-      <div className={classes.createAction}>
-        <Tooltip title={collapsed ? "Create or upload" : undefined} placement="right">
-          <div>
-            <DropdownUpload compact={collapsed} />
+      <div className={classes.brand}>
+        <div className={classes.brandMark}>
+          <Cloud className={classes.brandIcon} />
+        </div>
+
+        {!collapsed && (
+          <div className={classes.brandText}>
+            <span className={classes.brandName}>File</span>
+
+            <span className={classes.brandAccent}>Central</span>
           </div>
-        </Tooltip>
+        )}
       </div>
 
-      <nav aria-label="Dashboard navigation">
+      {/* <Tooltip title={collapsed ? "Create or upload" : undefined} placement="right">
+        <div className={classes.createArea}>
+          <DropdownUpload />
+        </div>
+      </Tooltip> */}
+
+      <nav className={classes.navigation}>
         <Menu
           mode="inline"
           inlineCollapsed={collapsed}
@@ -75,7 +121,6 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
           items={menuItems}
           onClick={handleMenuClick}
           className={classes.menu}
-          classNames={{ item: classes.menuItem }}
         />
       </nav>
 
@@ -86,12 +131,14 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
           <section className={classes.storageSection} aria-labelledby="storage-heading">
             <div className={classes.sectionHeading}>
               <HardDrive className={classes.sectionIcon} />
+
               <Typography.Text id="storage-heading" strong>
                 Storage
               </Typography.Text>
             </div>
 
             <Progress percent={37} showInfo={false} size="small" className={classes.progress} />
+
             <Typography.Text type="secondary" className={classes.storageText}>
               5.6 GB of 15 GB used
             </Typography.Text>
@@ -114,10 +161,12 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
             <div className={classes.activityCard}>
               <div className={classes.activityHeading}>
                 <FileClock className={classes.activityIcon} />
+
                 <Typography.Text strong className={classes.activityTitle}>
                   Activity
                 </Typography.Text>
               </div>
+
               <Typography.Paragraph type="secondary" className={classes.activityCopy}>
                 Your recent file activity will appear here.
               </Typography.Paragraph>

@@ -1,73 +1,329 @@
-.loading {
-  display: flex;
-  min-height: 2.25rem;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.shortSkeleton {
-  width: 6rem !important;
-}
-
-.longSkeleton {
-  width: 9rem !important;
-}
-
-.separatorMuted {
-  color: color-mix(in oklch, var(--muted-foreground), transparent 60%);
-  font-size: 0.75rem;
-}
-
-.collapsedLabel {
-  display: block;
-  max-width: 13rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.current {
-  display: block;
-  max-width: 16rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 1.25rem;
-}
-
-.ancestor {
-  max-width: 12rem;
-  height: auto !important;
-  padding-inline: 0.25rem !important;
-  color: var(--muted-foreground) !important;
-  font-size: 1.25rem !important;
-  font-weight: 400 !important;
-}
-
-.ancestorLabel {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.root {
+.folderBreadcrumbs {
   display: flex;
   min-width: 0;
-  min-height: 2.25rem;
+
   align-items: center;
+
+  gap: 0.375rem;
+
+  color: var(--text-secondary);
 }
 
-.breadcrumb {
+/* =========================================================
+   BREADCRUMB ROOT
+   ========================================================= */
+
+.folderBreadcrumbsBreadcrumb {
   min-width: 0;
+  flex: 1;
+
+  overflow: hidden;
+
+  color: var(--text-secondary);
+
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/*
+ * Keep breadcrumb items vertically aligned.
+ */
+.folderBreadcrumbsBreadcrumb
+  :global(.ant-breadcrumb-ol) {
+  display: flex;
+  min-width: 0;
+
+  align-items: center;
+
   overflow: hidden;
 }
 
-.spinner {
-  display: flex;
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
+/* =========================================================
+   INDIVIDUAL ITEM
+   ========================================================= */
+
+.folderBreadcrumbsItem {
+  display: inline-flex;
+  min-width: 0;
+
+  align-items: center;
+
+  flex-shrink: 1;
+}
+
+.folderBreadcrumbsItem:last-child {
+  min-width: 0;
+  flex: 1;
+}
+
+/* =========================================================
+   SEPARATOR
+   ========================================================= */
+
+.folderBreadcrumbsSeparator {
+  display: inline-flex;
+
   align-items: center;
   justify-content: center;
-  margin-left: 0.5rem;
+
+  flex-shrink: 0;
+
+  margin-inline: 0.25rem !important;
+
+  color: var(--text-muted) !important;
+
+  line-height: 1;
+}
+
+.folderBreadcrumbsSeparator
+  :global(.anticon) {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+.folderBreadcrumbsSeparator
+  :global(svg) {
+  display: block;
+
+  width: 10px;
+  height: 10px;
+}
+
+/* =========================================================
+   ANCESTOR BUTTON
+   ========================================================= */
+
+.folderBreadcrumbsAncestor {
+  display: inline-flex !important;
+  min-width: 0;
+  height: 32px !important;
+
+  align-items: center;
+  justify-content: flex-start;
+
+  padding-inline: 0.375rem !important;
+
+  border-radius: 6px !important;
+
+  color: var(--text-secondary) !important;
+
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  box-shadow: none !important;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+/*
+ * Ant Button puts content inside a span.
+ */
+.folderBreadcrumbsAncestor
+  > span {
+  min-width: 0;
+}
+
+@media (hover: hover) {
+  .folderBreadcrumbsAncestor:hover {
+    background: var(--surface-2) !important;
+    color: var(--primary) !important;
+  }
+}
+
+.folderBreadcrumbsAncestor:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* =========================================================
+   ANCESTOR LABEL
+   ========================================================= */
+
+.folderBreadcrumbsAncestorLabel {
+  display: block;
+  max-width: 180px;
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   CURRENT FOLDER
+   ========================================================= */
+
+.folderBreadcrumbsCurrent {
+  display: inline-flex;
+  min-width: 0;
+  height: 32px;
+
+  align-items: center;
+
+  color: var(--text-primary) !important;
+
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.folderBreadcrumbsCurrentLabel {
+  display: block;
+  max-width: 260px;
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   COLLAPSED "..." BUTTON
+   ========================================================= */
+
+.folderBreadcrumbsCollapsedButton {
+  display: inline-flex !important;
+
+  width: 32px !important;
+  height: 32px !important;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 !important;
+
+  border-radius: 9999px !important;
+
+  color: var(--text-secondary) !important;
+
+  box-shadow: none !important;
+
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.folderBreadcrumbsCollapsedButton
+  :global(.anticon) {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 1rem;
+}
+
+@media (hover: hover) {
+  .folderBreadcrumbsCollapsedButton:hover {
+    background: var(--surface-2) !important;
+    color: var(--text-primary) !important;
+  }
+}
+
+.folderBreadcrumbsCollapsedButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* =========================================================
+   FETCHING INDICATOR
+   ========================================================= */
+
+.folderBreadcrumbsUpdating {
+  display: inline-flex;
+
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  color: var(--primary);
+}
+
+.folderBreadcrumbsUpdating
+  :global(.ant-spin-dot) {
+  color: var(--primary);
+}
+
+.folderBreadcrumbsUpdating
+  :global(.anticon) {
+  font-size: 0.875rem;
+}
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.folderBreadcrumbsLoading {
+  display: flex;
+  min-width: 0;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  min-height: 32px;
+}
+
+.folderBreadcrumbsSkeletonShort {
+  width: 64px !important;
+}
+
+.folderBreadcrumbsSkeletonLong {
+  width: 128px !important;
+}
+
+.folderBreadcrumbsLoading
+  :global(.ant-skeleton-button) {
+  height: 24px !important;
+
+  border-radius: 6px !important;
+
+  background: var(--surface-2) !important;
+}
+
+/* =========================================================
+   ANT BREADCRUMB RESET
+   ========================================================= */
+
+.folderBreadcrumbsBreadcrumb
+  :global(.ant-breadcrumb-link) {
+  display: inline-flex;
+  min-width: 0;
+
+  align-items: center;
+}
+
+.folderBreadcrumbsBreadcrumb
+  :global(.ant-breadcrumb-overlay-link) {
+  display: inline-flex;
+
+  align-items: center;
+}
+
+.folderBreadcrumbsBreadcrumb
+  :global(.ant-breadcrumb-separator) {
+  display: inline-flex;
+
+  align-items: center;
+}
+
+/* =========================================================
+   ACCESSIBILITY / MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .folderBreadcrumbsAncestor,
+  .folderBreadcrumbsCollapsedButton {
+    transition: none;
+  }
 }

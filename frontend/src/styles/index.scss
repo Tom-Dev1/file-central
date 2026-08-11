@@ -1,58 +1,276 @@
 :root {
-  --radius: 0.75rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.216 0.006 285.9);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.216 0.006 285.9);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.216 0.006 285.9);
-  --primary: oklch(0.546 0.189 262.88);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.982 0.002 247.84);
-  --secondary-foreground: oklch(0.216 0.006 285.9);
-  --muted: oklch(0.967 0.003 264.54);
-  --muted-foreground: oklch(0.506 0.012 264);
-  --accent: oklch(0.952 0.025 264.05);
-  --accent-foreground: oklch(0.503 0.177 262.9);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.896 0.005 264.53);
-  --input: oklch(0.967 0.003 264.54);
-  --ring: oklch(0.546 0.189 262.88);
-  --scrollbar-thumb: oklch(0.506 0.012 264 / 35%);
-  --color-1: 0 100% 63%;
-  --color-2: 270 100% 63%;
-  --color-3: 210 100% 63%;
-  --color-4: 195 100% 63%;
-  --color-5: 90 100% 63%;
-}
+  color-scheme: light;
 
+  /* =========================================================
+     SURFACE HIERARCHY
+     0 = primary content surface
+     1 = application shell
+     2 = subtle container
+     3 = hover / elevated container
+     4 = pressed / stronger container
+     ========================================================= */
+
+  --surface-0: #ffffff;
+  --surface-1: #f8fafd;
+  --surface-2: #f0f4f9;
+  --surface-3: #e9eef6;
+  --surface-4: #dde3ea;
+
+  /* =========================================================
+     TEXT
+     ========================================================= */
+
+  --text-primary: #1f1f1f;
+  --text-secondary: #444746;
+  --text-muted: #5f6368;
+  --text-disabled: #9aa0a6;
+
+  /* =========================================================
+     PRIMARY
+     ========================================================= */
+
+  --primary: #0b57d0;
+  --primary-hover: #0842a0;
+  --primary-active: #062e6f;
+
+  --primary-foreground: #ffffff;
+
+  --primary-container: #d3e3fd;
+  --primary-container-foreground: #041e49;
+
+  /* =========================================================
+     SELECTION
+     ========================================================= */
+
+  --selection: #c2e7ff;
+  --selection-hover: #b4ddf8;
+  --selection-foreground: #001d35;
+
+  /* =========================================================
+     OUTLINE
+     ========================================================= */
+
+  --outline: #747775;
+  --outline-variant: #c7c7c7;
+  --outline-subtle: #e1e3e1;
+
+  /* =========================================================
+     STATUS
+     ========================================================= */
+
+  --success: #146c2e;
+  --success-container: #c4eed0;
+
+  --warning: #8a4f00;
+  --warning-container: #ffddb7;
+
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+  --destructive-container: #f9dedc;
+
+  /* =========================================================
+     APP SEMANTIC SURFACES
+     ========================================================= */
+
+  --app-background: var(--surface-1);
+
+  --sidebar-background: var(--surface-1);
+  --sidebar-foreground: var(--text-secondary);
+
+  --header-background: var(--surface-1);
+
+  --content-background: var(--surface-0);
+
+  --search-background: var(--surface-2);
+  --search-hover-background: var(--surface-3);
+
+  --card-background: var(--surface-2);
+  --card-hover-background: var(--surface-3);
+
+  --popover-background: var(--surface-0);
+  --dropdown-background: var(--surface-0);
+
+  /* =========================================================
+     INTERACTION
+     ========================================================= */
+
+  --hover: var(--surface-3);
+  --active: var(--surface-4);
+
+  --focus-ring: var(--primary);
+
+  /* =========================================================
+     LEGACY / SHADCN COMPATIBILITY
+     ========================================================= */
+
+  --background: var(--surface-1);
+  --foreground: var(--text-primary);
+
+  --card: var(--surface-0);
+  --card-foreground: var(--text-primary);
+
+  --popover: var(--surface-0);
+  --popover-foreground: var(--text-primary);
+
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text-primary);
+
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-secondary);
+
+  --accent: var(--surface-3);
+  --accent-foreground: var(--text-primary);
+
+  --border: var(--outline-variant);
+  --input: var(--outline-variant);
+  --ring: var(--focus-ring);
+
+  /* =========================================================
+     SCROLLBAR
+     ========================================================= */
+
+  --scrollbar-thumb: #c7c7c7;
+  --scrollbar-thumb-hover: #747775;
+}
 .dark {
-  --background: oklch(0.216 0.006 285.9);
-  --foreground: oklch(0.928 0.003 264);
-  --card: oklch(0.248 0.008 264);
-  --card-foreground: oklch(0.928 0.003 264);
-  --popover: oklch(0.248 0.008 264);
-  --popover-foreground: oklch(0.928 0.003 264);
-  --primary: oklch(0.757 0.104 264.05);
-  --primary-foreground: oklch(0.216 0.006 285.9);
-  --secondary: oklch(0.285 0.01 264);
-  --secondary-foreground: oklch(0.928 0.003 264);
-  --muted: oklch(0.285 0.01 264);
-  --muted-foreground: oklch(0.684 0.012 264);
-  --accent: oklch(0.32 0.04 264);
-  --accent-foreground: oklch(0.757 0.104 264.05);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.373 0.012 264);
-  --input: oklch(0.285 0.01 264);
-  --ring: oklch(0.757 0.104 264.05);
-  --scrollbar-thumb: oklch(0.684 0.012 264 / 45%);
+  color-scheme: dark;
+
+  /* =========================================================
+     SURFACE HIERARCHY
+     ========================================================= */
+
+  --surface-0: #131314;
+  --surface-1: #1b1b1b;
+  --surface-2: #1e1f20;
+  --surface-3: #282a2c;
+  --surface-4: #333537;
+
+  /* =========================================================
+     TEXT
+     ========================================================= */
+
+  --text-primary: #e3e3e3;
+  --text-secondary: #c4c7c5;
+  --text-muted: #9aa0a6;
+  --text-disabled: #6f7271;
+
+  /* =========================================================
+     PRIMARY
+     ========================================================= */
+
+  --primary: #a8c7fa;
+  --primary-hover: #d3e3fd;
+  --primary-active: #edf3ff;
+
+  --primary-foreground: #062e6f;
+
+  --primary-container: #0842a0;
+  --primary-container-foreground: #d3e3fd;
+
+  /* =========================================================
+     SELECTION
+     ========================================================= */
+
+  --selection: #004a77;
+  --selection-hover: #005b8f;
+  --selection-foreground: #c2e7ff;
+
+  /* =========================================================
+     OUTLINE
+     ========================================================= */
+
+  --outline: #8e918f;
+  --outline-variant: #444746;
+  --outline-subtle: #303134;
+
+  /* =========================================================
+     STATUS
+     ========================================================= */
+
+  --success: #6dd58c;
+  --success-container: #0f5223;
+
+  --warning: #ffbb29;
+  --warning-container: #633b00;
+
+  --destructive: #f2b8b5;
+  --destructive-foreground: #601410;
+  --destructive-container: #8c1d18;
+
+  /* =========================================================
+     APP SEMANTIC SURFACES
+     ========================================================= */
+
+  --app-background: var(--surface-1);
+
+  --sidebar-background: var(--surface-1);
+  --sidebar-foreground: var(--text-secondary);
+
+  --header-background: var(--surface-1);
+
+  --content-background: var(--surface-0);
+
+  --search-background: var(--surface-2);
+  --search-hover-background: var(--surface-3);
+
+  --card-background: var(--surface-2);
+  --card-hover-background: var(--surface-3);
+
+  --popover-background: var(--surface-2);
+  --dropdown-background: var(--surface-2);
+
+  /* =========================================================
+     INTERACTION
+     ========================================================= */
+
+  --hover: var(--surface-3);
+  --active: var(--surface-4);
+
+  --focus-ring: var(--primary);
+
+  /* =========================================================
+     SHADCN COMPATIBILITY
+     ========================================================= */
+
+  --background: var(--surface-1);
+  --foreground: var(--text-primary);
+
+  --card: var(--surface-2);
+  --card-foreground: var(--text-primary);
+
+  --popover: var(--surface-2);
+  --popover-foreground: var(--text-primary);
+
+  --secondary: var(--surface-2);
+  --secondary-foreground: var(--text-primary);
+
+  --muted: var(--surface-2);
+  --muted-foreground: var(--text-secondary);
+
+  --accent: var(--surface-3);
+  --accent-foreground: var(--text-primary);
+
+  --border: var(--outline-variant);
+  --input: var(--outline-variant);
+  --ring: var(--focus-ring);
+
+  /* =========================================================
+     SCROLLBAR
+     ========================================================= */
+
+  --scrollbar-thumb: #444746;
+  --scrollbar-thumb-hover: #8e918f;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   min-width: 0;
   min-height: 100%;
@@ -75,12 +293,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button, input, optgroup, select, textarea {
+button,
+input,
+optgroup,
+select,
+textarea {
   color: inherit;
   font: inherit;
 }
 
-img, picture, video, canvas, svg {
+img,
+picture,
+video,
+canvas,
+svg {
   display: block;
   max-width: 100%;
 }
@@ -90,11 +316,13 @@ a {
   text-decoration: none;
 }
 
-button, [role=button] {
+button,
+[role="button"] {
   cursor: pointer;
 }
 
-button:disabled, [aria-disabled=true] {
+button:disabled,
+[aria-disabled="true"] {
   cursor: default;
 }
 
@@ -115,7 +343,8 @@ button:disabled, [aria-disabled=true] {
   }
 }
 @keyframes file-central-float-one {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0) rotate(-6deg);
   }
   50% {
@@ -123,7 +352,8 @@ button:disabled, [aria-disabled=true] {
   }
 }
 @keyframes file-central-float-two {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0) rotate(7deg);
   }
   50% {
@@ -131,7 +361,8 @@ button:disabled, [aria-disabled=true] {
   }
 }
 @keyframes file-central-float-three {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0) rotate(5deg);
   }
   50% {
@@ -139,7 +370,8 @@ button:disabled, [aria-disabled=true] {
   }
 }
 @keyframes file-central-float-four {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate3d(0, 0, 0) rotate(-5deg);
   }
   50% {
@@ -152,7 +384,8 @@ button:disabled, [aria-disabled=true] {
   }
 }
 @keyframes file-central-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.35;
     transform: scale(0.96);
   }

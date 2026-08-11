@@ -1,17 +1,17 @@
 import { Checkbox, Table, Typography, type TableColumnsType } from "antd";
 import { useState } from "react";
+import { clsx as cn } from "clsx";
 
 import EmptyFolderState from "@/components/EmptyFolderState";
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
 import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import { clsx as cn } from "clsx";
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
 
 import FileActions from "./FileActions";
-import classes from "./DriveListView.module.css";
 
+import classes from "./DriveListView.module.css";
 
 interface DriveListViewProps {
   items: DriveItem[];
@@ -21,6 +21,7 @@ interface DriveListViewProps {
 
 export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListViewProps) {
   const { selectionMode, isSelected, toggleItem } = useDriveSelection();
+
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   const handleItemClick = (item: DriveItem) => {
@@ -56,23 +57,19 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
       title: "Name",
       render: (_, item) => {
         const iconSource = getDriveItemIcon(item);
-        const mobileSize = item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0));
 
         return (
-          <div className={classes.row}>
-            <ThemedSvgIcon
-              src={iconSource}
-              aria-hidden="true"
-              className={classes.icon}
-            />
-            <div className={classes.div}>
-              <Typography.Text strong ellipsis={{ tooltip: item.name }} className={classes.text}>
-                {item.name}
-              </Typography.Text>
-              <Typography.Text type="secondary" className={classes.truncatedText}>
-                {formatModifiedDate(item.updatedAt)} · {mobileSize}
-              </Typography.Text>
-            </div>
+          <div className={classes.nameCell}>
+            <ThemedSvgIcon src={iconSource} size={20} className={classes.icon} />
+
+            <Typography.Text
+              ellipsis={{
+                tooltip: item.name,
+              }}
+              className={classes.fileName}
+            >
+              {item.name}
+            </Typography.Text>
           </div>
         );
       },
@@ -80,17 +77,19 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
     {
       key: "modified",
       title: "Last modified",
-      width: 170,
-      responsive: ["md"],
-      render: (_, item) => <Typography.Text type="secondary">{formatModifiedDate(item.updatedAt)}</Typography.Text>,
+      width: 180,
+      render: (_, item) => (
+        <Typography.Text type="secondary" className={classes.metadata}>
+          {formatModifiedDate(item.updatedAt)}
+        </Typography.Text>
+      ),
     },
     {
       key: "size",
       title: "File size",
       width: 120,
-      responsive: ["sm"],
       render: (_, item) => (
-        <Typography.Text type="secondary">
+        <Typography.Text type="secondary" className={classes.metadata}>
           {item.type === "folder" ? "—" : formatFileSize(Number(item.sizeBytes ?? 0))}
         </Typography.Text>
       ),
@@ -105,10 +104,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
 
         return (
           <div
-            className={cn(
-              classes.row2,
-              isPreviewOpen && classes.div2
-            )}
+            className={cn(classes.actions, isPreviewOpen && classes.actionsVisible)}
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
@@ -141,14 +137,18 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
       onRow={(item) => ({
         tabIndex: 0,
         "aria-selected": isSelected(item.id),
+
         onClick: () => handleItemClick(item),
+
         onKeyDown: (event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             handleItemClick(item);
           }
         },
+
         onPointerEnter: () => onPrefetchItem?.(item),
+
         onFocus: () => onPrefetchItem?.(item),
       })}
     />

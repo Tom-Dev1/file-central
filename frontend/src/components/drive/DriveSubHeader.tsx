@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
 import { RightOutlined } from "@ant-design/icons";
 import { Typography } from "antd";
-import type { LucideIcon } from "lucide-react";
-
 import { clsx as cn } from "clsx";
+import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import classes from "./DriveSubHeader.module.css";
 
+import classes from "./DriveSubHeader.module.css";
 
 interface DriveSubHeaderProps {
   title: string;
@@ -30,55 +29,76 @@ export function DriveSubHeader({
   titleHref = "/dashboard",
 }: DriveSubHeaderProps) {
   const titleContent = (
-    <>
+    <span className={classes.driveSubHeaderTitleContent}>
       {Icon && (
-        <span className={classes.centeredRow}>
-          <Icon className={classes.icon} />
-        </span>
+        <Icon
+          aria-hidden="true"
+          className={classes.driveSubHeaderTitleIcon}
+          size={20}
+          strokeWidth={1.8}
+        />
       )}
-      <h1 className={classes.title}>{title}</h1>
-    </>
+      <span className={classes.driveSubHeaderTitleText}>{title}</span>
+    </span>
   );
 
   return (
-    <section
-      className={cn(
-        classes.section,
-        className
-      )}
-    >
-      <div className={classes.div}>
-        {leading && <div className={classes.div2}>{leading}</div>}
-        <div className={classes.row}>
-          {titleHref ? (
-            <Link
-              to={titleHref}
-              aria-label={`Go to ${title}`}
-              className={classes.row2}
+    <section className={cn(classes.driveSubHeader, className)}>
+      <div className={classes.driveSubHeaderBody}>
+        {leading && (
+          <div className={classes.driveSubHeaderLeading}>{leading}</div>
+        )}
+
+        <div className={classes.driveSubHeaderContent}>
+          <nav
+            aria-label="Breadcrumb"
+            className={classes.driveSubHeaderBreadcrumb}
+          >
+            <div className={classes.driveSubHeaderBreadcrumbTrack}>
+              {titleHref ? (
+                <Link
+                  aria-label={`Go to ${title}`}
+                  className={classes.driveSubHeaderBreadcrumbLink}
+                  to={titleHref}
+                >
+                  {titleContent}
+                </Link>
+              ) : (
+                <span
+                  aria-current={folderBreadcrumbs ? undefined : "page"}
+                  className={classes.driveSubHeaderBreadcrumbCurrent}
+                >
+                  {titleContent}
+                </span>
+              )}
+
+              {folderBreadcrumbs && (
+                <>
+                  <RightOutlined
+                    aria-hidden="true"
+                    className={classes.driveSubHeaderBreadcrumbSeparator}
+                  />
+                  <div className={classes.driveSubHeaderFolderBreadcrumbs}>
+                    {folderBreadcrumbs}
+                  </div>
+                </>
+              )}
+            </div>
+          </nav>
+
+          {description && (
+            <Typography.Text
+              className={classes.driveSubHeaderDescription}
+              type="secondary"
             >
-              {titleContent}
-            </Link>
-          ) : (
-            <div className={classes.row3}>{titleContent}</div>
-          )}
-          {folderBreadcrumbs && (
-            <>
-              <RightOutlined className={classes.icon2} />
-              <div className={classes.div3}>{folderBreadcrumbs}</div>
-            </>
+              {description}
+            </Typography.Text>
           )}
         </div>
-        {description && (
-          <Typography.Text type="secondary" className={classes.truncatedText}>
-            {description}
-          </Typography.Text>
-        )}
       </div>
 
       {actions && (
-        <div className={classes.row4}>
-          {actions}
-        </div>
+        <div className={classes.driveSubHeaderActions}>{actions}</div>
       )}
     </section>
   );

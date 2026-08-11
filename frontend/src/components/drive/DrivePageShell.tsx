@@ -1,8 +1,7 @@
 import type { ReactNode } from "react";
-
 import { clsx as cn } from "clsx";
-import classes from "./DrivePageShell.module.css";
 
+import classes from "./DrivePageShell.module.css";
 
 interface DrivePageShellProps {
   header: ReactNode;
@@ -13,12 +12,10 @@ interface DrivePageShellProps {
 
 export function DrivePageShell({ header, children, className, contentClassName }: DrivePageShellProps) {
   return (
-    <div className={cn(classes.column, className)}>
-      <div className={classes.div}>{header}</div>
+    <div className={cn(classes.shell, className)}>
+      <header className={classes.header}>{header}</header>
 
-      <div className={cn(classes.div2, contentClassName)}>
-        {children}
-      </div>
+      <div className={cn(classes.content, contentClassName)}>{children}</div>
     </div>
   );
 }

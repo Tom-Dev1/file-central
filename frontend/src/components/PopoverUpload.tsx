@@ -1,9 +1,11 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { Button, Popover } from "antd";
+import { clsx as cn } from "clsx";
+
+import { CreateFolderButton } from "./CreateFolder";
 import { UploadFileButton } from "./UploadFileButton";
 import { UploadFolderButton } from "./UploadFoldersButton";
-import { clsx as cn } from "clsx";
-import { CreateFolderButton } from "./CreateFolder";
+
 import styles from "./PopoverUpload.module.css";
 
 interface IPopoverUpload {
@@ -12,28 +14,59 @@ interface IPopoverUpload {
   compact?: boolean;
 }
 
-const PopoverUpload = ({ parentId, className, compact = false }: IPopoverUpload) => {
+const PopoverUpload = ({
+  parentId,
+  className,
+  compact = false,
+}: IPopoverUpload) => {
   return (
     <Popover
       trigger="click"
       placement="bottomLeft"
       arrow={false}
-      title="Create or upload"
+      classNames={{
+        root: styles.popoverRoot,
+
+      }}
       content={
-        <div className={styles.content}>
-          <CreateFolderButton parentId={parentId} />
-          <UploadFileButton parentId={parentId} />
-          <UploadFolderButton parentId={parentId} />
+        <div
+          className={styles.content}
+          role="menu"
+          aria-label="Create or upload"
+        >
+          <div className={styles.actionItem}>
+            <CreateFolderButton parentId={parentId} />
+          </div>
+
+          <div className={styles.divider} />
+
+          <div className={styles.actionItem}>
+            <UploadFileButton parentId={parentId} />
+          </div>
+
+          <div className={styles.actionItem}>
+            <UploadFolderButton parentId={parentId} />
+          </div>
         </div>
       }
     >
       <Button
-        type="default"
-        className={cn(styles.trigger, compact && styles.compactTrigger, className)}
-        aria-label={compact ? "Create or upload" : undefined}
+        color="default"
+        variant={compact ? "text" : "outlined"}
+        shape={compact ? "circle" : "round"}
+        className={cn(
+          styles.trigger,
+          compact && styles.compactTrigger,
+          className,
+        )}
+        aria-label={
+          compact
+            ? "Create or upload"
+            : undefined
+        }
         icon={<PlusOutlined />}
       >
-        {compact ? null : "New"}
+        {!compact && "New"}
       </Button>
     </Popover>
   );

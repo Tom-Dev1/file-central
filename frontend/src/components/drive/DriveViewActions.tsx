@@ -4,14 +4,23 @@ import {
   ReloadOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { App, Button, Segmented, Space, Tooltip, Typography } from "antd";
+import {
+  App,
+  Button,
+  Flex,
+  Segmented,
+  Tooltip,
+  Typography,
+} from "antd";
+
 import PopoverUpload from "@/components/PopoverUpload";
-import { DriveSelectionToggle } from "../DriveSelectionToggle";
-import { DriveSelectAll } from "./selection/DriveSelectAll";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { useDeleteItem } from "@/hooks";
-import classes from "./DriveViewActions.module.css";
 
+import { DriveSelectionToggle } from "../DriveSelectionToggle";
+import { DriveSelectAll } from "./selection/DriveSelectAll";
+
+import classes from "./DriveViewActions.module.css";
 
 export type ViewMode = "grid" | "list";
 
@@ -32,48 +41,100 @@ export function DriveViewActions({
   onRefresh,
   itemIds,
 }: DriveViewActionsProps) {
-  const { selectionMode, selectedIds, selectedCount, disableSelectionMode, unselectItems } = useDriveSelection();
+  const {
+    selectionMode,
+    selectedIds,
+    selectedCount,
+    disableSelectionMode,
+    unselectItems,
+  } = useDriveSelection();
+
   const deleteItem = useDeleteItem();
+
   const { message, modal } = App.useApp();
 
   const confirmDeleteSelected = () => {
-    if (selectedCount === 0 || deleteItem.isPending) return;
+    if (
+      selectedCount === 0 ||
+      deleteItem.isPending
+    ) {
+      return;
+    }
 
     const ids = [...selectedIds];
+
     modal.confirm({
-      title: `Move ${ids.length} selected ${ids.length === 1 ? "item" : "items"} to Trash?`,
-      content: "You can restore them later from Trash.",
+      title: `Move ${ids.length} selected ${ids.length === 1
+        ? "item"
+        : "items"
+        } to Trash?`,
+      content:
+        "You can restore them later from Trash.",
       okText: "Move to Trash",
-      okButtonProps: { danger: true },
+      okButtonProps: {
+        danger: true,
+      },
       cancelText: "Cancel",
+
       onOk: async () => {
         try {
           for (const id of ids) {
-            await deleteItem.mutateAsync(id);
+            await deleteItem.mutateAsync(
+              id,
+            );
+
             unselectItems([id]);
           }
+
           disableSelectionMode();
-          void message.success(`${ids.length} ${ids.length === 1 ? "item" : "items"} moved to Trash`);
+
+          void message.success(
+            `${ids.length} ${ids.length === 1
+              ? "item"
+              : "items"
+            } moved to Trash`,
+          );
         } catch (error) {
-          void message.error(error instanceof Error ? error.message : "Unable to move every selected item to Trash.");
+          void message.error(
+            error instanceof Error
+              ? error.message
+              : "Unable to move every selected item to Trash.",
+          );
+
           throw error;
         }
       },
     });
   };
+  const hasItems = itemIds.length > 0;
 
   return (
-    <Space size={8} wrap>
-      <PopoverUpload parentId={parentId} className={classes.popoverupload} />
-
-      {selectionMode && (
-        <Space size={6}>
-          <Typography.Text type="secondary" className={classes.text}>
+    <div className={classes.driveViewActions}>
+      {hasItems && selectionMode && (
+        <Flex
+          align="center"
+          gap={4}
+          className={classes.selectionActions}
+        >
+          <Typography.Text
+            type="secondary"
+            className={
+              classes.driveViewActionsSelectionText
+            }
+          >
             {selectedCount} selected
           </Typography.Text>
-          <Tooltip title={selectedCount === 0 ? "Select items first" : "Move selected items to Trash"}>
+
+          <Tooltip
+            title={
+              selectedCount === 0
+                ? "Select items first"
+                : "Move selected items to Trash"
+            }
+          >
             <Button
-              danger
+              color="danger"
+              variant="text"
               size="small"
               icon={<DeleteOutlined />}
               disabled={selectedCount === 0}
@@ -83,18 +144,38 @@ export function DriveViewActions({
               Trash
             </Button>
           </Tooltip>
-        </Space>
+        </Flex>
       )}
 
-      <Space.Compact className={classes.spacecompact}>
-        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel={false} className={classes.driveselectall} />}
+      <Flex
+        align="center"
+        gap={4}
+        aria-busy={isFetching}
+        className={
+          classes.driveViewActionsToolbar
+        }
+      >
+        {hasItems && selectionMode && (
+          <DriveSelectAll
+            itemIds={itemIds}
+            showLabel={false}
+            className={
+              classes.driveViewActionsSelectAll
+            }
+          />
+        )}
 
-        <DriveSelectionToggle showLabel />
+        {hasItems && (
+          <DriveSelectionToggle showLabel />
+        )}
+
+        <PopoverUpload parentId={parentId} />
+
         <Tooltip title="Refresh files">
           <Button
-            type="text"
-            size="small"
+            variant="text"
             shape="circle"
+            size="small"
             loading={isFetching}
             aria-label="Refresh files"
             icon={<ReloadOutlined />}
@@ -104,15 +185,36 @@ export function DriveViewActions({
 
         <Segmented
           size="small"
+          shape="round"
           value={viewMode}
           aria-label="Choose file view"
+          classNames={{
+            root:
+              classes.driveViewActionsViewMode,
+            item:
+              classes.driveViewActionsViewModeItem,
+            label:
+              classes.driveViewActionsViewModeLabel,
+            icon:
+              classes.driveViewActionsViewModeIcon,
+          }}
           options={[
-            { value: "list", icon: <UnorderedListOutlined />, label: <span className={classes.visuallyHidden}>List view</span> },
-            { value: "grid", icon: <AppstoreOutlined />, label: <span className={classes.visuallyHidden}>Grid view</span> },
+            {
+              value: "list",
+              icon: <UnorderedListOutlined />,
+              tooltip: "List view",
+            },
+            {
+              value: "grid",
+              icon: <AppstoreOutlined />,
+              tooltip: "Grid view",
+            },
           ]}
-          onChange={(value) => onViewModeChange(value as ViewMode)}
+          onChange={(value) =>
+            onViewModeChange(value as ViewMode)
+          }
         />
-      </Space.Compact>
-    </Space>
+      </Flex>
+    </div>
   );
 }
