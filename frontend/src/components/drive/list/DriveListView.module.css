@@ -1,5 +1,5 @@
 .list {
-  --drive-list-columns: 48px minmax(280px, 1fr) 180px 120px 56px;
+  --drive-list-columns: 48px minmax(240px, 1fr) 170px 110px 120px 56px;
   display: flex;
 
   width: 100%;
@@ -187,11 +187,25 @@
   font-size: 0.75rem;
   font-weight: 500;
   box-shadow: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
 }
 
 .columnSort:hover {
   color: var(--text-primary) !important;
   cursor: pointer;
+}
+
+.columnSortDisabled:hover {
+  color: inherit !important;
+  cursor: default;
+}
+
+.columnSort:disabled {
+  opacity: 1;
 }
 
 .columnSortActive {

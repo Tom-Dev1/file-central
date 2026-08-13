@@ -17,6 +17,8 @@ interface DriveListViewProps {
 
   sort: DriveSortState;
 
+  sortDisabled?: boolean;
+
   onSortChange: (sort: DriveSortState) => void;
 
   onOpenItem?: (item: DriveItem) => void;
@@ -24,7 +26,14 @@ interface DriveListViewProps {
   onPrefetchItem?: (item: DriveItem) => void;
 }
 
-export function DriveListView({ items, sort, onSortChange, onOpenItem, onPrefetchItem }: DriveListViewProps) {
+export function DriveListView({
+  items,
+  sort,
+  sortDisabled = false,
+  onSortChange,
+  onOpenItem,
+  onPrefetchItem,
+}: DriveListViewProps) {
   const { selectionMode, selectedCount, isSelected, selectOnly, toggleItem, clearSelection } = useDriveSelection();
 
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
@@ -79,7 +88,7 @@ export function DriveListView({ items, sort, onSortChange, onOpenItem, onPrefetc
 
   return (
     <div role="table" aria-label="Drive files" className={classes.list}>
-      <DriveListHeader sort={sort} onSortChange={onSortChange} />
+      <DriveListHeader sort={sort} disabled={sortDisabled} onSortChange={onSortChange} />
 
       <div
         role="rowgroup"

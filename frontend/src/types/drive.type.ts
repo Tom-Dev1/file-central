@@ -1,3 +1,5 @@
+import type { DriveListSort, DriveSortDirection } from "./api.types";
+
 export interface FolderBreadcrumbItem {
   id: string;
   name: string;
@@ -5,14 +7,9 @@ export interface FolderBreadcrumbItem {
 
 export type DriveViewMode = "list" | "grid";
 
-export type DriveSortField = "name" | "updatedAt" | "sizeBytes" | "type";
-
-export type DriveSortDirection = "asc" | "desc";
-
-export type DriveFolderPlacement = "onTop" | "mixed";
+export type DriveSortField = DriveListSort;
 
 export interface DriveSortState {
   field: DriveSortField;
   direction: DriveSortDirection;
-  folderPlacement: DriveFolderPlacement;
 }

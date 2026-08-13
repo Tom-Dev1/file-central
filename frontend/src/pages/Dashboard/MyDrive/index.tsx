@@ -25,7 +25,6 @@ export default function MyDrivePage() {
   const [sort, setSort] = useState<DriveSortState>({
     field: "name",
     direction: "asc",
-    folderPlacement: "onTop",
   });
 
   const query = (searchParams.get("q") ?? "").trim();
@@ -34,6 +33,8 @@ export default function MyDrivePage() {
 
   const listQuery = useInfiniteDriveList({
     limit: 100,
+    sort: sort.field,
+    direction: sort.direction,
   });
 
   const searchQuery = useInfiniteDriveSearch({
@@ -94,6 +95,7 @@ export default function MyDrivePage() {
           parentId={null}
           itemIds={driveItems.map((item) => item.id)}
           sort={sort}
+          sortDisabled={isSearchMode}
           isFetching={isFetching}
           onSortChange={setSort}
           onRefresh={() => {
@@ -108,6 +110,7 @@ export default function MyDrivePage() {
             <DriveListView
               items={driveItems}
               sort={sort}
+              sortDisabled={isSearchMode}
               onSortChange={setSort}
               onOpenItem={handleOpenItem}
               onPrefetchItem={prefetchFolder}

@@ -1,5 +1,7 @@
 ﻿export type DriveItemKind = "file" | "folder";
 export type FileStatus = "uploading" | "processing" | "active" | "failed";
+export type DriveListSort = "name" | "modified" | "type" | "size";
+export type DriveSortDirection = "asc" | "desc";
 export type SharePermission = "view" | "download" | "edit";
 export type ShareType = "user" | "public_link";
 
@@ -82,7 +84,7 @@ export interface RefreshRequest { refreshToken: string; }
 export interface CreateFolderRequest { name: string; parentId?: string | null; }
 export interface RenameRequest { name: string; expectedMetadataVersion: number; }
 export interface MoveRequest { newParentId?: string | null; expectedMetadataVersion: number; }
-export interface ListDriveParams { parentId?: string; cursor?: string; limit?: number; }
+export interface ListDriveParams { parentId?: string; cursor?: string; limit?: number; sort?: DriveListSort; direction?: DriveSortDirection; }
 export interface SearchDriveParams { q?: string; type?: DriveItemKind; cursor?: string; limit?: number; }
 export interface CreateShareRequest { itemId: string; shareType: ShareType; permission: SharePermission; sharedWithEmail?: string; expiresAt?: string | null; }
 export interface SharedWithMeRow { share: Share; item: DriveItem; }

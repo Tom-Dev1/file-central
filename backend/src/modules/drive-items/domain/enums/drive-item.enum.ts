@@ -12,11 +12,12 @@ export enum FileStatus {
 
 export enum DriveItemSortBy {
   NAME = "name",
-  UPDATED_AT = "updatedAt",
-  SIZE_BYTES = "sizeBytes",
+  TYPE = "type",
+  MODIFIED = "modified",
+  SIZE = "size",
 }
 
-export enum SortOrder {
+export enum DriveItemSortDirection {
   ASC = "asc",
   DESC = "desc",
 }

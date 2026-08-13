@@ -65,7 +65,10 @@ export class DriveItem {
 
 export const DriveItemSchema = SchemaFactory.createForClass(DriveItem);
 DriveItemSchema.index({ ownerId: 1, parentId: 1, isTrashed: 1, lastModifiedAt: -1, _id: -1 });
+DriveItemSchema.index({ ownerId: 1, parentId: 1, isTrashed: 1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, parentId: 1, isTrashed: 1, type: 1, normalizedName: 1, _id: 1 });
 DriveItemSchema.index({ ownerId: 1, parentId: 1, isTrashed: 1, type: -1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, parentId: 1, isTrashed: 1, sizeBytes: 1, _id: 1 });
 DriveItemSchema.index(
   { ownerId: 1, parentId: 1, normalizedName: 1 },
   { unique: true, partialFilterExpression: { isTrashed: false } },

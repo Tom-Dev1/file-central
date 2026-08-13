@@ -11,6 +11,7 @@ import { PermissionsService } from '../permissions/permissions.service';
 import { SharePermission } from '../shares/schemas/share.schema';
 import { MoveDto } from './dto/move.dto';
 import { RenameDto } from './dto/rename.dto';
+import { DriveItemSortBy, DriveItemSortDirection } from '../drive-items/domain/enums/drive-item.enum';
 
 @Injectable()
 export class DriveService {
@@ -25,8 +26,15 @@ export class DriveService {
     private readonly permissions: PermissionsService,
   ) {}
 
-  async list(userId: string, parentId: string | null, cursor: string | undefined, limit: number) {
-    return this.listItems.execute({ ownerId: userId, parentId, cursor, limit });
+  async list(
+    userId: string,
+    parentId: string | null,
+    cursor: string | undefined,
+    limit: number,
+    sort: DriveItemSortBy,
+    direction: DriveItemSortDirection,
+  ) {
+    return this.listItems.execute({ ownerId: userId, parentId, cursor, limit, sort, direction });
   }
 
   async search(userId: string, query: string, type: 'file' | 'folder' | undefined, cursor: string | undefined, limit: number) {

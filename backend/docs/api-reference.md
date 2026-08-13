@@ -97,14 +97,15 @@ Lỗi: `NAME_ALREADY_EXISTS`, `PARENT_NOT_FOUND`, `MAX_DEPTH_EXCEEDED`.
 ### 1.2. List nội dung folder (cursor pagination)
 
 ```
-GET /drive/items?parentId={id|root}&sort={modified|name}&limit=50&cursor={cursor}
+GET /drive?parentId={id}&sort={name|modified|type|size}&direction={asc|desc}&limit=50&cursor={cursor}
 ```
 
 Query params:
 
-- `parentId`: id folder, hoặc `root` cho thư mục gốc.
-- `sort`: `modified` (mặc định, mới nhất trước) hoặc `name` (folder trước, rồi A→Z).
-- `limit`: 1–100, mặc định 50.
+- `parentId`: id folder; bỏ trống cho thư mục gốc.
+- `sort`: một cột active: `name` (mặc định), `modified`, `type`, hoặc `size`.
+- `direction`: `asc` (mặc định) hoặc `desc`. `type asc` cho file trước, `type desc` cho folder trước. Folder có `sizeBytes=null`, nên đứng đầu với `size asc` và cuối với `size desc`.
+- `limit`: 1–200, mặc định 50.
 - `cursor`: lấy từ `nextCursor` của response trước; bỏ trống cho trang đầu.
 
 Response `200`:
@@ -119,12 +120,12 @@ Response `200`:
       /* DriveItem */
     }
   ],
-  "nextCursor": "eyJsYXN0TW9kaWZpZWRBdCI6...",
-  "hasMore": true
+  "limit": 50,
+  "nextCursor": "eyJ2ZXJzaW9uIjoxLCJzb3J0IjoibmFtZSIsLi4ufQ"
 }
 ```
 
-`nextCursor=null` khi hết. **Không dùng skip/page.**
+`nextCursor=null` khi hết. Cursor gắn với cả `sort` và `direction`; đổi một trong hai thì phải bắt đầu lại từ trang đầu. **Không dùng skip/page.**
 
 ---
 

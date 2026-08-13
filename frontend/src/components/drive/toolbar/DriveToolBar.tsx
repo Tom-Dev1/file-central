@@ -31,6 +31,7 @@ interface DriveToolbarProps {
   parentId?: string | null;
   itemIds: string[];
   sort: DriveSortState;
+  sortDisabled?: boolean;
   isFetching?: boolean;
   onSortChange: (sort: DriveSortState) => void;
   onRefresh: () => void;
@@ -40,6 +41,7 @@ export function DriveToolbar({
   parentId,
   itemIds,
   sort,
+  sortDisabled = false,
   isFetching = false,
   onSortChange,
   onRefresh,
@@ -64,6 +66,7 @@ export function DriveToolbar({
     <DriveBrowseToolbar
       parentId={parentId}
       sort={sort}
+      sortDisabled={sortDisabled}
       isFetching={isFetching}
       onSortChange={onSortChange}
       onRefresh={onRefresh}
@@ -74,28 +77,26 @@ export function DriveToolbar({
 interface DriveBrowseToolbarProps {
   parentId?: string | null;
   sort: DriveSortState;
+  sortDisabled: boolean;
   isFetching: boolean;
   onSortChange: (sort: DriveSortState) => void;
   onRefresh: () => void;
 }
 
-function DriveBrowseToolbar({ parentId, sort, isFetching, onSortChange, onRefresh }: DriveBrowseToolbarProps) {
+function DriveBrowseToolbar({
+  parentId,
+  sort,
+  sortDisabled,
+  isFetching,
+  onSortChange,
+  onRefresh,
+}: DriveBrowseToolbarProps) {
   const handleSortChange: MenuProps["onClick"] = ({ key }) => {
     const field = key as DriveSortField;
-
-    if (sort.field === field) {
-      onSortChange({
-        ...sort,
-        direction: sort.direction === "asc" ? "desc" : "asc",
-      });
-
-      return;
-    }
-
     onSortChange({
-      ...sort,
       field,
-      direction: "asc",
+      direction:
+        sort.field === field && sort.direction === "asc" ? "desc" : "asc",
     });
   };
 
@@ -111,18 +112,22 @@ function DriveBrowseToolbar({ parentId, sort, isFetching, onSortChange, onRefres
           placement="bottomLeft"
           menu={{
             items: SORT_ITEMS,
+            selectedKeys: [sort.field],
             onClick: handleSortChange,
           }}
         >
-          <Button variant="outlined" icon={<SortAscendingOutlined />} className={classes.toolbarButton}>
+          <Button
+            variant="outlined"
+            icon={<SortAscendingOutlined />}
+            className={classes.toolbarButton}
+            disabled={sortDisabled}
+          >
             <span>{SORT_LABELS[sort.field]}</span>
-
             {sort.direction === "asc" ? (
               <ArrowUpOutlined className={classes.directionIcon} />
             ) : (
               <ArrowDownOutlined className={classes.directionIcon} />
             )}
-
             <DownOutlined className={classes.dropdownIcon} />
           </Button>
         </Dropdown>

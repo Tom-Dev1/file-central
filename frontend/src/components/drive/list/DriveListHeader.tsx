@@ -8,15 +8,20 @@ import classes from "./DriveListView.module.css";
 interface DriveListHeaderProps {
   sort: DriveSortState;
 
+  disabled?: boolean;
+
   onSortChange: (sort: DriveSortState) => void;
 }
 
-export function DriveListHeader({ sort, onSortChange }: DriveListHeaderProps) {
+export function DriveListHeader({ sort, disabled = false, onSortChange }: DriveListHeaderProps) {
   const handleSort = (field: DriveSortField) => {
+    if (disabled) {
+      return;
+    }
     onSortChange({
-      ...sort,
       field,
-      direction: sort.field === field && sort.direction === "asc" ? "desc" : "asc",
+      direction:
+        sort.field === field && sort.direction === "asc" ? "desc" : "asc",
     });
   };
 
@@ -24,11 +29,37 @@ export function DriveListHeader({ sort, onSortChange }: DriveListHeaderProps) {
     <div role="row" className={classes.header}>
       <div role="columnheader" className={classes.selectionHeader} />
 
-      <SortableColumn label="Name" field="name" sort={sort} onSort={handleSort} />
+      <SortableColumn
+        label="Name"
+        field="name"
+        sort={sort}
+        disabled={disabled}
+        onSort={handleSort}
+      />
 
-      <SortableColumn label="Last modified" field="updatedAt" sort={sort} onSort={handleSort} />
+      <SortableColumn
+        label="Last modified"
+        field="modified"
+        sort={sort}
+        disabled={disabled}
+        onSort={handleSort}
+      />
 
-      <SortableColumn label="File size" field="sizeBytes" sort={sort} onSort={handleSort} />
+      <SortableColumn
+        label="Type"
+        field="type"
+        sort={sort}
+        disabled={disabled}
+        onSort={handleSort}
+      />
+
+      <SortableColumn
+        label="File size"
+        field="size"
+        sort={sort}
+        disabled={disabled}
+        onSort={handleSort}
+      />
 
       <div role="columnheader" aria-label="Actions" className={classes.actionsHeader} />
     </div>
@@ -42,11 +73,13 @@ interface SortableColumnProps {
 
   sort: DriveSortState;
 
+  disabled: boolean;
+
   onSort: (field: DriveSortField) => void;
 }
 
-function SortableColumn({ label, field, sort, onSort }: SortableColumnProps) {
-  const active = sort.field === field;
+function SortableColumn({ label, field, sort, disabled, onSort }: SortableColumnProps) {
+  const active = !disabled && sort.field === field;
 
   return (
     <div
@@ -54,7 +87,18 @@ function SortableColumn({ label, field, sort, onSort }: SortableColumnProps) {
       aria-sort={active ? (sort.direction === "asc" ? "ascending" : "descending") : "none"}
       className={classes.columnHeader}
     >
-      <div className={cn(classes.columnSort, active && classes.columnSortActive)} onClick={() => onSort(field)}>
+      <button
+        type="button"
+        disabled={disabled}
+        aria-label={`${label}, ${active ? (sort.direction === "asc" ? "ascending" : "descending") : "not sorted"}`}
+        aria-disabled={disabled || undefined}
+        className={cn(
+          classes.columnSort,
+          active && classes.columnSortActive,
+          disabled && classes.columnSortDisabled,
+        )}
+        onClick={() => onSort(field)}
+      >
         <span className={classes.columnSortLabel}>{label}</span>
 
         {active &&
@@ -63,7 +107,7 @@ function SortableColumn({ label, field, sort, onSort }: SortableColumnProps) {
           ) : (
             <ArrowDownOutlined className={classes.columnSortIcon} />
           ))}
-      </div>
+      </button>
     </div>
   );
 }

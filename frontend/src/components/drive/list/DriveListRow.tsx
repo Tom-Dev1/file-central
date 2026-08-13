@@ -203,7 +203,11 @@ export function DriveListRow({
         </div>
 
         <div role="cell" className={classes.metadata}>
-          {formatModifiedDate(item.updatedAt)}
+          {formatModifiedDate(item.lastModifiedAt)}
+        </div>
+
+        <div role="cell" className={classes.metadata}>
+          {item.type === "folder" ? "Folder" : "File"}
         </div>
 
         <div role="cell" className={classes.metadata}>

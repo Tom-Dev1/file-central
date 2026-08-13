@@ -9,6 +9,8 @@ function normalizeListParams(params: ListDriveParams = {}): ListDriveParams {
   return {
     parentId: params.parentId?.trim() || undefined,
     limit: params.limit ?? 100,
+    sort: params.sort ?? "name",
+    direction: params.direction ?? "asc",
   };
 }
 

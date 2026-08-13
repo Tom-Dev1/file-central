@@ -10,6 +10,10 @@ import { PaginationQueryDto } from "./dto/pagination-query.dto";
 import { SearchQueryDto } from "./dto/search-query.dto";
 import { toDriveItemDto, toDriveItemDtoList } from "../../common/mappers/response-mapper";
 import { DriveDriveItemsDto } from "./dto/drive-item-query.dto";
+import {
+  DriveItemSortBy,
+  DriveItemSortDirection,
+} from "../drive-items/domain/enums/drive-item.enum";
 
 @ApiTags("drive")
 @ApiBearerAuth()
@@ -35,14 +39,15 @@ export class DriveController {
   @Get()
   async list(
     @CurrentUser() user: AuthUser,
-    @Query("parentId") parentId: string | undefined,
     @Query() query: DriveDriveItemsDto
   ) {
     const result = await this.driveService.list(
       user.userId,
       query.parentId ?? null,
       query.cursor,
-      query.limit ?? 50
+      query.limit ?? 50,
+      query.sort ?? DriveItemSortBy.NAME,
+      query.direction ?? DriveItemSortDirection.ASC,
     );
     return { ...result, items: toDriveItemDtoList(result.items) };
   }

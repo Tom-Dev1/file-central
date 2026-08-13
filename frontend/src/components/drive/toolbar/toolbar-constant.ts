@@ -41,22 +41,22 @@ export const SORT_ITEMS: MenuProps["items"] = [
     label: "Name",
   },
   {
-    key: "updatedAt",
+    key: "modified",
     label: "Last modified",
-  },
-  {
-    key: "sizeBytes",
-    label: "File size",
   },
   {
     key: "type",
     label: "Type",
   },
+  {
+    key: "size",
+    label: "File size",
+  },
 ];
 
 export const SORT_LABELS: Record<DriveSortField, string> = {
   name: "Name",
-  updatedAt: "Last modified",
-  sizeBytes: "File size",
+  modified: "Last modified",
   type: "Type",
+  size: "File size",
 };

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "antd";
 import { useInfiniteDriveList } from "@/hooks";
 import DriveGridView from "../Dashboard/MyDrive/DriveGridView";
-import { DriveListView } from "../Dashboard/MyDrive/DriveListView";
+import { DriveListView } from "@/components/drive/list";
 import type { DriveItem } from "@/types/api.types";
 import { FolderBreadcrumbs } from "@/components/FolderBreadcrumb";
 import FolderErrorState from "./FolderErrorState";
@@ -15,6 +15,8 @@ import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
 import { LoadingState } from "./LoadingStates";
 import classes from "./index.module.css";
 import { DriveViewModeToggle } from "@/components/drive/DriveViewModeToggle";
+import { DriveToolbar } from "@/components/drive/toolbar/DriveToolBar";
+import type { DriveSortState } from "@/types/drive.type";
 
 type ViewMode = "grid" | "list";
 
@@ -22,19 +24,20 @@ export default function FolderPage() {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [sort, setSort] = useState<DriveSortState>({ field: "name", direction: "asc" });
   const prefetchFolder = usePrefetchDriveFolder();
   const listParams = useMemo(
     () => ({
       parentId: folderId,
       limit: 100,
+      sort: sort.field,
+      direction: sort.direction,
     }),
-    [folderId]
+    [folderId, sort.direction, sort.field]
   );
-  const { data, isLoading, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, isFetching, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useInfiniteDriveList(listParams);
   const itemsDrive = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
-  const folders = useMemo(() => itemsDrive.filter((item) => item.type === "folder"), [itemsDrive]);
-  const files = useMemo(() => itemsDrive.filter((item) => item.type === "file"), [itemsDrive]);
 
   if (!folderId) {
     return (
@@ -84,27 +87,27 @@ export default function FolderPage() {
     >
       {/* CONTENT */}
       <div className={classes.div}>
-        {folders.length > 0 && (
-          <section>
-            <h2 className={classes.title}>Folders</h2>
-            {viewMode === "grid" ? (
-              <DriveGridView items={folders} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
-            ) : (
-              <DriveListView items={folders} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
-            )}
-          </section>
-        )}
+        <DriveToolbar
+          parentId={folderId}
+          itemIds={itemsDrive.map((item) => item.id)}
+          sort={sort}
+          isFetching={isFetching}
+          onSortChange={setSort}
+          onRefresh={() => void refetch()}
+        />
 
-        {files.length > 0 && (
-          <section className={classes.section}>
-            <h2 className={classes.title}>Files</h2>
-            {viewMode === "grid" ? (
-              <DriveGridView items={files} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
-            ) : (
-              <DriveListView items={files} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
-            )}
-          </section>
-        )}
+        {itemsDrive.length > 0 &&
+          (viewMode === "grid" ? (
+            <DriveGridView items={itemsDrive} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
+          ) : (
+            <DriveListView
+              items={itemsDrive}
+              sort={sort}
+              onSortChange={setSort}
+              onOpenItem={handleOpenItem}
+              onPrefetchItem={prefetchFolder}
+            />
+          ))}
 
         {itemsDrive.length === 0 && <EmptyFolderState parentId={folderId} />}
 
