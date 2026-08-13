@@ -10,12 +10,11 @@ import FolderErrorState from "./FolderErrorState";
 import EmptyFolderState from "@/components/EmptyFolderState";
 import { DrivePageShell } from "@/components/drive/DrivePageShell";
 import { DriveSubHeader } from "@/components/drive/DriveSubHeader";
-import { DriveViewActions } from "@/components/drive/DriveViewActions";
 import { Folder } from "lucide-react";
 import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
 import { LoadingState } from "./LoadingStates";
 import classes from "./index.module.css";
-
+import { DriveViewModeToggle } from "@/components/drive/DriveViewModeToggle";
 
 type ViewMode = "grid" | "list";
 
@@ -31,7 +30,8 @@ export default function FolderPage() {
     }),
     [folderId]
   );
-  const { data, isLoading, isFetching, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = useInfiniteDriveList(listParams);
+  const { data, isLoading, isError, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useInfiniteDriveList(listParams);
   const itemsDrive = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
   const folders = useMemo(() => itemsDrive.filter((item) => item.type === "folder"), [itemsDrive]);
   const files = useMemo(() => itemsDrive.filter((item) => item.type === "file"), [itemsDrive]);
@@ -74,20 +74,11 @@ export default function FolderPage() {
         <DriveSubHeader
           folderBreadcrumbs={<FolderBreadcrumbs folderId={folderId} />}
           title="My Drive"
-          description={`${itemsDrive.length} ${itemsDrive.length === 1 ? "item" : "items"} loaded · ${hasNextPage ? "more available" : "all loaded"}`}
+          description={`${itemsDrive.length} ${itemsDrive.length === 1 ? "item" : "items"} loaded · ${
+            hasNextPage ? "more available" : "all loaded"
+          }`}
           icon={Folder}
-          actions={
-            <DriveViewActions
-              parentId={folderId}
-              itemIds={itemsDrive.map((item) => item.id)}
-              viewMode={viewMode}
-              isFetching={isFetching}
-              onViewModeChange={setViewMode}
-              onRefresh={() => {
-                void refetch();
-              }}
-            />
-          }
+          actions={<DriveViewModeToggle value={viewMode} onChange={setViewMode} />}
         />
       }
     >

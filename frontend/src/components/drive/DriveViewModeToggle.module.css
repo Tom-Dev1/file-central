@@ -1,0 +1,49 @@
+.root {
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 99999px;
+  background: transparent;
+  overflow: hidden;
+}
+
+.root :global(.ant-segmented-thumb) {
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--secondary);
+}
+
+.root :global(.ant-segmented-thumb) {
+  transition: transform 0.16s ease-in-out, width 0.12s ease-in-out;
+}
+.item {
+  min-width: 48px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+}
+
+.item:hover {
+  background: var(--outline-variant);
+}
+
+.item:global(.ant-segmented-item-selected) {
+  background: var(--primary-container);
+  box-shadow: none;
+}
+
+.label {
+  height: 100%;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}

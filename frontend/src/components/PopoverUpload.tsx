@@ -1,5 +1,5 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Popover } from "antd";
+import { Button, Popover, Tooltip } from "antd";
 import { clsx as cn } from "clsx";
 
 import { CreateFolderButton } from "./CreateFolder";
@@ -14,11 +14,7 @@ interface IPopoverUpload {
   compact?: boolean;
 }
 
-const PopoverUpload = ({
-  parentId,
-  className,
-  compact = false,
-}: IPopoverUpload) => {
+const PopoverUpload = ({ parentId, className, compact = false }: IPopoverUpload) => {
   return (
     <Popover
       trigger="click"
@@ -26,14 +22,9 @@ const PopoverUpload = ({
       arrow={false}
       classNames={{
         root: styles.popoverRoot,
-
       }}
       content={
-        <div
-          className={styles.content}
-          role="menu"
-          aria-label="Create or upload"
-        >
+        <div className={styles.content} role="menu" aria-label="Create or upload">
           <div className={styles.actionItem}>
             <CreateFolderButton parentId={parentId} />
           </div>
@@ -50,24 +41,17 @@ const PopoverUpload = ({
         </div>
       }
     >
-      <Button
-        color="default"
-        variant={compact ? "text" : "outlined"}
-        shape={compact ? "circle" : "round"}
-        className={cn(
-          styles.trigger,
-          compact && styles.compactTrigger,
-          className,
-        )}
-        aria-label={
-          compact
-            ? "Create or upload"
-            : undefined
-        }
-        icon={<PlusOutlined />}
-      >
-        {!compact && "New"}
-      </Button>
+      <Tooltip title="New files">
+        <Button
+          variant={compact ? "text" : "text"}
+          shape={compact ? "circle" : "circle"}
+          className={cn(styles.trigger, compact && styles.compactTrigger, className)}
+          aria-label={compact ? "Create or upload" : undefined}
+          icon={<PlusOutlined />}
+        >
+          {!compact && "New"}
+        </Button>
+      </Tooltip>
     </Popover>
   );
 };

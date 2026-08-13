@@ -1,7 +1,4 @@
-import {
-  CheckSquareOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+import { CheckSquareOutlined, CloseOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { clsx as cn } from "clsx";
 
@@ -14,52 +11,38 @@ interface DriveSelectionToggleProps {
   showLabel?: boolean;
 }
 
-export function DriveSelectionToggle({
-  className,
-  showLabel = false,
-}: DriveSelectionToggleProps) {
-  const { selectionMode, selectedCount, toggleSelectionMode, } = useDriveSelection();
+export function DriveSelectionToggle({ className, showLabel = false }: DriveSelectionToggleProps) {
+  const { selectionMode, selectedCount, enableSelectionMode, disableSelectionMode } = useDriveSelection();
 
-  const label = selectionMode
-    ? selectedCount > 0
-      ? `${selectedCount} selected`
-      : "Cancel selection"
-    : "Select items";
+  const handleClick = () => {
+    if (selectionMode) {
+      disableSelectionMode();
+      return;
+    }
+
+    enableSelectionMode();
+  };
+
+  const label = selectionMode ? "Done" : "Select";
 
   return (
     <Button
       type="text"
       size="small"
       shape={showLabel ? "default" : "circle"}
+      disabled={selectedCount === 0}
       className={cn(
         classes.toggle,
-        showLabel
-          ? classes.withLabel
-          : classes.iconOnly,
-        selectionMode &&
-        classes.active,
-        className,
+        showLabel ? classes.withLabel : classes.iconOnly,
+        selectionMode && classes.active,
+        className
       )}
-      aria-label={
-        selectionMode
-          ? "Disable selection mode"
-          : "Enable selection mode"
-      }
+      aria-label={selectionMode ? "Disable selection mode" : "Enable selection mode"}
       aria-pressed={selectionMode}
-      onClick={toggleSelectionMode}
-      icon={
-        selectionMode ? (
-          <CloseOutlined />
-        ) : (
-          <CheckSquareOutlined />
-        )
-      }
+      onClick={handleClick}
+      icon={selectionMode ? <CloseOutlined /> : <CheckSquareOutlined />}
     >
-      {showLabel && (
-        <span className={classes.label}>
-          {label}
-        </span>
-      )}
+      {showLabel && <span className={classes.label}>{label}</span>}
     </Button>
   );
 }

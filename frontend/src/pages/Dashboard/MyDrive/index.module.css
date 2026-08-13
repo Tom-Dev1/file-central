@@ -1,42 +1,72 @@
-.content {
+.browser {
+  display: flex;
   width: 100%;
+  height: 100%;
   min-width: 0;
-  min-height: 100%;
+  min-height: 0;
 
-  padding: 0 1rem 1rem;
+  flex-direction: column;
+
+  overflow: hidden;
 
   background: var(--content-background);
 }
 
-/* =========================================================
-   DRIVE VIEW
-   ========================================================= */
+.view {
+  position: relative;
 
-.driveView {
   width: 100%;
   min-width: 0;
+  min-height: 0;
+  flex: 1;
+
+  overflow: hidden;
+
+  background: var(--content-background);
 }
 
-/*
- * List view usually benefits from slightly tighter spacing,
- * while grid cards control their own gaps.
- */
-.driveView[data-view="list"] {
-  padding-top: 0.25rem;
+.pagination {
+  display: flex;
+  min-height: 52px;
+  flex-shrink: 0;
+
+  align-items: center;
+  justify-content: center;
+
+  padding-inline: 1rem;
+
+  background: var(--content-background);
 }
 
-.driveView[data-view="grid"] {
-  padding-top: 0.5rem;
+.pagination :global(.ant-btn) {
+  min-width: 112px;
+
+  border-color: var(--outline-variant);
+
+  border-radius: 9999px;
+
+  background: transparent;
+
+  color: var(--primary);
+
+  box-shadow: none;
 }
 
-/* =========================================================
-   EMPTY STATE
-   ========================================================= */
+@media (hover: hover) {
+  .pagination :global(.ant-btn:not(:disabled):hover) {
+    border-color: var(--outline);
+
+    background: var(--surface-2);
+
+    color: var(--primary);
+  }
+}
 
 .emptyState {
   display: flex;
   width: 100%;
-  min-height: 420px;
+  height: 100%;
+  min-height: 280px;
 
   flex-direction: column;
 
@@ -48,129 +78,34 @@
   text-align: center;
 }
 
-.empty {
-  margin: 0;
-}
-
-.emptyDescription {
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  gap: 0.375rem;
-}
-
 .emptyIcon {
-  display: flex;
-  width: 4rem;
-  height: 4rem;
-
-  align-items: center;
-  justify-content: center;
+  width: 40px;
+  height: 40px;
 
   margin-bottom: 1rem;
 
-  border-radius: 9999px;
-
-  background: var(--surface-2);
   color: var(--text-secondary);
-}
 
-.emptyIcon svg {
-  width: 2rem;
-  height: 2rem;
-
-  stroke-width: 1.75;
+  stroke-width: 1.5;
 }
 
 .emptyTitle {
-  margin: 0 !important;
+  margin: 0;
 
-  color: var(--text-primary) !important;
+  color: var(--text-primary);
+
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
 }
 
-.emptyCopy {
+.emptyDescription {
   max-width: 360px;
 
-  margin: 0.25rem 0 0 !important;
+  margin: 0.375rem 0 0;
 
-  color: var(--text-secondary) !important;
+  color: var(--text-secondary);
 
   font-size: 0.875rem;
   line-height: 1.375rem;
-}
-
-/* =========================================================
-   PAGINATION
-   ========================================================= */
-
-.pagination {
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  padding-block: 1.5rem 0.75rem;
-}
-
-.loadMoreButton {
-  min-width: 120px;
-
-  border-color: var(--outline-variant) !important;
-  border-radius: 9999px !important;
-
-  background: transparent !important;
-  color: var(--primary) !important;
-
-  font-weight: 500;
-
-  box-shadow: none !important;
-
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
-}
-
-@media (hover: hover) {
-  .loadMoreButton:hover {
-    border-color: var(--outline) !important;
-
-    background: var(--hover) !important;
-
-    color: var(--primary) !important;
-  }
-}
-
-.loadMoreButton:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-/* =========================================================
-   ERROR / STATUS STATE
-   ========================================================= */
-
-.stateContainer {
-  display: flex;
-  width: 100%;
-  min-height: 100%;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 2rem;
-
-  background: var(--content-background);
-}
-
-.stateContainer :global(.ant-result) {
-  max-width: 560px;
-}
-
-.stateContainer :global(.ant-result-title) {
-  color: var(--text-primary);
-}
-
-.stateContainer :global(.ant-result-subtitle) {
-  color: var(--text-secondary);
 }

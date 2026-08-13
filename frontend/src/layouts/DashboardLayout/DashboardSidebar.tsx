@@ -1,9 +1,7 @@
 import { Button, Divider, Menu, Progress, Tooltip, Typography, type MenuProps } from "antd";
-import { Clock3, Cloud, FileClock, HardDrive, Settings, Share2, Star, Trash2 } from "lucide-react";
+import { Clock3, Cloud, HardDrive, Settings, Share2, Star, Trash2 } from "lucide-react";
 import type { ComponentType } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
-import DropdownUpload from "@/components/PopoverUpload";
 
 import classes from "./DashboardSidebar.module.css";
 
@@ -156,22 +154,6 @@ export default function DashboardSidebar({ collapsed = false, onNavigate }: Dash
               </span>
             </Tooltip>
           </section>
-
-          <div className={classes.activityRegion}>
-            <div className={classes.activityCard}>
-              <div className={classes.activityHeading}>
-                <FileClock className={classes.activityIcon} />
-
-                <Typography.Text strong className={classes.activityTitle}>
-                  Activity
-                </Typography.Text>
-              </div>
-
-              <Typography.Paragraph type="secondary" className={classes.activityCopy}>
-                Your recent file activity will appear here.
-              </Typography.Paragraph>
-            </div>
-          </div>
         </>
       )}
     </div>

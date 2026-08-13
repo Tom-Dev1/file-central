@@ -1,0 +1,87 @@
+.toolbar {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-inline: 1rem;
+  /* color: var(--primary-container-foreground); */
+}
+
+.toolbarLeft,
+.toolbarRight {
+  min-width: 0;
+}
+
+.toolbarLeft {
+  flex: 1;
+}
+
+.toolbarRight {
+  flex-shrink: 0;
+}
+
+.toolbarButton,
+.selectButton {
+  min-height: 36px;
+
+  box-shadow: none;
+}
+
+.toolbarButton {
+  color: var(--text-secondary);
+
+  border-color: var(--outline-variant);
+}
+
+.toolbarButton:hover {
+  color: var(--text-primary) !important;
+
+  border-color: var(--outline) !important;
+
+  background: var(--hover) !important;
+}
+
+.selectButton {
+  flex-shrink: 0;
+}
+
+.iconButton {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--text-secondary);
+}
+.iconButton:hover {
+  background: var(--hover) !important;
+}
+.actionToolbar .iconButton {
+  color: var(--primary-container-foreground);
+}
+
+.selectionCount {
+  flex-shrink: 0;
+
+  color: var(--primary-container-foreground) !important;
+
+  font-size: 0.875rem;
+
+  font-weight: 500;
+}
+
+.dropdownIcon {
+  margin-inline-start: 0.125rem;
+
+  font-size: 0.625rem;
+}
+
+.directionIcon {
+  margin-inline-start: 0.125rem;
+
+  font-size: 0.75rem;
+}

@@ -1,34 +1,13 @@
-
 .trigger {
   display: inline-flex !important;
-
   height: 48px !important;
   min-width: 100px;
-
   align-items: center;
   justify-content: flex-start;
-
   gap: 0.75rem;
-
   padding-inline: 1rem !important;
-
-  border: 0 !important;
-  border-radius: 16px !important;
-
-  background: var(--surface-0) !important;
-  color: var(--text-primary) !important;
-
-  box-shadow:
-    0 1px 2px rgb(60 64 67 / 30%),
-    0 1px 3px 1px rgb(60 64 67 / 15%) !important;
-
   font-size: 0.875rem;
   font-weight: 500;
-
-  transition:
-    background-color 120ms ease,
-    box-shadow 120ms ease,
-    color 120ms ease;
 }
 
 .trigger :global(.ant-btn-icon) {
@@ -47,13 +26,9 @@
 
 @media (hover: hover) {
   .trigger:hover {
-    background: var(--surface-2) !important;
-
-    color: var(--text-primary) !important;
-
-    box-shadow:
-      0 1px 3px rgb(60 64 67 / 30%),
-      0 4px 8px 3px rgb(60 64 67 / 15%) !important;
+    background: var(--hover) !important;
+    color: var(--primary-container-foreground);
+    border: 1px solid var(--text-secondary);
   }
 }
 
@@ -65,7 +40,6 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-
 
 .compactTrigger {
   width: 36px !important;
@@ -79,35 +53,19 @@
 
   border-radius: 9999px !important;
 
-  background: transparent !important;
-
   box-shadow: none !important;
 
-  color: var(--text-secondary) !important;
+  /* background: var(--hover) !important; */
 }
-
-.compactTrigger :global(.anticon) {
-  font-size: 1rem;
+.compactTrigger:hover {
+  color: var(--primary-container-foreground) !important;
+  box-shadow: none !important;
+  background: var(--hover) !important;
+  border-color: var(--primary-container-foreground) !important;
 }
-
-@media (hover: hover) {
-  .compactTrigger:hover {
-    background: var(--surface-3) !important;
-
-    color: var(--text-primary) !important;
-
-    box-shadow: none !important;
-  }
-}
-
-.compactTrigger:active {
-  background: var(--surface-4) !important;
-}
-
 
 .popoverRoot {
-  --antd-arrow-background-color:
-    var(--popover-background);
+  --antd-arrow-background-color: var(--popover-background);
 }
 
 .popoverBody {
@@ -119,12 +77,9 @@
 
   border-radius: 12px !important;
 
-  background:
-    var(--popover-background) !important;
+  background: var(--popover-background) !important;
 
-  box-shadow:
-    0 2px 6px 2px rgb(60 64 67 / 15%),
-    0 1px 2px rgb(60 64 67 / 30%) !important;
+  box-shadow: 0 2px 6px 2px rgb(60 64 67 / 15%), 0 1px 2px rgb(60 64 67 / 30%) !important;
 }
 
 .content {
@@ -165,13 +120,10 @@
 
   text-align: left;
 
-  transition:
-    background-color 120ms ease,
-    color 120ms ease;
+  transition: background-color 120ms ease, color 120ms ease;
 }
 
-.actionItem
-  :global(.ant-btn-icon) {
+.actionItem :global(.ant-btn-icon) {
   display: inline-flex;
 
   width: 20px;
@@ -190,29 +142,21 @@
 }
 
 @media (hover: hover) {
-  .actionItem
-    :global(.ant-btn:not(:disabled):hover) {
-    background:
-      var(--surface-3) !important;
+  .actionItem :global(.ant-btn:not(:disabled):hover) {
+    background: var(--surface-3) !important;
 
-    color:
-      var(--text-primary) !important;
+    color: var(--text-primary) !important;
   }
 
-  .actionItem
-    :global(.ant-btn:not(:disabled):hover)
-    :global(.ant-btn-icon) {
-    color:
-      var(--text-primary);
+  .actionItem :global(.ant-btn:not(:disabled):hover) :global(.ant-btn-icon) {
+    color: var(--text-primary);
   }
 }
 
-.actionItem
-  :global(.ant-btn:focus-visible) {
+.actionItem :global(.ant-btn:focus-visible) {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
-
 
 .divider {
   width: calc(100% - 1rem);
@@ -220,8 +164,7 @@
 
   margin: 0.25rem auto;
 
-  background:
-    var(--outline-subtle);
+  background: var(--outline-subtle);
 }
 
 @media (prefers-reduced-motion: reduce) {

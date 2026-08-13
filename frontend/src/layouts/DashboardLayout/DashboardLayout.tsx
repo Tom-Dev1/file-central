@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Layout } from "antd";
 import { Outlet } from "react-router-dom";
 
-import { DriveSelectionProvider } from "@/components/drive/selection/DriveSelectionContext";
 import { DriveNProgress } from "@/components/DriveNProgress";
 import { useTheme } from "@/contexts/themeContext";
 
@@ -10,6 +9,7 @@ import DashboardSidebar from "./DashboardSidebar";
 
 import styles from "./DashboardLayout.module.css";
 import DashboardHeader from "./DashboardHeader";
+import { DriveSelectionProvider } from "@/contexts/driveSelectionProvider";
 
 const { Content, Sider } = Layout;
 
