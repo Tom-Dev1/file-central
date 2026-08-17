@@ -15,12 +15,18 @@ import classes from "./DriveGridView.module.css";
 
 interface DriveGridViewProps {
   items: DriveItem[];
+  previewPaneOpen?: boolean;
   onOpenItem?: (item: DriveItem) => void;
   onPrefetchItem?: (item: DriveItem) => void;
 }
 
-export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: DriveGridViewProps) {
-  const { selectionMode, isSelected, toggleItem } = useDriveSelection();
+export default function DriveGridView({
+  items,
+  previewPaneOpen = false,
+  onOpenItem,
+  onPrefetchItem,
+}: DriveGridViewProps) {
+  const { selectionMode, isSelected, selectOnly, toggleItem, clearSelection } = useDriveSelection();
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   if (items.length === 0) {
@@ -33,6 +39,11 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
       return;
     }
 
+    if (previewPaneOpen) {
+      selectOnly(item.id);
+      return;
+    }
+
     if (item.type === "folder") {
       onOpenItem?.(item);
       return;
@@ -41,8 +52,24 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
     setPreviewItemId(item.id);
   };
 
+  const handleOpenItem = (item: DriveItem) => {
+    if (item.type === "folder") {
+      clearSelection();
+      onOpenItem?.(item);
+      return;
+    }
+
+    selectOnly(item.id);
+    setPreviewItemId(item.id);
+  };
+
   return (
-    <div className={classes.responsiveGrid}>
+    <div
+      className={classes.responsiveGrid}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) clearSelection();
+      }}
+    >
       {items.map((item) => {
         const iconSource = getDriveItemIcon(item);
         const selected = isSelected(item.id);
@@ -61,8 +88,21 @@ export default function DriveGridView({ items, onOpenItem, onPrefetchItem }: Dri
             )}
             styles={{ body: { padding: 16 } }}
             onClick={() => handleItemClick(item)}
+            onDoubleClick={(event) => {
+              if (!previewPaneOpen) return;
+              event.preventDefault();
+              event.stopPropagation();
+              handleOpenItem(item);
+            }}
             onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                if (previewPaneOpen) {
+                  handleOpenItem(item);
+                } else {
+                  handleItemClick(item);
+                }
+              } else if (event.key === " ") {
                 event.preventDefault();
                 handleItemClick(item);
               }

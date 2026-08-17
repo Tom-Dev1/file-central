@@ -1,5 +1,5 @@
-import { DownloadOutlined, ExportOutlined, FileUnknownOutlined } from "@ant-design/icons";
-import { Button, Space, Typography } from "antd";
+import { ExportOutlined, FileUnknownOutlined } from "@ant-design/icons";
+import { Button, Typography } from "antd";
 
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
 import { resolvePreviewKind } from "@/utils/resolve-preview-kind";
@@ -9,17 +9,11 @@ import classes from "./FilePreviewContent.module.css";
 interface FilePreviewContentProps {
   preview: PreviewLinkResponse;
   fileName: string;
-  allowDownload?: boolean;
-  downloadPending?: boolean;
-  onDownload?: () => void;
 }
 
 export function FilePreviewContent({
   preview,
   fileName,
-  allowDownload = true,
-  downloadPending = false,
-  onDownload,
 }: FilePreviewContentProps) {
   switch (resolvePreviewKind(fileName)) {
     case "image":
@@ -65,24 +59,12 @@ export function FilePreviewContent({
             <Typography.Paragraph type="secondary">
               This file type cannot be previewed in the browser.
             </Typography.Paragraph>
-            <Space wrap className={classes.centeredRow5}>
-              <Button
-                icon={<ExportOutlined />}
-                onClick={() => window.open(preview.url, "_blank", "noopener,noreferrer")}
-              >
-                Open file
-              </Button>
-              {allowDownload && (
-                <Button
-                  type="primary"
-                  icon={<DownloadOutlined />}
-                  loading={downloadPending}
-                  onClick={onDownload}
-                >
-                  Download
-                </Button>
-              )}
-            </Space>
+            <Button
+              icon={<ExportOutlined />}
+              onClick={() => window.open(preview.url, "_blank", "noopener,noreferrer")}
+            >
+              Open file
+            </Button>
           </div>
         </div>
       );

@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Button } from "antd";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { App, Button } from "antd";
 import { useInfiniteDriveList } from "@/hooks";
 import DriveGridView from "../Dashboard/MyDrive/DriveGridView";
 import { DriveListView } from "@/components/drive/list";
@@ -17,15 +17,27 @@ import classes from "./index.module.css";
 import { DriveViewModeToggle } from "@/components/drive/DriveViewModeToggle";
 import { DriveToolbar } from "@/components/drive/toolbar/DriveToolBar";
 import type { DriveSortState } from "@/types/drive.type";
+import { DrivePreviewLayout } from "@/components/drive/DrivePreviewLayout";
+import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import { useDrivePreviewPane } from "@/hooks/useDrivePreviewPane";
+import { DriveContentSkeleton } from "@/components/DriveContentSkeleton";
+import { createDriveSortSearch, readDriveSortParams, writeDriveSortParams } from "@/utils/drive-sort-params";
 
 type ViewMode = "grid" | "list";
 
 export default function FolderPage() {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { message } = App.useApp();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [sort, setSort] = useState<DriveSortState>({ field: "name", direction: "asc" });
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const searchParams = new URLSearchParams(location.search);
+  const sort = readDriveSortParams(searchParams);
+  const sortSearch = createDriveSortSearch(sort);
   const prefetchFolder = usePrefetchDriveFolder();
+  const { selectedIds, clearSelection } = useDriveSelection();
+  const { previewPaneOpen, setPreviewPaneOpen } = useDrivePreviewPane();
   const listParams = useMemo(
     () => ({
       parentId: folderId,
@@ -35,9 +47,46 @@ export default function FolderPage() {
     }),
     [folderId, sort.direction, sort.field]
   );
-  const { data, isLoading, isError, isFetching, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useInfiniteDriveList(listParams);
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    isPlaceholderData,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteDriveList(listParams);
   const itemsDrive = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
+  const selectedItems = itemsDrive.filter((item) => selectedIds.has(item.id));
+  const selectedItem = selectedItems.length === 1 ? selectedItems[0] : null;
+  const isSortTransitioning = isPlaceholderData && isFetching;
+  const showContentSkeleton = isManualRefreshing || isSortTransitioning;
+
+  useEffect(() => {
+    clearSelection();
+  }, [clearSelection, folderId]);
+
+  useEffect(() => {
+    const currentParams = new URLSearchParams(location.search);
+
+    if (currentParams.get("sort") === sort.field && currentParams.get("direction") === sort.direction) return;
+
+    const nextParams = writeDriveSortParams(currentParams, {
+      field: sort.field,
+      direction: sort.direction,
+    });
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${nextParams.toString()}`,
+        hash: location.hash,
+      },
+      { replace: true }
+    );
+  }, [location.hash, location.pathname, location.search, navigate, sort.direction, sort.field]);
 
   if (!folderId) {
     return (
@@ -45,7 +94,7 @@ export default function FolderPage() {
         title="Invalid folder"
         description="The requested folder ID is missing."
         retryLabel="Return to My Drive"
-        onRetry={() => navigate("/dashboard")}
+        onRetry={() => navigate(`/dashboard?${sortSearch}`)}
       />
     );
   }
@@ -53,7 +102,7 @@ export default function FolderPage() {
     return <LoadingState message="Loading..." />;
   }
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <FolderErrorState
         title="Unable to load folder"
@@ -66,9 +115,37 @@ export default function FolderPage() {
 
   const handleOpenItem = (item: DriveItem) => {
     if (item.type === "folder") {
-      navigate(`/dashboard/folders/${item.id}`);
+      clearSelection();
+      navigate(`/dashboard/folders/${item.id}?${sortSearch}`);
       return;
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsManualRefreshing(true);
+
+    try {
+      const result = await refetch();
+
+      if (result.isError) {
+        void message.error("Unable to refresh this folder. The current list has been kept.");
+      }
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
+  const handleSortChange = (nextSort: DriveSortState) => {
+    const nextParams = writeDriveSortParams(new URLSearchParams(location.search), nextSort);
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${nextParams.toString()}`,
+        hash: location.hash,
+      },
+      { replace: true }
+    );
   };
 
   return (
@@ -81,44 +158,68 @@ export default function FolderPage() {
             hasNextPage ? "more available" : "all loaded"
           }`}
           icon={Folder}
-          actions={<DriveViewModeToggle value={viewMode} onChange={setViewMode} />}
+          titleHref={`/dashboard?${sortSearch}`}
+          actions={
+            <DriveViewModeToggle
+              value={viewMode}
+              onChange={setViewMode}
+              previewOpen={previewPaneOpen}
+              onPreviewOpenChange={setPreviewPaneOpen}
+            />
+          }
         />
       }
     >
-      {/* CONTENT */}
-      <div className={classes.div}>
-        <DriveToolbar
-          parentId={folderId}
-          itemIds={itemsDrive.map((item) => item.id)}
-          sort={sort}
-          isFetching={isFetching}
-          onSortChange={setSort}
-          onRefresh={() => void refetch()}
-        />
+      <DrivePreviewLayout
+        open={previewPaneOpen}
+        item={selectedItem}
+        selectedCount={selectedItems.length}
+        onClose={() => setPreviewPaneOpen(false)}
+      >
+        <div className={classes.div}>
+          <DriveToolbar
+            parentId={folderId}
+            itemIds={itemsDrive.map((item) => item.id)}
+            sort={sort}
+            isFetching={isManualRefreshing}
+            onSortChange={handleSortChange}
+            onRefresh={() => void handleRefresh()}
+          />
 
-        {itemsDrive.length > 0 &&
-          (viewMode === "grid" ? (
-            <DriveGridView items={itemsDrive} onOpenItem={handleOpenItem} onPrefetchItem={prefetchFolder} />
-          ) : (
-            <DriveListView
-              items={itemsDrive}
-              sort={sort}
-              onSortChange={setSort}
-              onOpenItem={handleOpenItem}
-              onPrefetchItem={prefetchFolder}
-            />
-          ))}
-
-        {itemsDrive.length === 0 && <EmptyFolderState parentId={folderId} />}
-
-        {hasNextPage && (
-          <div className={classes.centeredRow}>
-            <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
-              Load more
-            </Button>
+          <div className={classes.view}>
+            {showContentSkeleton ? (
+              <DriveContentSkeleton viewMode={viewMode} />
+            ) : itemsDrive.length > 0 ? (
+              (viewMode === "grid" ? (
+                <DriveGridView
+                  items={itemsDrive}
+                  previewPaneOpen={previewPaneOpen}
+                  onOpenItem={handleOpenItem}
+                  onPrefetchItem={prefetchFolder}
+                />
+              ) : (
+                <DriveListView
+                  items={itemsDrive}
+                  sort={sort}
+                  onSortChange={handleSortChange}
+                  onOpenItem={handleOpenItem}
+                  onPrefetchItem={prefetchFolder}
+                />
+              ))
+            ) : (
+              <EmptyFolderState parentId={folderId} />
+            )}
           </div>
-        )}
-      </div>
+
+          {hasNextPage && !showContentSkeleton && (
+            <div className={classes.centeredRow}>
+              <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+                Load more
+              </Button>
+            </div>
+          )}
+        </div>
+      </DrivePreviewLayout>
     </DrivePageShell>
   );
 }

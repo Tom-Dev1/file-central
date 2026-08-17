@@ -1,4 +1,5 @@
 ﻿import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData } from "@tanstack/react-query";
 import { driveKeys } from "@/lib/query-keys";
 import type { ListDriveParams, MoveRequest, RenameRequest, SearchDriveParams } from "@/types/api.types";
 import { driveApi } from "@/apis/drive.api";
@@ -23,6 +24,8 @@ export function useInfiniteDriveList(params: ListDriveParams = {}) {
     initialPageParam: null as string | null,
     queryFn: ({ pageParam, signal }) => driveApi.list({ ...query, cursor: pageParam ?? undefined }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
+    meta: { suppressGlobalProgress: true },
   });
 }
 
@@ -47,6 +50,7 @@ export function useInfiniteDriveSearch(params: SearchDriveParams) {
     queryFn: ({ pageParam, signal }) => driveApi.search({ ...query, cursor: pageParam ?? undefined }, signal),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(query.q?.trim()),
+    meta: { suppressGlobalProgress: true },
   });
 }
 

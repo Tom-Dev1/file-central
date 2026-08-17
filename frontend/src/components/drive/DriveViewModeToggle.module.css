@@ -1,9 +1,35 @@
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .root {
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 99999px;
   background: transparent;
   overflow: hidden;
+}
+
+.previewButton {
+  height: 34px;
+  border-radius: 9999px;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .previewButton {
+    width: 36px;
+    min-width: 36px;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .previewButton :global(.ant-btn-icon) {
+    margin: 0;
+    font-size: 0.875rem;
+  }
 }
 
 .root :global(.ant-segmented-thumb) {

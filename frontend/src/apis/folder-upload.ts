@@ -1,14 +1,17 @@
 ﻿import { toApiError, type ApiError } from "@/lib/api-error";
 import type { DriveItem } from "@/types/api.types";
+import type { CompleteUploadResponse } from "@/types/upload.types";
 import { foldersApi } from "./folders.api";
 import { driveApi } from "./drive.api";
-import { filesApi } from "./files.api";
+import { uploadDriveFile } from "./upload-drive-file";
 
 export interface UploadFolderProgress {
   totalFiles: number;
   completedFiles: number;
   failedFiles: number;
-  // 0-100, based on (completed + failed) / total.
+  totalBytes: number;
+  uploadedBytes: number;
+  // 0-100, based on transferred bytes across the selected folder.
   percent: number;
   currentFileName?: string;
   phase: "creating-folders" | "uploading-files" | "done";
@@ -20,7 +23,7 @@ export interface UploadFolderFailure {
 
 export interface UploadFolderResult {
   createdFolders: DriveItem[];
-  uploadedFiles: DriveItem[];
+  uploadedFiles: CompleteUploadResponse[];
   // Files that failed - the rest of the batch still completes
   failures: UploadFolderFailure[];
 }
@@ -88,15 +91,20 @@ export async function uploadFolder({
 }: UploadFolderOptions): Promise<UploadFolderResult> {
   const fileArray = Array.from(files);
   const totalFiles = fileArray.length;
+  const totalBytes = fileArray.reduce((total, file) => total + file.size, 0);
 
   let completedFiles = 0;
   let failedFiles = 0;
+  const processedBytesByFile = new Map<number, number>();
   const report = (phase: UploadFolderProgress["phase"], currentFileName?: string) => {
+    const uploadedBytes = Array.from(processedBytesByFile.values()).reduce((total, bytes) => total + bytes, 0);
     onProgress?.({
       totalFiles,
       completedFiles,
       failedFiles,
-      percent: totalFiles === 0 ? 100 : Math.round(((completedFiles + failedFiles) / totalFiles) * 100),
+      totalBytes,
+      uploadedBytes,
+      percent: totalBytes === 0 ? 100 : Math.round((uploadedBytes / totalBytes) * 100),
       currentFileName,
       phase,
     });
@@ -134,10 +142,10 @@ export async function uploadFolder({
 
   // Phase 3: upload files, several at a time
   report("uploading-files");
-  const uploadedFiles: DriveItem[] = [];
+  const uploadedFiles: CompleteUploadResponse[] = [];
   const failures: UploadFolderFailure[] = [];
 
-  const tasks = fileArray.map((file) => async () => {
+  const tasks = fileArray.map((file, fileIndex) => async () => {
     if (signal?.aborted) return; // let already-queued work drain instead of throwing mid-batch
 
     const relativePath = file.webkitRelativePath || file.name;
@@ -145,10 +153,21 @@ export async function uploadFolder({
 
     report("uploading-files", relativePath);
     try {
-      const uploaded = await filesApi.upload({ file, parentId: targetParentId, signal });
+      const uploaded = await uploadDriveFile({
+        file,
+        parentId: targetParentId,
+        signal,
+        onProgress: (fileProgress) => {
+          processedBytesByFile.set(fileIndex, fileProgress.uploadedBytes);
+          report("uploading-files", relativePath);
+        },
+      });
+      processedBytesByFile.set(fileIndex, file.size);
       uploadedFiles.push(uploaded);
       completedFiles++;
     } catch (error) {
+      if (signal?.aborted) return;
+      processedBytesByFile.set(fileIndex, file.size);
       failedFiles++;
       failures.push({ relativePath, error: toApiError(error) });
     }
@@ -156,6 +175,10 @@ export async function uploadFolder({
   });
 
   await runWithConcurrency(tasks, concurrency);
+
+  if (signal?.aborted) {
+    throw new DOMException("Upload cancelled", "AbortError");
+  }
 
   report("done");
   return { createdFolders, uploadedFiles, failures };

@@ -6,6 +6,7 @@ import { initialAppContext } from "./contexts";
 
 import { App as AntdApp, ConfigProvider, theme as antdTheme } from 'antd';
 import { useTheme } from './contexts/themeContext';
+import { UploadManagerProvider } from './components/upload/UploadManagerProvider';
 import classes from "./App.module.css";
 
 
@@ -38,7 +39,9 @@ function ThemedRouter() {
       }}
     >
       <AntdApp className={classes.antdapp}>
-        <RouterProvider router={router} />
+        <UploadManagerProvider>
+          <RouterProvider router={router} />
+        </UploadManagerProvider>
       </AntdApp>
     </ConfigProvider>
   );

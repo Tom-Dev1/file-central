@@ -16,12 +16,13 @@ import {
 } from "antd";
 import { clsx as cn } from "clsx";
 import { startTransition, useLayoutEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { getBreadcrumbParts } from "@/constants/file-constants";
 import { useFolderBreadcrumbs } from "@/hooks/useDrive";
 import { driveKeys } from "@/lib/query-keys";
 import type { FolderBreadcrumbItem } from "@/types/drive.type";
+import { createDriveSortSearch, readDriveSortParams } from "@/utils/drive-sort-params";
 
 import styles from "./FolderBreadcrumb.module.css";
 
@@ -79,6 +80,8 @@ export function FolderBreadcrumbs({
   className,
 }: FolderBreadcrumbsProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sortSearch = createDriveSortSearch(readDriveSortParams(searchParams));
   const queryClient = useQueryClient();
   const {
     data: breadcrumbs = [],
@@ -105,7 +108,7 @@ export function FolderBreadcrumbs({
     }
 
     startTransition(() => {
-      navigate(`/dashboard/folders/${item.id}`);
+      navigate(`/dashboard/folders/${item.id}?${sortSearch}`);
     });
   };
 

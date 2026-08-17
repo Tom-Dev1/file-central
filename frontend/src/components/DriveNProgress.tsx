@@ -18,6 +18,7 @@ export function DriveNProgress() {
   const fetchingCount = useIsFetching({
     queryKey: driveKeys.all,
     type: "active",
+    predicate: (query) => query.meta?.suppressGlobalProgress !== true,
   });
 
   const startTimerRef = useRef<number | null>(null);

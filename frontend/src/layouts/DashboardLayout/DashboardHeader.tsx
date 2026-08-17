@@ -56,13 +56,16 @@ function DashboardHeader({ onToggleSidebar, sidebarCollapsed }: DashboardHeaderP
 
   const handleSearch = (value: string) => {
     const query = value.trim();
-    const searchParams = new URLSearchParams();
+    const searchParams = new URLSearchParams(location.search);
 
     if (query) {
       searchParams.set("q", query);
+    } else {
+      searchParams.delete("q");
     }
 
-    const target = query ? `/dashboard?${searchParams.toString()}` : "/dashboard";
+    const nextSearch = searchParams.toString();
+    const target = `/dashboard${nextSearch ? `?${nextSearch}` : ""}`;
 
     const currentTarget = `${location.pathname}${location.search}`;
 

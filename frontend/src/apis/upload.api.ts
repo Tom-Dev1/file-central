@@ -27,9 +27,11 @@ export const uploadApi = {
     options?: {
       contentType?: string;
       onProgress?: (percent: number) => void;
+      signal?: AbortSignal;
     }
   ): Promise<string> => {
     const res = await axios.put(presignedUrl, data, {
+      signal: options?.signal,
       headers: options?.contentType ? { "Content-Type": options.contentType } : undefined,
       transformRequest: [(d) => d],
       onUploadProgress: (evt) => {

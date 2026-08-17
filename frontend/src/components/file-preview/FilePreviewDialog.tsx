@@ -130,9 +130,6 @@ export function FilePreviewDialog({ item, open, onOpenChange, allowDownload = tr
         <FilePreviewContent
           preview={data}
           fileName={item.name}
-          allowDownload={allowDownload}
-          downloadPending={downloadMutation.isPending}
-          onDownload={handleDownload}
         />
       ) : (
         <div className={classes.centeredRow2}>
