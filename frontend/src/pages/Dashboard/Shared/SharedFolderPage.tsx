@@ -1,17 +1,16 @@
 import { ArrowLeftOutlined, EyeOutlined, FolderOpenOutlined, ReloadOutlined } from "@ant-design/icons";
-import { Breadcrumb, Button, Empty, Result, Skeleton, Space, Table, Typography, type TableColumnsType } from "antd";
+import { Breadcrumb, Button, Empty, Result, Typography } from "antd";
 import { Folder } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DrivePageShell } from "@/components/drive/DrivePageShell";
 import { DriveSubHeader } from "@/components/drive/DriveSubHeader";
+import { DriveListMetadataCell, DriveListView, type DriveListMetadataColumn } from "@/components/drive/list";
 import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
-import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useSharedFolderChildren } from "@/hooks";
 import type { DriveItem } from "@/types/api.types";
-import { getDriveItemIcon } from "@/utils/file-utils";
 import classes from "./SharedFolderPage.module.css";
 
 
@@ -61,46 +60,22 @@ export default function SharedFolderPage() {
     });
   };
 
-  const columns: TableColumnsType<DriveItem> = [
+  const columns: DriveListMetadataColumn[] = [
     {
-      key: "name",
-      title: "Name",
-      render: (_, item) => (
-        <div className={classes.row}>
-          <ThemedSvgIcon src={getDriveItemIcon(item)} className={classes.icon} />
-          <div className={classes.div}>
-            <Typography.Text strong ellipsis={{ tooltip: item.name }} className={classes.text}>{item.name}</Typography.Text>
-            <Typography.Text type="secondary" className={classes.text2}>{formatModifiedDate(item.updatedAt)} · {item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0))}</Typography.Text>
-          </div>
-        </div>
-      ),
+      key: "modified",
+      title: "Last modified",
+      width: 170,
+      responsive: ["md"],
+      render: (item) => <DriveListMetadataCell>{formatModifiedDate(item.lastModifiedAt)}</DriveListMetadataCell>,
     },
     {
       key: "type",
       title: "Type",
-      width: 120,
+      width: 110,
       responsive: ["lg"],
-      render: (_, item) => <Typography.Text type="secondary">{item.type === "folder" ? "Folder" : item.extension?.toUpperCase() || "File"}</Typography.Text>,
+      render: (item) => <DriveListMetadataCell>{item.type === "folder" ? "Folder" : item.extension?.toUpperCase() || "File"}</DriveListMetadataCell>,
     },
-    { key: "modified", title: "Modified", width: 170, responsive: ["md"], render: (_, item) => <Typography.Text type="secondary">{formatModifiedDate(item.updatedAt)}</Typography.Text> },
-    { key: "size", title: "Size", width: 120, responsive: ["xl"], render: (_, item) => <Typography.Text type="secondary">{item.type === "folder" ? "—" : formatFileSize(Number(item.sizeBytes ?? 0))}</Typography.Text> },
-    {
-      key: "actions",
-      title: <span className={classes.visuallyHidden}>Actions</span>,
-      width: 56,
-      align: "right",
-      render: (_, item) => (
-        <Space onClick={(event) => event.stopPropagation()}>
-          <Button
-            type="text"
-            shape="circle"
-            aria-label={`${item.type === "folder" ? "Open" : "Preview"} ${item.name}`}
-            icon={item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />}
-            onClick={() => openItem(item)}
-          />
-        </Space>
-      ),
-    },
+    { key: "size", title: "File size", width: 120, responsive: ["xl"], render: (item) => <DriveListMetadataCell>{item.type === "folder" ? "—" : formatDriveFileSize(item)}</DriveListMetadataCell> },
   ];
 
   return (
@@ -134,33 +109,39 @@ export default function SharedFolderPage() {
         />
       }
     >
-      {childrenQuery.isLoading ? (
-        <div className={classes.div2}><Skeleton active paragraph={{ rows: 7 }} /></div>
-      ) : childrenQuery.isError ? (
+      {childrenQuery.isError ? (
         <Result status="error" title="Unable to open shared folder" extra={<Button icon={<ReloadOutlined />} onClick={() => void childrenQuery.refetch()}>Try again</Button>} />
-      ) : items.length === 0 ? (
-        <div className={classes.centeredRow}><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="This folder is empty" /></div>
       ) : (
         <div className={classes.div3}>
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={items}
-            pagination={false}
-            tableLayout="fixed"
-            className={classes.table}
-            rowClassName={classes.clickableRow}
-            onRow={(item) => ({
-              tabIndex: 0,
-              onClick: () => openItem(item),
-              onKeyDown: (event) => {
-                if (event.target !== event.currentTarget) return;
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  openItem(item);
-                }
-              },
-            })}
+          <DriveListView
+            items={items}
+            loading={childrenQuery.isLoading}
+            selectable={false}
+            metadataColumns={columns}
+            renderNameDetails={(item) => (
+              <Typography.Text type="secondary" className={classes.text2}>
+                {formatModifiedDate(item.lastModifiedAt)} · {item.type === "folder" ? "Folder" : formatDriveFileSize(item)}
+              </Typography.Text>
+            )}
+            renderActions={(item) => (
+              <Button
+                type="text"
+                shape="circle"
+                aria-label={`${item.type === "folder" ? "Open" : "Preview"} ${item.name}`}
+                icon={item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />}
+                onClick={() => openItem(item)}
+              />
+            )}
+            onOpenItem={openItem}
+            onPreviewItem={openItem}
+            ariaLabel={`Files in ${currentFolder.name}`}
+            loadingAriaLabel={`Loading files in ${currentFolder.name}`}
+            emptyState={
+              <div className={classes.centeredRow}>
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="This folder is empty" />
+              </div>
+            }
+            scrollX={686}
           />
         </div>
       )}

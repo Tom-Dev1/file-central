@@ -179,7 +179,7 @@ export default function FolderPage() {
         <div className={classes.div}>
           <DriveToolbar
             parentId={folderId}
-            itemIds={itemsDrive.map((item) => item.id)}
+            items={itemsDrive}
             sort={sort}
             isFetching={isManualRefreshing}
             onSortChange={handleSortChange}

@@ -18,6 +18,9 @@ export const uploadApi = {
   complete: (uploadSessionId: string, body: CompleteUploadRequest) =>
     api.post<CompleteUploadResponse>(`/uploads/${uploadSessionId}/complete`, body).then((res) => res.data),
 
+  pause: (uploadSessionId: string) =>
+    api.post<{ status: string }>(`/uploads/${uploadSessionId}/pause`).then((res) => res.data),
+
   abort: (uploadSessionId: string) =>
     api.post<{ status: string }>(`/uploads/${uploadSessionId}/abort`).then((res) => res.data),
 

@@ -84,11 +84,15 @@ export interface RefreshRequest { refreshToken: string; }
 export interface CreateFolderRequest { name: string; parentId?: string | null; }
 export interface RenameRequest { name: string; expectedMetadataVersion: number; }
 export interface MoveRequest { newParentId?: string | null; expectedMetadataVersion: number; }
+export interface BulkMoveItemRequest { id: string; expectedMetadataVersion: number; }
+export interface BulkMoveRequest { items: BulkMoveItemRequest[]; newParentId?: string | null; }
+export interface BulkTrashRequest { itemIds: string[]; }
 export interface ListDriveParams { parentId?: string; cursor?: string; limit?: number; sort?: DriveListSort; direction?: DriveSortDirection; }
 export interface SearchDriveParams { q?: string; type?: DriveItemKind; cursor?: string; limit?: number; }
 export interface CreateShareRequest { itemId: string; shareType: ShareType; permission: SharePermission; sharedWithEmail?: string; expiresAt?: string | null; }
 export interface SharedWithMeRow { share: Share; item: DriveItem; }
 export interface PublicShareMetadata { item: DriveItem; permission: SharePermission; }
 export interface DeletedIdsResponse { deletedIds: string[]; }
+export interface MovedIdsResponse { movedIds: string[]; }
 export interface RestoreResponse { restoredIds: string[]; }
 export interface PresignedFileUrlResponse { url: string; expiresInSeconds: number; }

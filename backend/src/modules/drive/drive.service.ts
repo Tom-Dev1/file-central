@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { MoveDriveItemCommand } from '../drive-items/application/commands/items/move-drive-item.command';
+import { MoveDriveItemsCommand } from '../drive-items/application/commands/items/move-drive-items.command';
 import { RenameDriveItemCommand } from '../drive-items/application/commands/items/rename-drive-item.command';
 import { TrashDriveItemCommand } from '../drive-items/application/commands/trash/trash-drive-item.command';
+import { TrashDriveItemsCommand } from '../drive-items/application/commands/trash/trash-drive-items.command';
 import { GetDriveItemAncestorsQuery } from '../drive-items/application/queries/get-drive-item-ancestors.query';
 import { DriveItemLookupQuery } from '../drive-items/application/queries/drive-item-lookup.query';
 import { ListDriveItemsQuery } from '../drive-items/application/queries/list-drive-items.query';
@@ -12,6 +14,7 @@ import { SharePermission } from '../shares/schemas/share.schema';
 import { MoveDto } from './dto/move.dto';
 import { RenameDto } from './dto/rename.dto';
 import { DriveItemSortBy, DriveItemSortDirection } from '../drive-items/domain/enums/drive-item.enum';
+import { BulkMoveDto } from './dto/bulk-move.dto';
 
 @Injectable()
 export class DriveService {
@@ -22,7 +25,9 @@ export class DriveService {
     private readonly ancestorsQuery: GetDriveItemAncestorsQuery,
     private readonly renameCommand: RenameDriveItemCommand,
     private readonly moveCommand: MoveDriveItemCommand,
+    private readonly moveItemsCommand: MoveDriveItemsCommand,
     private readonly trashCommand: TrashDriveItemCommand,
+    private readonly trashItemsCommand: TrashDriveItemsCommand,
     private readonly permissions: PermissionsService,
   ) {}
 
@@ -75,10 +80,43 @@ export class DriveService {
     return this.moveCommand.execute({ ownerId: item.ownerId, itemId, newParentId: dto.newParentId ? new Types.ObjectId(dto.newParentId) : null, expectedMetadataVersion: dto.expectedMetadataVersion });
   }
 
+  async moveMany(userId: string, userEmail: string | undefined, dto: BulkMoveDto) {
+    const items = dto.items.map((item) => ({
+      itemId: new Types.ObjectId(item.id),
+      expectedMetadataVersion: item.expectedMetadataVersion,
+    }));
+
+    await Promise.all(
+      items.map((item) =>
+        this.permissions.requireAccess(userId, userEmail, item.itemId, SharePermission.EDIT),
+      ),
+    );
+
+    const movedIds = await this.moveItemsCommand.execute({
+      items,
+      newParentId: dto.newParentId ? new Types.ObjectId(dto.newParentId) : null,
+    });
+    return { movedIds: movedIds.map((id) => id.toString()) };
+  }
+
   async remove(userId: string, userEmail: string | undefined, itemIdValue: string) {
     const itemId = new Types.ObjectId(itemIdValue);
     await this.permissions.requireAccess(userId, userEmail, itemId, SharePermission.EDIT);
     const deletedIds = await this.trashCommand.execute(itemId);
+    if (!deletedIds.length) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
+    return { deletedIds: deletedIds.map((id) => id.toString()) };
+  }
+
+  async removeMany(userId: string, userEmail: string | undefined, itemIdValues: string[]) {
+    const itemIds = Array.from(new Set(itemIdValues)).map((itemId) => new Types.ObjectId(itemId));
+
+    await Promise.all(
+      itemIds.map((itemId) =>
+        this.permissions.requireAccess(userId, userEmail, itemId, SharePermission.EDIT),
+      ),
+    );
+
+    const deletedIds = await this.trashItemsCommand.execute(itemIds);
     if (!deletedIds.length) throw new NotFoundException('DRIVE_ITEM_NOT_FOUND');
     return { deletedIds: deletedIds.map((id) => id.toString()) };
   }

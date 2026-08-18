@@ -27,5 +27,5 @@ export function useCompleteUpload() {
 
 /** Pauses the session; the backend retains MinIO parts so it can be resumed. */
 export function usePauseUpload() {
-  return useMutation({ mutationFn: (sessionId: string) => uploadApi.abort(sessionId) });
+  return useMutation({ mutationFn: (sessionId: string) => uploadApi.pause(sessionId) });
 }

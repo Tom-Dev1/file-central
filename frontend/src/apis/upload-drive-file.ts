@@ -1,7 +1,15 @@
 import axios from "axios";
 
 import { uploadApi } from "@/apis/upload.api";
-import type { CompletePart, CompleteUploadResponse } from "@/types/upload.types";
+import { ApiError } from "@/lib/api-error";
+import type {
+  CompletePart,
+  CompleteUploadResponse,
+  InitUploadResponse,
+  PartUrl,
+  UploadMethod,
+  UploadStatusResponse,
+} from "@/types/upload.types";
 
 const MULTIPART_CONCURRENCY = 3;
 
@@ -14,11 +22,21 @@ export interface UploadDriveFileProgress {
   totalBytes: number;
 }
 
+export interface UploadDriveFileState {
+  idempotencyKey: string;
+  uploadSessionId?: string;
+}
+
 export interface UploadDriveFileOptions {
   file: File;
   parentId?: string | null;
   signal?: AbortSignal;
+  state?: UploadDriveFileState;
   onProgress?: (progress: UploadDriveFileProgress) => void;
+}
+
+export function createUploadDriveFileState(): UploadDriveFileState {
+  return { idempotencyKey: crypto.randomUUID() };
 }
 
 function createAbortError() {
@@ -33,24 +51,42 @@ function clampPercent(value: number) {
   return Math.min(Math.max(Math.round(value), 0), 100);
 }
 
-/**
- * Production upload flow shared with the dashboard buttons.
- * It mirrors /dashboard/test: init -> direct PUT to storage -> complete.
- */
+function resetUploadState(state: UploadDriveFileState) {
+  state.idempotencyKey = crypto.randomUUID();
+  state.uploadSessionId = undefined;
+}
+
+function isTerminalSessionError(error: unknown) {
+  if (!(error instanceof ApiError)) return false;
+  return error.messages.some(
+    (message) =>
+      message === "UPLOAD_SESSION_NOT_FOUND" ||
+      message === "UPLOAD_SESSION_EXPIRED" ||
+      message.startsWith("UPLOAD_SESSION_NOT_RESUMABLE:"),
+  );
+}
+
+/** A task owns one mutable state object so retries resume its existing session. */
 export async function uploadDriveFile({
   file,
   parentId = null,
   signal,
+  state: providedState,
   onProgress,
 }: UploadDriveFileOptions): Promise<CompleteUploadResponse> {
-  let uploadSessionId: string | undefined;
+  const canResume = providedState !== undefined;
+  const state = providedState ?? createUploadDriveFileState();
+  let pausePromise: Promise<unknown> | undefined;
   let abortPromise: Promise<unknown> | undefined;
 
-  const requestAbort = () => {
-    if (!uploadSessionId || abortPromise) return;
-    abortPromise = uploadApi.abort(uploadSessionId).catch(() => undefined);
+  const requestPause = () => {
+    if (!state.uploadSessionId || pausePromise) return;
+    pausePromise = uploadApi.pause(state.uploadSessionId).catch(() => undefined);
   };
-
+  const requestAbort = () => {
+    if (!state.uploadSessionId || abortPromise) return;
+    abortPromise = uploadApi.abort(state.uploadSessionId);
+  };
   const handleAbort = () => requestAbort();
   signal?.addEventListener("abort", handleAbort, { once: true });
 
@@ -68,42 +104,100 @@ export async function uploadDriveFile({
     throwIfAborted(signal);
     report("initializing", 0);
 
-    const init = await uploadApi.init({
-      name: file.name,
-      parentId: parentId?.trim() || null,
-      declaredSizeBytes: String(file.size),
-      idempotencyKey: crypto.randomUUID(),
-      mimeTypeHint: file.type || undefined,
-    });
+    let method: UploadMethod = "single";
+    let singlePutUrl: string | undefined;
+    let partSizeBytes: number | undefined;
+    let partUrls: PartUrl[] = [];
+    let completedParts: CompletePart[] = [];
 
-    uploadSessionId = init.uploadSessionId;
-    throwIfAborted(signal);
-    report("uploading", 0);
+    if (state.uploadSessionId) {
+      let status: UploadStatusResponse | undefined;
+      try {
+        status = await uploadApi.status(state.uploadSessionId);
+      } catch (error) {
+        if (!isTerminalSessionError(error)) throw error;
+        if (
+          error instanceof ApiError &&
+          error.messages.some((message) => message === "UPLOAD_SESSION_NOT_RESUMABLE:aborted")
+        ) {
+          await uploadApi.abort(state.uploadSessionId);
+        }
+        resetUploadState(state);
+      }
 
-    const completedParts: CompletePart[] = [];
+      if (status) {
+        if (status.status === "completed" && status.driveItemId) {
+          return { driveItemId: status.driveItemId, status: status.status };
+        }
+        if (status.status === "processing") {
+          throw new Error("Upload is still processing. Retry shortly.");
+        }
+        if (!status.method) throw new Error("Upload status is missing its method.");
 
-    if (init.method === "single") {
-      await uploadApi.putToStorage(init.putUrl, file, {
-        contentType: file.type || "application/octet-stream",
-        signal,
-        onProgress: (percent) => report("uploading", file.size * (percent / 100)),
+        method = status.method;
+        if (method === "single") {
+          singlePutUrl = status.singlePartUploaded ? undefined : status.putUrl;
+          if (!status.singlePartUploaded && !singlePutUrl) {
+            throw new Error("Upload status did not provide a single-part URL.");
+          }
+        } else {
+          if (!status.partSizeBytes) throw new Error("Upload status is missing its part size.");
+          partSizeBytes = status.partSizeBytes;
+          partUrls = status.missingPartUrls ?? [];
+          completedParts = (status.uploadedParts ?? []).map((part) => ({ ...part }));
+        }
+      }
+    }
+
+    if (!state.uploadSessionId) {
+      const init: InitUploadResponse = await uploadApi.init({
+        name: file.name,
+        parentId: parentId?.trim() || null,
+        declaredSizeBytes: String(file.size),
+        idempotencyKey: state.idempotencyKey,
+        mimeTypeHint: file.type || undefined,
       });
-    } else {
-      let nextPartIndex = 0;
-      const partUploadedBytes = new Map<number, number>();
+      state.uploadSessionId = init.uploadSessionId;
+      method = init.method;
+      if (init.method === "single") {
+        singlePutUrl = init.putUrl;
+      } else {
+        partSizeBytes = init.partSizeBytes;
+        partUrls = init.partUrls;
+      }
+    }
 
+    throwIfAborted(signal);
+    report("uploading", completedParts.reduce((total, part) => total + Number(part.sizeBytes), 0));
+
+    if (method === "single") {
+      if (singlePutUrl) {
+        await uploadApi.putToStorage(singlePutUrl, file, {
+          contentType: file.type || "application/octet-stream",
+          signal,
+          onProgress: (percent) => report("uploading", file.size * (percent / 100)),
+        });
+      }
+    } else {
+      if (!partSizeBytes) throw new Error("Multipart upload is missing its part size.");
+      const safePartSizeBytes = partSizeBytes;
+      let nextPartIndex = 0;
+      const partUploadedBytes = new Map<number, number>(
+        completedParts.map((part) => [part.partNumber, Number(part.sizeBytes)]),
+      );
       const reportMultipartProgress = () => {
-        const uploadedBytes = Array.from(partUploadedBytes.values()).reduce((total, bytes) => total + bytes, 0);
-        report("uploading", uploadedBytes);
+        report(
+          "uploading",
+          Array.from(partUploadedBytes.values()).reduce((total, bytes) => total + bytes, 0),
+        );
       };
 
       const worker = async () => {
-        while (nextPartIndex < init.partUrls.length) {
+        while (nextPartIndex < partUrls.length) {
           throwIfAborted(signal);
-          const part = init.partUrls[nextPartIndex++];
-          const start = (part.partNumber - 1) * init.partSizeBytes;
-          const chunk = file.slice(start, start + init.partSizeBytes);
-
+          const part = partUrls[nextPartIndex++];
+          const start = (part.partNumber - 1) * safePartSizeBytes;
+          const chunk = file.slice(start, start + safePartSizeBytes);
           const etag = await uploadApi.putToStorage(part.url, chunk, {
             contentType: file.type || "application/octet-stream",
             signal,
@@ -124,27 +218,41 @@ export async function uploadDriveFile({
       };
 
       await Promise.all(
-        Array.from({ length: Math.min(MULTIPART_CONCURRENCY, init.partUrls.length) }, () => worker())
+        Array.from({ length: Math.min(MULTIPART_CONCURRENCY, partUrls.length) }, () => worker()),
       );
     }
 
     throwIfAborted(signal);
     report("completing", file.size);
-
-    const result = await uploadApi.complete(uploadSessionId, {
+    const result = await uploadApi.complete(state.uploadSessionId, {
       parts:
-        init.method === "multipart"
+        method === "multipart"
           ? completedParts.sort((left, right) => left.partNumber - right.partNumber)
           : undefined,
     });
-
     report("completing", file.size);
     return result;
   } catch (error) {
-    requestAbort();
-    await abortPromise;
+    if (signal?.aborted || axios.isCancel(error)) {
+      requestAbort();
+      try {
+        await abortPromise;
+        resetUploadState(state);
+      } catch {
+        // Keep the session id so a later retry can finish abort cleanup.
+      }
+      throw createAbortError();
+    }
 
-    if (signal?.aborted || axios.isCancel(error)) throw createAbortError();
+    if (state.uploadSessionId && canResume) {
+      requestPause();
+      await pausePromise;
+    } else if (state.uploadSessionId) {
+      requestAbort();
+      await abortPromise;
+    } else {
+      state.idempotencyKey = crypto.randomUUID();
+    }
     throw error;
   } finally {
     signal?.removeEventListener("abort", handleAbort);

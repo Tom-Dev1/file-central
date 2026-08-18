@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   ArrowDownOutlined,
@@ -16,20 +16,23 @@ import {
   SwapOutlined,
 } from "@ant-design/icons";
 
-import { Button, Dropdown, Flex, Tooltip, Typography, type MenuProps } from "antd";
+import { App, Button, Dropdown, Flex, Tooltip, Typography, type MenuProps } from "antd";
 
 import { DriveSelectAll } from "@/components/drive/selection/DriveSelectAll";
+import { MoveItemsModal } from "@/components/drive/actions/MoveItemsModal";
 
+import type { DriveItem } from "@/types/api.types";
 import type { DriveSortField, DriveSortState } from "@/types/drive.type";
 
 import classes from "./DriveToolBar.module.css";
 import PopoverUpload from "@/components/PopoverUpload";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import { useDeleteItems } from "@/hooks";
 import { MODIFIED_FILTER_ITEMS, SORT_ITEMS, SORT_LABELS, TYPE_FILTER_ITEMS } from "./toolbar-constant";
 
 interface DriveToolbarProps {
   parentId?: string | null;
-  itemIds: string[];
+  items: DriveItem[];
   sort: DriveSortState;
   sortDisabled?: boolean;
   isFetching?: boolean;
@@ -39,20 +42,24 @@ interface DriveToolbarProps {
 
 export function DriveToolbar({
   parentId,
-  itemIds,
+  items,
   sort,
   sortDisabled = false,
   isFetching = false,
   onSortChange,
   onRefresh,
 }: DriveToolbarProps) {
-  const { selectedCount, selectionMode, clearSelection, enableSelectionMode, disableSelectionMode } =
+  const { selectedIds, selectedCount, selectionMode, clearSelection, enableSelectionMode, disableSelectionMode } =
     useDriveSelection();
+  const itemIds = items.map((item) => item.id);
+  const selectedItems = items.filter((item) => selectedIds.has(item.id));
 
   if (selectedCount > 0) {
     return (
       <DriveActionToolbar
         itemIds={itemIds}
+        selectedItemIds={Array.from(selectedIds)}
+        selectedItems={selectedItems}
         selectedCount={selectedCount}
         selectionMode={selectionMode}
         onClear={clearSelection}
@@ -103,9 +110,9 @@ function DriveBrowseToolbar({
   return (
     <div className={classes.toolbar}>
       <Flex align="center" gap={8} className={classes.toolbarLeft}>
-        <ToolbarDropdown label="Type" items={TYPE_FILTER_ITEMS} />
+        <ToolbarDropdown label="Type" items={TYPE_FILTER_ITEMS} disabled />
 
-        <ToolbarDropdown label="Modified" items={MODIFIED_FILTER_ITEMS} />
+        <ToolbarDropdown label="Modified" items={MODIFIED_FILTER_ITEMS} disabled />
 
         <Dropdown
           trigger={["click"]}
@@ -154,6 +161,8 @@ function DriveBrowseToolbar({
 ////DriveActionToolbar
 interface DriveActionToolbarProps {
   itemIds: string[];
+  selectedItemIds: string[];
+  selectedItems: DriveItem[];
   selectedCount: number;
   selectionMode: boolean;
   onClear: () => void;
@@ -163,6 +172,8 @@ interface DriveActionToolbarProps {
 
 function DriveActionToolbar({
   itemIds,
+  selectedItemIds,
+  selectedItems,
   selectedCount,
   selectionMode,
   onClear,
@@ -170,63 +181,111 @@ function DriveActionToolbar({
   onDisableSelection,
 }: DriveActionToolbarProps) {
   const singleSelection = selectedCount === 1;
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const deleteItems = useDeleteItems();
+  const { message, modal } = App.useApp();
+
+  const handleTrash = () => {
+    const itemLabel = selectedCount === 1 ? "item" : `${selectedCount} items`;
+
+    modal.confirm({
+      title: `Move ${itemLabel} to trash?`,
+      content: "Selected folders and everything inside them will be moved to trash.",
+      okText: "Move to trash",
+      okButtonProps: { danger: true },
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await deleteItems.mutateAsync({ itemIds: selectedItemIds });
+          onClear();
+          void message.success(`${selectedCount} ${selectedCount === 1 ? "item" : "items"} moved to trash`);
+        } catch (error) {
+          void message.error(error instanceof Error ? error.message : "Unable to move selected items to trash.");
+          throw error;
+        }
+      },
+    });
+  };
 
   return (
-    <div className={classes.toolbar}>
-      <Flex align="center" gap={4} className={classes.toolbarLeft}>
-        <ToolbarAction label="Share" icon={<ShareAltOutlined />} />
+    <>
+      <div className={classes.toolbar}>
+        <Flex align="center" gap={4} className={classes.toolbarLeft}>
+          <ToolbarAction label="Share" icon={<ShareAltOutlined />} />
 
-        {singleSelection && <ToolbarAction label="Copy link" icon={<LinkOutlined />} />}
+          {singleSelection && <ToolbarAction label="Copy link" icon={<LinkOutlined />} />}
 
-        <ToolbarAction label="Move" icon={<SwapOutlined />} />
-
-        {singleSelection && <ToolbarAction label="Rename" icon={<EditOutlined />} />}
-
-        <ToolbarAction label="Move to Trash" icon={<DeleteOutlined />} danger />
-
-        <ToolbarAction label="More actions" icon={<MoreOutlined />} />
-      </Flex>
-
-      <Flex align="center" gap={8} className={classes.toolbarRight}>
-        <Tooltip title="Clear selection">
-          <Button
-            variant="text"
-            shape="circle"
-            aria-label="Clear selection"
-            icon={<CloseOutlined />}
-            className={classes.iconButton}
-            onClick={onClear}
+          <ToolbarAction
+            label="Move"
+            icon={<SwapOutlined />}
+            disabled={selectedItems.length !== selectedCount}
+            onClick={() => setMoveModalOpen(true)}
           />
-        </Tooltip>
 
-        <Typography.Text className={classes.selectionCount}>
-          {selectedCount} {selectedCount === 1 ? "item selected" : "items selected"}
-        </Typography.Text>
+          {singleSelection && <ToolbarAction label="Rename" icon={<EditOutlined />} />}
 
-        <Button
-          variant={selectionMode ? "filled" : "outlined"}
-          icon={<CheckSquareOutlined />}
-          className={classes.selectButton}
-          onClick={selectionMode ? onDisableSelection : onEnableSelection}
-        >
-          {selectionMode ? "Done" : "Select"}
-        </Button>
+          <ToolbarAction
+            label="Move to Trash"
+            icon={<DeleteOutlined />}
+            danger
+            loading={deleteItems.isPending}
+            onClick={handleTrash}
+          />
 
-        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel />}
-      </Flex>
-    </div>
+          <ToolbarAction label="More actions" icon={<MoreOutlined />} />
+        </Flex>
+
+        <Flex align="center" gap={8} className={classes.toolbarRight}>
+          <Tooltip title="Clear selection">
+            <Button
+              variant="text"
+              shape="circle"
+              aria-label="Clear selection"
+              icon={<CloseOutlined />}
+              className={classes.iconButton}
+              onClick={onClear}
+            />
+          </Tooltip>
+
+          <Typography.Text className={classes.selectionCount}>
+            {selectedCount} {selectedCount === 1 ? "item selected" : "items selected"}
+          </Typography.Text>
+
+          <Button
+            variant={selectionMode ? "filled" : "outlined"}
+            icon={<CheckSquareOutlined />}
+            className={classes.selectButton}
+            onClick={selectionMode ? onDisableSelection : onEnableSelection}
+          >
+            {selectionMode ? "Done" : "Select"}
+          </Button>
+
+          {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel />}
+        </Flex>
+      </div>
+
+      {moveModalOpen && (
+        <MoveItemsModal
+          open
+          items={selectedItems}
+          onClose={() => setMoveModalOpen(false)}
+          onMoved={onClear}
+        />
+      )}
+    </>
   );
 }
 
 interface ToolbarDropdownProps {
   label: string;
   items: MenuProps["items"];
+  disabled?: boolean;
 }
 
-function ToolbarDropdown({ label, items }: ToolbarDropdownProps) {
+function ToolbarDropdown({ label, items, disabled = false }: ToolbarDropdownProps) {
   return (
-    <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items }}>
-      <Button variant="outlined" className={classes.toolbarButton}>
+    <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items }} disabled={disabled}>
+      <Button variant="outlined" className={classes.toolbarButton} disabled={disabled}>
         {label}
 
         <DownOutlined className={classes.dropdownIcon} />
@@ -239,9 +298,19 @@ interface ToolbarActionProps {
   label: string;
   icon: ReactNode;
   danger?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
 }
 
-function ToolbarAction({ label, icon, danger = false }: ToolbarActionProps) {
+function ToolbarAction({
+  label,
+  icon,
+  danger = false,
+  disabled = false,
+  loading = false,
+  onClick,
+}: ToolbarActionProps) {
   return (
     <Tooltip title={label}>
       <Button
@@ -250,7 +319,10 @@ function ToolbarAction({ label, icon, danger = false }: ToolbarActionProps) {
         shape="circle"
         aria-label={label}
         icon={icon}
+        disabled={disabled || !onClick}
+        loading={loading}
         className={classes.iconButton}
+        onClick={onClick}
       />
     </Tooltip>
   );

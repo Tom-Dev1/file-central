@@ -1,4 +1,5 @@
 import type { FolderBreadcrumbItem } from "@/types/drive.type";
+import type { DriveItem } from "@/types/api.types";
 
 export function formatModifiedDate(dateValue: string): string {
   const date = new Date(dateValue);
@@ -26,6 +27,19 @@ export function formatFileSize(bytes: number): string {
   const value = bytes / 1024 ** unitIndex;
 
   return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+export function formatDriveFileSize(item: DriveItem): string {
+  switch (item.fileStatus) {
+    case "uploading":
+      return "Uploading…";
+    case "processing":
+      return "Processing…";
+    case "failed":
+      return "Upload failed";
+    default:
+      return item.sizeBytes === null ? "—" : formatFileSize(Number(item.sizeBytes));
+  }
 }
 
 export function getBreadcrumbParts(items: FolderBreadcrumbItem[]) {

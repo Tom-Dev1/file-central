@@ -11,7 +11,9 @@ export class DiscardFilePlaceholderCommand {
     await this.items.model.deleteOne({
       _id: driveItemId,
       type: DriveItemType.FILE,
-      fileStatus: { $in: [FileStatus.UPLOADING, FileStatus.FAILED] },
+      fileStatus: {
+        $in: [FileStatus.UPLOADING, FileStatus.PROCESSING, FileStatus.FAILED],
+      },
       storageObjectId: null,
     });
   }

@@ -14,7 +14,6 @@ import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { useDrivePreviewPane } from "@/hooks/useDrivePreviewPane";
 import { useInfiniteDriveList, useInfiniteDriveSearch } from "@/hooks";
 import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
-import { LoadingState } from "@/pages/FolderPage/LoadingStates";
 import type { DriveItem } from "@/types/api.types";
 import type { DriveSortState, DriveViewMode } from "@/types/drive.type";
 import { createDriveSortSearch, readDriveSortParams, writeDriveSortParams } from "@/utils/drive-sort-params";
@@ -80,7 +79,6 @@ export default function MyDrivePage() {
     isLoading,
     isError,
     isFetching,
-    isPlaceholderData,
     hasNextPage,
     isFetchingNextPage,
     refetch,
@@ -90,12 +88,8 @@ export default function MyDrivePage() {
   const driveItems = data?.pages.flatMap((page) => page.items) ?? [];
   const selectedItems = driveItems.filter((item) => selectedIds.has(item.id));
   const selectedItem = selectedItems.length === 1 ? selectedItems[0] : null;
-  const isSortTransitioning = !isSearchMode && isPlaceholderData && isFetching;
-  const showContentSkeleton = isManualRefreshing || isSortTransitioning;
-
-  if (isLoading) {
-    return <LoadingState message={isSearchMode ? `Searching for "${query}"...` : "Loading files..."} />;
-  }
+  const isTableLoading = isLoading || isManualRefreshing || (isFetching && !isFetchingNextPage);
+  const showNoSearchResults = isSearchMode && driveItems.length === 0 && !isTableLoading;
 
   if (isError && !data) {
     return (
@@ -179,10 +173,10 @@ export default function MyDrivePage() {
         <div className={classes.browser}>
           <DriveToolbar
             parentId={null}
-            itemIds={driveItems.map((item) => item.id)}
+            items={driveItems}
             sort={sort}
             sortDisabled={isSearchMode}
-            isFetching={isManualRefreshing}
+            isFetching={isTableLoading}
             onSortChange={handleSortChange}
             onRefresh={() => {
               void handleRefresh();
@@ -190,19 +184,20 @@ export default function MyDrivePage() {
           />
 
           <div className={classes.view}>
-            {showContentSkeleton ? (
-              <DriveContentSkeleton viewMode={viewMode} />
-            ) : isSearchMode && driveItems.length === 0 ? (
+            {showNoSearchResults ? (
               <Result status="info" title="No results found" subTitle={`No files or folders match "${query}".`} />
             ) : viewMode === "list" ? (
               <DriveListView
                 items={driveItems}
+                loading={isTableLoading}
                 sort={sort}
                 sortDisabled={isSearchMode}
                 onSortChange={handleSortChange}
                 onOpenItem={handleOpenItem}
                 onPrefetchItem={prefetchFolder}
               />
+            ) : isTableLoading ? (
+              <DriveContentSkeleton viewMode="grid" />
             ) : (
               <DriveGridView
                 items={driveItems}
@@ -213,7 +208,7 @@ export default function MyDrivePage() {
             )}
           </div>
 
-          {hasNextPage && !showContentSkeleton && (
+          {hasNextPage && !isTableLoading && (
             <div className={classes.pagination}>
               <Button loading={isFetchingNextPage} onClick={() => void fetchNextPage()}>
                 Load more

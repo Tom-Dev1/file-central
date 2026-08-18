@@ -1,9 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { MarkFileFailedCommand } from "../../drive-items/application/commands/files/mark-file-failed.command";
+import { DiscardFilePlaceholderCommand } from "../../drive-items/application/commands/files/discard-file-placeholder.command";
 import { QuotaService } from "../../quota/quota.service";
 import { S3StorageAdapter } from "../../s3/s3-storage.adapter";
+import { UploadPart } from "../schemas/upload-part.schema";
 import {
   UploadMethod,
   UploadSession,
@@ -19,9 +20,11 @@ export class ReapExpiredUploadsUseCase {
   constructor(
     @InjectModel(UploadSession.name)
     private readonly sessions: Model<UploadSession>,
+    @InjectModel(UploadPart.name)
+    private readonly parts: Model<UploadPart>,
     private readonly storage: S3StorageAdapter,
     private readonly quota: QuotaService,
-    private readonly markFileFailed: MarkFileFailedCommand,
+    private readonly discardPlaceholder: DiscardFilePlaceholderCommand,
   ) {}
 
   async execute(batchSize = 100): Promise<number> {
@@ -85,9 +88,8 @@ export class ReapExpiredUploadsUseCase {
           BigInt(claimed.declaredSizeBytes as unknown as string),
           `${claimed.idempotencyKey ?? claimed._id.toString()}:expiry-release`,
         );
-        await this.markFileFailed
-          .execute(claimed.driveItemId)
-          .catch(() => undefined);
+        await this.discardPlaceholder.execute(claimed.driveItemId);
+        await this.parts.deleteMany({ uploadSessionId: claimed._id });
         await this.sessions.updateOne(
           {
             _id: claimed._id,

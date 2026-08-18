@@ -1,8 +1,9 @@
 ﻿import { useCallback, useRef, useState } from "react";
-import { Button, Card, Progress, Space, Tag, Typography, Input, Upload, Steps, Divider, message } from "antd";
+import { App, Button, Card, Progress, Space, Tag, Typography, Input, Upload, Steps, Divider } from "antd";
 import { InboxOutlined, CloudUploadOutlined, StopOutlined, ReloadOutlined } from "@ant-design/icons";
 import { uploadApi } from "@/apis/upload.api";
 import type { InitUploadResponse, CompletePart } from "@/types/upload.types";
+import { ApiError } from "@/lib/api-error";
 import axios from "axios";
 import classes from "./UploadTesting.module.css";
 
@@ -35,6 +36,7 @@ interface PartState {
 }
 
 export default function UploadTester() {
+  const { message } = App.useApp();
   const [file, setFile] = useState<File | null>(null);
   const [parentId, setParentId] = useState<string>("");
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -103,6 +105,10 @@ export default function UploadTester() {
   // LUỒNG UPLOAD CHÍNH
   // =============================================================
   const startUpload = async () => {
+    if (sessionRef.current) {
+      message.warning("Session hiện tại chưa kết thúc. Hãy Resume hoặc Huỷ trước.");
+      return;
+    }
     if (!file) {
       message.warning("Chọn file trước đã");
       return;
@@ -164,6 +170,8 @@ export default function UploadTester() {
       setCurrentStep(3);
       log("success", `HOÀN TẤT! driveItemId=${result.driveItemId}, status=${result.status}`);
       log("info", "→ File chuyển fileStatus=active, sẵn sàng preview/download");
+      setSessionId(null);
+      sessionRef.current = null;
       message.success("Upload thành công");
     } catch (err: unknown) {
       handleError(err);
@@ -192,6 +200,32 @@ export default function UploadTester() {
         return;
       }
 
+      if (status.status === "processing") {
+        log("info", "Session đang processing — thử lại sau");
+        return;
+      }
+
+      if (status.method === "single") {
+        if (!status.singlePartUploaded) {
+          if (!status.putUrl) throw new Error("Server không trả PUT URL để resume single-part");
+          log("minio", `PUT lại toàn bộ file → MinIO (${formatBytes(file.size)})`);
+          await uploadApi.putToStorage(status.putUrl, file, {
+            contentType: file.type || "application/octet-stream",
+            onProgress: (progress) => setOverallProgress(progress),
+          });
+        }
+
+        log("api", `uploadApi.complete(${sid})`);
+        const result = await uploadApi.complete(sid, {});
+        setCurrentStep(3);
+        setOverallProgress(100);
+        log("success", `RESUME HOÀN TẤT! driveItemId=${result.driveItemId}`);
+        setSessionId(null);
+        sessionRef.current = null;
+        message.success("Resume thành công");
+        return;
+      }
+
       const missing = status.missingPartUrls ?? [];
       log(
         "info",
@@ -204,7 +238,10 @@ export default function UploadTester() {
         sizeBytes: p.sizeBytes,
       }));
 
-      const partSize = multipartPartSize ?? (file.size > SINGLE_PART_MAX_BYTES ? SINGLE_PART_MAX_BYTES : file.size);
+      const partSize =
+        status.partSizeBytes ??
+        multipartPartSize ??
+        (file.size > SINGLE_PART_MAX_BYTES ? SINGLE_PART_MAX_BYTES : file.size);
 
       for (const { partNumber, url } of missing) {
         if (abortedRef.current) throw new Error("ABORTED_BY_USER");
@@ -222,6 +259,8 @@ export default function UploadTester() {
       setCurrentStep(3);
       setOverallProgress(100);
       log("success", `RESUME HOÀN TẤT! driveItemId=${result.driveItemId}`);
+      setSessionId(null);
+      sessionRef.current = null;
       message.success("Resume thành công");
     } catch (err: unknown) {
       handleError(err);
@@ -241,6 +280,8 @@ export default function UploadTester() {
         log("api", `uploadApi.abort(${sid})`);
         await uploadApi.abort(sid);
         log("info", "Server đã huỷ session + release quota");
+        setSessionId(null);
+        sessionRef.current = null;
       } catch (err: unknown) {
         log("error", `Abort lỗi: ${err instanceof Error ? err.message : "Lỗi không xác định"}`);
       }
@@ -255,8 +296,9 @@ export default function UploadTester() {
       return;
     }
     const responseData = axios.isAxiosError<{ code?: string; message?: string }>(err) ? err.response?.data : undefined;
-    const code = responseData?.code ?? (axios.isAxiosError(err) ? err.code : undefined);
-    const msg = responseData?.message ?? (err instanceof Error ? err.message : "Lỗi không xác định");
+    const apiMessage = err instanceof ApiError ? err.messages[0] : undefined;
+    const code = responseData?.code ?? apiMessage ?? (axios.isAxiosError(err) ? err.code : undefined);
+    const msg = responseData?.message ?? apiMessage ?? (err instanceof Error ? err.message : "Lỗi không xác định");
     log("error", `Lỗi: ${code ? `[${code}] ` : ""}${msg}`);
     if (code === "QUOTA_EXCEEDED") message.error("Vượt dung lượng cho phép");
     else message.error(msg);
@@ -270,14 +312,16 @@ export default function UploadTester() {
 
         <div style={{ flex: "1 1 420px", minWidth: 380 }}>
           <Card size="small" title="1. Chọn file & folder đích">
-            <Space direction="vertical" style={{ width: "100%" }}>
-              <Input
-                addonBefore="parentId"
-                placeholder="để trống = root"
-                value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
-                disabled={uploading}
-              />
+            <Space orientation="vertical" style={{ width: "100%" }}>
+              <Space.Compact block>
+                <Space.Addon>parentId</Space.Addon>
+                <Input
+                  placeholder="để trống = root"
+                  value={parentId}
+                  onChange={(e) => setParentId(e.target.value)}
+                  disabled={uploading || Boolean(sessionId)}
+                />
+              </Space.Compact>
               <Dragger
                 multiple={false}
                 beforeUpload={(f) => {
@@ -285,7 +329,7 @@ export default function UploadTester() {
                   return false;
                 }}
                 maxCount={1}
-                disabled={uploading}
+                disabled={uploading || Boolean(sessionId)}
               >
                 <p className={classes.dragIcon}>
                   <InboxOutlined />
@@ -311,7 +355,7 @@ export default function UploadTester() {
                 icon={<CloudUploadOutlined />}
                 onClick={startUpload}
                 loading={uploading}
-                disabled={!file}
+                disabled={!file || Boolean(sessionId)}
               >
                 Bắt đầu upload
               </Button>
@@ -398,7 +442,7 @@ export default function UploadTester() {
           </Card>
 
           <Card size="small" title="Chú thích luồng" style={{ marginTop: 16 }}>
-            <Space direction="vertical" size={2}>
+            <Space orientation="vertical" size={2}>
               <Text style={{ fontSize: 12 }}>
                 <Tag color="purple">API</Tag> gọi backend NestJS (qua axios instance `api`)
               </Text>

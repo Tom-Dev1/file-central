@@ -8,6 +8,8 @@ import {
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { ActivateFileCommand } from "../../drive-items/application/commands/files/activate-file.command";
+import { DiscardFilePlaceholderCommand } from "../../drive-items/application/commands/files/discard-file-placeholder.command";
+import { MarkFileProcessingCommand } from "../../drive-items/application/commands/files/mark-file-processing.command";
 import { RollbackFileActivationCommand } from "../../drive-items/application/commands/files/rollback-file-activation.command";
 import { QuotaService } from "../../quota/quota.service";
 import { S3StorageAdapter } from "../../s3/s3-storage.adapter";
@@ -37,6 +39,8 @@ export class CompleteUploadUseCase {
     private readonly mimeDetector: MimeDetectorService,
     private readonly activateFile: ActivateFileCommand,
     private readonly rollbackActivation: RollbackFileActivationCommand,
+    private readonly markFileProcessing: MarkFileProcessingCommand,
+    private readonly discardPlaceholder: DiscardFilePlaceholderCommand,
     private readonly quota: QuotaService,
   ) {}
 
@@ -77,6 +81,7 @@ export class CompleteUploadUseCase {
     let quotaCommitted = false;
 
     try {
+      await this.markFileProcessing.execute(session.driveItemId);
       const finalSizeBytes = await this.finalizeObject(session, dto);
       const declaredSizeBytes = BigInt(
         session.declaredSizeBytes as unknown as string,
@@ -248,6 +253,7 @@ export class CompleteUploadUseCase {
     session.errorCode = error instanceof Error ? error.message : "UNKNOWN_ERROR";
     await session.save().catch(() => undefined);
     await this.rollbackActivation.execute(session.driveItemId).catch(() => undefined);
+    await this.discardPlaceholder.execute(session.driveItemId).catch(() => undefined);
     if (storageObjectId) {
       await this.storageObjects.permanentDelete(storageObjectId).catch(() => undefined);
     } else {

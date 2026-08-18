@@ -43,7 +43,11 @@ export interface UploadedPart {
 export interface UploadStatusResponse {
   status: UploadStatus;
   driveItemId?: string;
+  method?: UploadMethod;
   singlePartUploaded?: boolean;
+  putUrl?: string;
+  partSizeBytes?: number;
+  expectedPartsCount?: number;
   totalParts?: number;
   uploadedPartCount?: number;
   uploadedParts?: UploadedPart[];

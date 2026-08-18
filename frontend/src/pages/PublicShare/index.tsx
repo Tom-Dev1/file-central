@@ -3,7 +3,7 @@ import { App, Button, Card, Descriptions, Result, Skeleton, Tag, Typography } fr
 import { useParams } from "react-router-dom";
 
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDownloadPublicShare, usePublicShareMetadata } from "@/hooks";
 import type { SharePermission } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
@@ -60,7 +60,7 @@ export default function PublicSharePage() {
           <div className={classes.div}>
             <Descriptions column={1} size="small" bordered>
               <Descriptions.Item label="Type">{metadata.item.type === "folder" ? "Folder" : metadata.item.mimeType ?? "File"}</Descriptions.Item>
-              <Descriptions.Item label="Size">{metadata.item.type === "folder" ? "—" : formatFileSize(Number(metadata.item.sizeBytes ?? 0))}</Descriptions.Item>
+              <Descriptions.Item label="Size">{metadata.item.type === "folder" ? "—" : formatDriveFileSize(metadata.item)}</Descriptions.Item>
               <Descriptions.Item label="Last modified">{formatModifiedDate(metadata.item.updatedAt)}</Descriptions.Item>
               <Descriptions.Item label="Access">{permissionLabels[metadata.permission]}</Descriptions.Item>
             </Descriptions>

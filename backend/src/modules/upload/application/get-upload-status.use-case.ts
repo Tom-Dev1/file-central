@@ -43,7 +43,14 @@ export class GetUploadStatusUseCase {
     }
     if (session.method === UploadMethod.SINGLE) {
       const head = await this.storage.headObject(session.temporaryObjectKey);
-      return { status: session.status, singlePartUploaded: head !== null };
+      return {
+        status: session.status,
+        method: session.method,
+        singlePartUploaded: head !== null,
+        putUrl: head
+          ? undefined
+          : await this.storage.getPresignedPutUrl(session.temporaryObjectKey),
+      };
     }
 
     const remoteParts = await this.storage.listParts(
@@ -88,6 +95,9 @@ export class GetUploadStatusUseCase {
     );
     return {
       status: session.status,
+      method: session.method,
+      partSizeBytes: session.partSizeBytes,
+      expectedPartsCount: session.expectedPartsCount,
       totalParts: localParts.length,
       uploadedPartCount: remoteParts.length,
       uploadedParts: remoteParts

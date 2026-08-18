@@ -10,6 +10,11 @@ describe("DriveItemNamePolicy", () => {
     expect(name).toContain("(9999)");
   });
 
+  it("generates numbered folder names within the schema limit", () => {
+    expect(policy.createFolderCopyName("Reports", 1)).toBe("Reports (1)");
+    expect(policy.createFolderCopyName("a".repeat(255), 9_999)).toHaveLength(255);
+  });
+
   it("maps Mongo unique-index errors to a domain conflict", () => {
     expect(() => policy.rethrowDuplicate({ code: 11000 })).toThrow(
       ConflictException,

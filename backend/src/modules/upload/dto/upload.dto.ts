@@ -102,7 +102,11 @@ export interface InitUploadResponseDto {
 export interface ResumeUploadResponseDto {
   status: string;
   driveItemId?: string;
+  method?: "single" | "multipart";
   singlePartUploaded?: boolean;
+  putUrl?: string;
+  partSizeBytes?: number;
+  expectedPartsCount?: number;
   totalParts?: number;
   uploadedPartCount?: number;
   uploadedParts?: Array<{ partNumber: number; etag: string; sizeBytes: string }>;

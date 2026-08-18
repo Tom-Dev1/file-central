@@ -26,6 +26,13 @@ export class DriveItemNamePolicy {
     return `${stem.slice(0, maxStemLength)}${suffix}${safeExtension}`;
   }
 
+  createFolderCopyName(originalName: string, copyNumber: number): string {
+    if (copyNumber === 0) return originalName;
+    const suffix = ` (${copyNumber})`;
+    const maxNameLength = Math.max(1, 255 - suffix.length);
+    return `${originalName.slice(0, maxNameLength).trimEnd()}${suffix}`;
+  }
+
   isDuplicateKeyError(error: unknown): error is { code: number } {
     return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
   }

@@ -1,5 +1,8 @@
 ﻿import type {
+  BulkMoveRequest,
   DeletedIdsResponse,
+  MovedIdsResponse,
+  BulkTrashRequest,
   DriveItem,
   ListDriveParams,
   MoveRequest,
@@ -25,7 +28,13 @@ export const driveApi = {
 
   move: (id: string, body: MoveRequest) => api.patch<DriveItem>(`/drive/${id}/move`, body).then((res) => res.data),
 
+  moveMany: (body: BulkMoveRequest) =>
+    api.patch<MovedIdsResponse>("/drive/bulk/move", body).then((res) => res.data),
+
   remove: (id: string) => api.delete<DeletedIdsResponse>(`/drive/${id}`).then((res) => res.data),
+
+  removeMany: (body: BulkTrashRequest) =>
+    api.delete<DeletedIdsResponse>("/drive/bulk", { data: body }).then((res) => res.data),
 
   getFolderBreadcrumbs: async (folderId: string, signal?: AbortSignal): Promise<FolderBreadcrumbItem[]> => {
     const response = await api.get<FolderBreadcrumbItem[]>(`/drive/${folderId}/ancestors`, { signal });

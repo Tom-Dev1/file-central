@@ -15,6 +15,7 @@ import { GetUploadStatusUseCase } from "./application/get-upload-status.use-case
 import { InitUploadUseCase } from "./application/init-upload.use-case";
 import { PauseUploadUseCase } from "./application/pause-upload.use-case";
 import { ReapExpiredUploadsUseCase } from "./application/reap-expired-uploads.use-case";
+import { AbortUploadUseCase } from "./application/abort-upload.use-case";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ReapExpiredUploadsUseCase } from "./application/reap-expired-uploads.us
     GetUploadStatusUseCase,
     CompleteUploadUseCase,
     PauseUploadUseCase,
+    AbortUploadUseCase,
     ReapExpiredUploadsUseCase,
   ],
 })

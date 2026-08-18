@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import { useContext, type HTMLAttributes, type Key } from "react";
 
 import {
   DeleteOutlined,
@@ -9,51 +9,34 @@ import {
   ShareAltOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
-import { Checkbox, Dropdown, Typography, type MenuProps } from "antd";
-import { clsx as cn } from "clsx";
-import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
-import type { DriveItem } from "@/types/api.types";
-import { getDriveItemIcon } from "@/utils/file-utils";
+import { Dropdown, type MenuProps } from "antd";
+
+import { DriveListRowContext } from "./DriveListRowContext";
+
 import classes from "./DriveListView.module.css";
-import FileActions from "@/pages/Dashboard/MyDrive/FileActions";
-interface DriveListRowProps {
-  item: DriveItem;
 
-  selected: boolean;
+type DriveListRowProps = HTMLAttributes<HTMLTableRowElement> & {
+  "data-row-key"?: Key;
+};
 
-  selectionMode: boolean;
+/**
+ * Keeps the row context menu while letting Ant Design Table own the row and cells.
+ * Dropdown clones this real <tr>; it does not introduce a div inside <tbody>.
+ */
+export function DriveListRow(rowProps: DriveListRowProps) {
+  const context = useContext(DriveListRowContext);
+  const item = context?.itemById.get(String(rowProps["data-row-key"]));
 
-  contextSelectionCount: number;
+  if (!context || !item) {
+    return <tr {...rowProps} />;
+  }
 
-  previewOpen: boolean;
-
-  onSelect: (event: MouseEvent<HTMLDivElement>) => void;
-
-  onContextSelect: () => void;
-
-  onToggleSelection: () => void;
-
-  onOpen: () => void;
-
-  onPreviewChange: (open: boolean) => void;
-
-  onPrefetch?: () => void;
-}
-
-export function DriveListRow({
-  item,
-  selected,
-  selectionMode,
-  contextSelectionCount,
-  previewOpen,
-  onSelect,
-  onContextSelect,
-  onToggleSelection,
-  onOpen,
-  onPreviewChange,
-  onPrefetch,
-}: DriveListRowProps) {
+  const selected = context.isSelected(item.id);
+  const contextSelectionCount = selected
+    ? context.selectedCount
+    : context.selectionMode
+      ? context.selectedCount + 1
+      : 1;
   const singleTarget = contextSelectionCount === 1;
 
   const menuItems: MenuProps["items"] = [
@@ -63,18 +46,13 @@ export function DriveListRow({
       label: item.type === "folder" ? "Open" : "Preview",
       disabled: !singleTarget,
     },
-
-    {
-      type: "divider",
-    },
-
+    { type: "divider" },
     {
       key: "share",
       icon: <ShareAltOutlined />,
       label: "Share",
       disabled: true,
     },
-
     ...(singleTarget
       ? [
           {
@@ -85,14 +63,12 @@ export function DriveListRow({
           } satisfies NonNullable<MenuProps["items"]>[number],
         ]
       : []),
-
     {
       key: "move",
       icon: <SwapOutlined />,
       label: "Move",
       disabled: true,
     },
-
     ...(singleTarget
       ? [
           {
@@ -103,11 +79,7 @@ export function DriveListRow({
           } satisfies NonNullable<MenuProps["items"]>[number],
         ]
       : []),
-
-    {
-      type: "divider",
-    },
-
+    { type: "divider" },
     {
       key: "trash",
       icon: <DeleteOutlined />,
@@ -115,7 +87,6 @@ export function DriveListRow({
       danger: true,
       disabled: true,
     },
-
     {
       key: "more",
       icon: <MoreOutlined />,
@@ -128,110 +99,17 @@ export function DriveListRow({
     domEvent.stopPropagation();
 
     if (key === "open") {
-      onOpen();
+      context.onOpen(item);
     }
-  };
-
-  const handleDoubleClick = (event: MouseEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    onOpen();
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "Enter") {
-      return;
-    }
-
-    event.preventDefault();
-
-    onOpen();
   };
 
   return (
     <Dropdown
       trigger={["contextMenu"]}
-      menu={{
-        items: menuItems,
-        onClick: handleMenuClick,
-      }}
-      classNames={{
-        root: classes.contextMenu,
-      }}
+      menu={{ items: menuItems, onClick: handleMenuClick }}
+      classNames={{ root: classes.contextMenu }}
     >
-      <div
-        role="row"
-        tabIndex={0}
-        aria-selected={selected}
-        className={cn(classes.row, selected && classes.selectedRow)}
-        onClick={onSelect}
-        onDoubleClick={handleDoubleClick}
-        onContextMenu={() => {
-          onContextSelect();
-        }}
-        onKeyDown={handleKeyDown}
-        onPointerEnter={onPrefetch}
-        onFocus={onPrefetch}
-      >
-        <div role="cell" className={classes.selectionCell}>
-          {selectionMode && (
-            <Checkbox
-              checked={selected}
-              aria-label={`Select ${item.name}`}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-              onChange={() => {
-                onToggleSelection();
-              }}
-            />
-          )}
-        </div>
-
-        <div role="cell" className={classes.nameCell}>
-          <ThemedSvgIcon src={getDriveItemIcon(item)} size={20} className={classes.icon} />
-
-          <Typography.Text
-            ellipsis={{
-              tooltip: item.name,
-            }}
-            className={classes.fileName}
-          >
-            {item.name}
-          </Typography.Text>
-        </div>
-
-        <div role="cell" className={classes.metadata}>
-          {formatModifiedDate(item.lastModifiedAt)}
-        </div>
-
-        <div role="cell" className={classes.metadata}>
-          {item.type === "folder" ? "Folder" : "File"}
-        </div>
-
-        <div role="cell" className={classes.metadata}>
-          {item.type === "folder" ? "—" : formatFileSize(Number(item.sizeBytes ?? 0))}
-        </div>
-
-        <div
-          role="cell"
-          className={classes.actionsCell}
-          onClick={(event) => {
-            event.stopPropagation();
-          }}
-          onDoubleClick={(event) => {
-            event.stopPropagation();
-          }}
-          onContextMenu={(event) => {
-            event.stopPropagation();
-          }}
-        >
-          <div className={cn(classes.actions, previewOpen && classes.actionsVisible)}>
-            <FileActions item={item} isPreview={previewOpen} onPreviewChange={onPreviewChange} onOpenItem={onOpen} />
-          </div>
-        </div>
-      </div>
+      <tr {...rowProps} />
     </Dropdown>
   );
 }

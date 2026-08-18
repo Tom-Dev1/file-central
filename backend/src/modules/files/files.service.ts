@@ -6,6 +6,7 @@ import { unlink } from "fs/promises";
 import { Types } from "mongoose";
 import { ActivateFileCommand } from "../drive-items/application/commands/files/activate-file.command";
 import { CreateFilePlaceholderCommand } from "../drive-items/application/commands/files/create-file-placeholder.command";
+import { DiscardFilePlaceholderCommand } from "../drive-items/application/commands/files/discard-file-placeholder.command";
 import { RollbackFileActivationCommand } from "../drive-items/application/commands/files/rollback-file-activation.command";
 import { DriveItemLookupQuery } from "../drive-items/application/queries/drive-item-lookup.query";
 import { DriveItemParentService } from "../drive-items/application/services/drive-item-parent.service";
@@ -25,6 +26,7 @@ export class FilesService {
     private readonly items: DriveItemLookupQuery,
     private readonly parents: DriveItemParentService,
     private readonly createPlaceholder: CreateFilePlaceholderCommand,
+    private readonly discardPlaceholder: DiscardFilePlaceholderCommand,
     private readonly activateFile: ActivateFileCommand,
     private readonly rollbackActivation: RollbackFileActivationCommand,
     private readonly minio: MinioService,
@@ -79,7 +81,10 @@ export class FilesService {
           .permanentDelete(storageObjectId)
           .catch((cleanup) => this.logger.error(String(cleanup)));
       else await this.minio.removeObject(objectKey).catch(() => undefined);
-      if (driveItemId) await this.rollbackActivation.execute(driveItemId);
+      if (driveItemId) {
+        await this.rollbackActivation.execute(driveItemId);
+        await this.discardPlaceholder.execute(driveItemId);
+      }
       if (reserved)
         await this.quota.release(ownerId, bytes, `legacy-upload:${operationId}:rollback`).catch(() => undefined);
       throw error;

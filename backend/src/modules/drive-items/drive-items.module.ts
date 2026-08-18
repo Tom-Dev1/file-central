@@ -4,13 +4,16 @@ import { ActivateFileCommand } from './application/commands/files/activate-file.
 import { CreateFilePlaceholderCommand } from './application/commands/files/create-file-placeholder.command';
 import { DiscardFilePlaceholderCommand } from './application/commands/files/discard-file-placeholder.command';
 import { MarkFileFailedCommand } from './application/commands/files/mark-file-failed.command';
+import { MarkFileProcessingCommand } from './application/commands/files/mark-file-processing.command';
 import { RollbackFileActivationCommand } from './application/commands/files/rollback-file-activation.command';
 import { CreateFolderCommand } from './application/commands/folders/create-folder.command';
 import { MoveDriveItemCommand } from './application/commands/items/move-drive-item.command';
+import { MoveDriveItemsCommand } from './application/commands/items/move-drive-items.command';
 import { RenameDriveItemCommand } from './application/commands/items/rename-drive-item.command';
 import { FinalizeHardDeleteCommand } from './application/commands/trash/finalize-hard-delete.command';
 import { RestoreDriveItemCommand } from './application/commands/trash/restore-drive-item.command';
 import { TrashDriveItemCommand } from './application/commands/trash/trash-drive-item.command';
+import { TrashDriveItemsCommand } from './application/commands/trash/trash-drive-items.command';
 import { GetDriveItemAncestorsQuery } from './application/queries/get-drive-item-ancestors.query';
 import { DriveItemLookupQuery } from './application/queries/drive-item-lookup.query';
 import { ListTrashRootsQuery } from './application/queries/list-trash-roots.query';
@@ -40,12 +43,15 @@ const publicApplicationApi = [
   CreateFolderCommand,
   RenameDriveItemCommand,
   MoveDriveItemCommand,
+  MoveDriveItemsCommand,
   CreateFilePlaceholderCommand,
   ActivateFileCommand,
   RollbackFileActivationCommand,
   MarkFileFailedCommand,
+  MarkFileProcessingCommand,
   DiscardFilePlaceholderCommand,
   TrashDriveItemCommand,
+  TrashDriveItemsCommand,
   RestoreDriveItemCommand,
   FinalizeHardDeleteCommand,
   DriveItemLookupQuery,

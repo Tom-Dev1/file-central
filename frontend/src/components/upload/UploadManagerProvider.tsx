@@ -2,7 +2,12 @@ import { useCallback, useMemo, useRef, useState, type PropsWithChildren } from "
 import { useQueryClient } from "@tanstack/react-query";
 
 import { uploadFolder } from "@/apis/folder-upload";
-import { uploadDriveFile, type UploadDriveFileProgress } from "@/apis/upload-drive-file";
+import {
+  createUploadDriveFileState,
+  uploadDriveFile,
+  type UploadDriveFileProgress,
+  type UploadDriveFileState,
+} from "@/apis/upload-drive-file";
 import {
   UploadManagerContext,
   type UploadManagerContextValue,
@@ -14,7 +19,7 @@ import { getErrorMessage, getRootFolderName } from "@/utils/upload-utils";
 import { UploadProgressPanel } from "./UploadProgressPanel";
 
 type UploadSource =
-  | { kind: "file"; file: File; parentId?: string | null }
+  | { kind: "file"; file: File; parentId?: string | null; uploadState: UploadDriveFileState }
   | { kind: "folder"; files: File[]; parentId?: string | null; concurrency: number };
 
 function clampPercent(value: number) {
@@ -54,6 +59,7 @@ export function UploadManagerProvider({ children }: PropsWithChildren) {
               file: source.file,
               parentId: source.parentId,
               signal: controller.signal,
+              state: source.uploadState,
               onProgress: (progress) => {
                 updateTask(taskId, {
                   percent: clampPercent(progress.percent),
@@ -95,8 +101,6 @@ export function UploadManagerProvider({ children }: PropsWithChildren) {
               });
             }
           }
-
-          await queryClient.invalidateQueries({ queryKey: driveKeys.all });
         } catch (error) {
           if (controller.signal.aborted || isAbortError(error)) {
             updateTask(taskId, { status: "cancelled", detail: "Upload cancelled" });
@@ -104,6 +108,7 @@ export function UploadManagerProvider({ children }: PropsWithChildren) {
             updateTask(taskId, { status: "error", detail: getErrorMessage(error) });
           }
         } finally {
+          await queryClient.invalidateQueries({ queryKey: driveKeys.all });
           controllersRef.current.delete(taskId);
         }
       };
@@ -117,7 +122,12 @@ export function UploadManagerProvider({ children }: PropsWithChildren) {
     (selectedFiles: FileList | File[], parentId?: string | null) => {
       const pending = Array.from(selectedFiles).map((file) => {
         const id = crypto.randomUUID();
-        const source: UploadSource = { kind: "file", file, parentId };
+        const source: UploadSource = {
+          kind: "file",
+          file,
+          parentId,
+          uploadState: createUploadDriveFileState(),
+        };
         const task: UploadTask = {
           id,
           name: file.name,

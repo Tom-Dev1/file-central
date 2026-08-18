@@ -2,7 +2,7 @@ import { Card, Checkbox, Typography } from "antd";
 import { useState } from "react";
 
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { clsx as cn } from "clsx";
 import type { DriveItem } from "@/types/api.types";
@@ -162,7 +162,7 @@ export default function DriveGridView({
                 {formatModifiedDate(item.updatedAt)}
               </Typography.Text>
               <Typography.Text type="secondary" className={classes.text2}>
-                {item.type === "folder" ? "Folder" : formatFileSize(Number(item.sizeBytes ?? 0))}
+                {item.type === "folder" ? "Folder" : formatDriveFileSize(item)}
               </Typography.Text>
             </div>
           </Card>

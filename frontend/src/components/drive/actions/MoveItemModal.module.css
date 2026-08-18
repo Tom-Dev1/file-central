@@ -6,6 +6,11 @@
   width: 100% !important;
 }
 
+.description {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
 .icon {
   color: var(--primary);
 }
@@ -110,6 +115,20 @@
 
 .listitem {
   padding-inline: 1rem !important;
+}
+
+.folderTable :global(.ant-table-cell) {
+  padding-inline: 1rem !important;
+}
+
+.folderInfo,
+.folderDetails {
+  min-width: 0;
+}
+
+.folderDetails {
+  display: flex;
+  flex-direction: column;
 }
 
 .icon2 {

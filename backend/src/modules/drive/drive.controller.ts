@@ -6,6 +6,8 @@ import type { AuthUser } from "../../common/decorators/current-user.decorator";
 import { DriveService } from "./drive.service";
 import { RenameDto } from "./dto/rename.dto";
 import { MoveDto } from "./dto/move.dto";
+import { BulkTrashDto } from "./dto/bulk-trash.dto";
+import { BulkMoveDto } from "./dto/bulk-move.dto";
 import { PaginationQueryDto } from "./dto/pagination-query.dto";
 import { SearchQueryDto } from "./dto/search-query.dto";
 import { toDriveItemDto, toDriveItemDtoList } from "../../common/mappers/response-mapper";
@@ -63,6 +65,11 @@ export class DriveController {
     return toDriveItemDto(item);
   }
 
+  @Patch("bulk/move")
+  moveMany(@CurrentUser() user: AuthUser, @Body() dto: BulkMoveDto) {
+    return this.driveService.moveMany(user.userId, user.email, dto);
+  }
+
   @Patch(":id/rename")
   async rename(@CurrentUser() user: AuthUser, @Param("id") id: string, @Body() dto: RenameDto) {
     const item = await this.driveService.rename(user.userId, user.email, id, dto);
@@ -73,6 +80,11 @@ export class DriveController {
   async move(@CurrentUser() user: AuthUser, @Param("id") id: string, @Body() dto: MoveDto) {
     const item = await this.driveService.move(user.userId, user.email, id, dto);
     return toDriveItemDto(item);
+  }
+
+  @Delete("bulk")
+  removeMany(@CurrentUser() user: AuthUser, @Body() dto: BulkTrashDto) {
+    return this.driveService.removeMany(user.userId, user.email, dto.itemIds);
   }
 
   @Delete(":id")

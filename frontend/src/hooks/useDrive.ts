@@ -1,7 +1,7 @@
 ﻿import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
-import { driveKeys } from "@/lib/query-keys";
-import type { ListDriveParams, MoveRequest, RenameRequest, SearchDriveParams } from "@/types/api.types";
+import { driveKeys, trashKeys } from "@/lib/query-keys";
+import type { BulkMoveRequest, BulkTrashRequest, ListDriveParams, MoveRequest, RenameRequest, SearchDriveParams } from "@/types/api.types";
 import { driveApi } from "@/apis/drive.api";
 import { driveListQueryOptions } from "./queries/drive-query-options";
 import { folderBreadcrumbQueryOptions } from "./queries/folder-query-options";
@@ -70,13 +70,34 @@ export function useMoveItem() {
   });
 }
 
+export function useMoveItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BulkMoveRequest) => driveApi.moveMany(body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: driveKeys.all }),
+  });
+}
+
 export function useDeleteItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => driveApi.remove(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: driveKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ["trash"] });
+      void queryClient.invalidateQueries({ queryKey: trashKeys.all });
+    },
+  });
+}
+
+export function useDeleteItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: BulkTrashRequest) => driveApi.removeMany(body),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: driveKeys.all }),
+        queryClient.invalidateQueries({ queryKey: trashKeys.all }),
+      ]);
     },
   });
 }

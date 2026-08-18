@@ -8,7 +8,7 @@ import { Button, Spin } from "antd";
 
 import { FilePreviewContent } from "@/components/file-preview/FilePreviewContent";
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useFilePreviewLink } from "@/hooks/useFiles";
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
@@ -113,7 +113,7 @@ export function DrivePreviewPane({ item, selectedCount, onClose }: DrivePreviewP
                   ? item.childCount === null
                     ? "Unknown"
                     : `${item.childCount} ${item.childCount === 1 ? "item" : "items"}`
-                  : formatFileSize(Number(item.sizeBytes ?? 0))}
+                  : formatDriveFileSize(item)}
               </dd>
             </div>
           </dl>

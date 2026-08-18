@@ -3,9 +3,9 @@ import { App, Button, Form, Input, Modal } from "antd";
 import { useState } from "react";
 
 import { useCreateFolder } from "@/hooks";
+import { ApiError } from "@/lib/api-error";
 import { clsx as cn } from "clsx";
 import classes from "./CreateFolder.module.css";
-
 
 interface CreateFolderButtonProps {
   parentId?: string | null;
@@ -43,6 +43,20 @@ export function CreateFolderButton({
           setDialogOpen(false);
         },
         onError: (error) => {
+          if (
+            error instanceof ApiError &&
+            error.isConflict &&
+            error.messages.includes("NAME_ALREADY_EXISTS")
+          ) {
+            form.setFields([
+              {
+                name: "folderName",
+                errors: ["An item with this name already exists in this location."],
+              },
+            ]);
+            return;
+          }
+
           void message.error(
             error instanceof Error ? error.message : "Unable to create folder. Please try again."
           );
@@ -80,7 +94,7 @@ export function CreateFolderButton({
         confirmLoading={createFolder.isPending}
         okButtonProps={{ disabled: !folderName.trim() }}
         cancelButtonProps={{ disabled: createFolder.isPending }}
-        maskClosable={!createFolder.isPending}
+        mask={{ closable: !createFolder.isPending }}
         keyboard={!createFolder.isPending}
         destroyOnHidden
         onOk={() => form.submit()}

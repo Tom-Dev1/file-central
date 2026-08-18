@@ -4,7 +4,7 @@ import { clsx as cn } from "clsx";
 
 import EmptyFolderState from "@/components/EmptyFolderState";
 import { ThemedSvgIcon } from "@/components/theme/ThemedSvgIcon";
-import { formatFileSize, formatModifiedDate } from "@/constants/file-constants";
+import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import type { DriveItem } from "@/types/api.types";
 import { getDriveItemIcon } from "@/utils/file-utils";
@@ -90,7 +90,7 @@ export function DriveListView({ items, onOpenItem, onPrefetchItem }: DriveListVi
       width: 120,
       render: (_, item) => (
         <Typography.Text type="secondary" className={classes.metadata}>
-          {item.type === "folder" ? "—" : formatFileSize(Number(item.sizeBytes ?? 0))}
+          {item.type === "folder" ? "—" : formatDriveFileSize(item)}
         </Typography.Text>
       ),
     },

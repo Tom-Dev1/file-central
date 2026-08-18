@@ -9,6 +9,7 @@ import { CompleteUploadUseCase } from "./application/complete-upload.use-case";
 import { GetUploadStatusUseCase } from "./application/get-upload-status.use-case";
 import { InitUploadUseCase } from "./application/init-upload.use-case";
 import { PauseUploadUseCase } from "./application/pause-upload.use-case";
+import { AbortUploadUseCase } from "./application/abort-upload.use-case";
 
 @UseGuards(JwtAuthGuard)
 @Controller("uploads")
@@ -18,6 +19,7 @@ export class UploadsController {
     private readonly getUploadStatus: GetUploadStatusUseCase,
     private readonly completeUpload: CompleteUploadUseCase,
     private readonly pauseUpload: PauseUploadUseCase,
+    private readonly abortUpload: AbortUploadUseCase,
   ) {}
 
   /**
@@ -55,14 +57,21 @@ export class UploadsController {
     );
   }
 
-  /**
-   * Huỷ upload đang dở.
-   * POST /uploads/:id/abort
-   */
+  /** Tạm dừng upload để có thể resume bằng cùng session. */
+  @Post(":id/pause")
+  @HttpCode(200)
+  async pause(@CurrentUser() user: AuthUser, @Param() params: UploadStatusParamDto) {
+    return this.pauseUpload.execute(
+      new Types.ObjectId(user.userId),
+      new Types.ObjectId(params.id),
+    );
+  }
+
+  /** Huỷ upload và dọn storage, quota cùng placeholder chưa hoàn tất. */
   @Post(":id/abort")
   @HttpCode(200)
   async abort(@CurrentUser() user: AuthUser, @Param() params: UploadStatusParamDto) {
-    return this.pauseUpload.execute(
+    return this.abortUpload.execute(
       new Types.ObjectId(user.userId),
       new Types.ObjectId(params.id),
     );
