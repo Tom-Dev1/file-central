@@ -60,6 +60,11 @@ export class DriveItemResponseDto {
   @Expose()
   isTrashed!: boolean;
 
+  @ApiProperty({ default: false })
+  @Expose()
+  @Transform(({ value }) => Boolean(value))
+  isStarred!: boolean;
+
   @ApiPropertyOptional({ nullable: true })
   @Expose()
   @Transform(({ value }) => (value ? new Date(value).toISOString() : null))

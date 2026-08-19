@@ -9,6 +9,7 @@ import { DriveItemLookupQuery } from "./drive-item-lookup.query";
 
 interface EncodedCursor {
   version?: number;
+  context?: string;
   sort?: DriveItemSortBy;
   direction?: DriveItemSortDirection;
   type?: DriveItemType;
@@ -34,22 +35,36 @@ export class ListDriveItemsQuery {
 
   async execute(args: {
     ownerId: string;
-    parentId: string | null;
+    parentId?: string | null;
+    starredOnly?: boolean;
     cursor?: string;
     limit: number;
     sort: DriveItemSortBy;
     direction: DriveItemSortDirection;
   }) {
+    const cursorContext = this.getCursorContext(args.parentId, args.starredOnly);
     const filter: Record<string, unknown> = {
       ownerId: new Types.ObjectId(args.ownerId),
-      parentId: args.parentId ? new Types.ObjectId(args.parentId) : null,
       isTrashed: false,
     };
+
+    if (args.parentId !== undefined) {
+      filter.parentId = args.parentId ? new Types.ObjectId(args.parentId) : null;
+    }
+
+    if (args.starredOnly) {
+      filter.isStarred = true;
+    }
 
     if (args.cursor) {
       Object.assign(
         filter,
-        this.buildCursorFilter(args.cursor, args.sort, args.direction),
+        this.buildCursorFilter(
+          args.cursor,
+          args.sort,
+          args.direction,
+          cursorContext,
+        ),
       );
     }
 
@@ -70,9 +85,24 @@ export class ListDriveItemsQuery {
       limit: args.limit,
       nextCursor:
         hasMore && last
-          ? this.encodeCursor(last, args.sort, args.direction)
+          ? this.encodeCursor(last, args.sort, args.direction, cursorContext)
           : null,
     };
+  }
+
+  private getCursorContext(
+    parentId: string | null | undefined,
+    starredOnly: boolean | undefined,
+  ): string {
+    if (starredOnly) {
+      return "starred";
+    }
+
+    if (parentId === undefined) {
+      return "recent";
+    }
+
+    return `folder:${parentId ?? "root"}`;
   }
 
   private getMongoSort(
@@ -97,10 +127,12 @@ export class ListDriveItemsQuery {
     cursor: string,
     sort: DriveItemSortBy,
     direction: DriveItemSortDirection,
+    context: string,
   ): CursorFilter {
     const value = this.decodeCursor(cursor);
     if (
       value.version !== 1 ||
+      value.context !== context ||
       value.sort !== sort ||
       value.direction !== direction
     ) {
@@ -185,9 +217,11 @@ export class ListDriveItemsQuery {
     item: CursorItem,
     sort: DriveItemSortBy,
     direction: DriveItemSortDirection,
+    context: string,
   ): string {
     const base: EncodedCursor = {
       version: 1,
+      context,
       sort,
       direction,
       id: item._id.toString(),

@@ -12,10 +12,11 @@ import { DrivePreviewLayout } from "@/components/drive/DrivePreviewLayout";
 import { DriveContentSkeleton } from "@/components/DriveContentSkeleton";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { useDrivePreviewPane } from "@/hooks/useDrivePreviewPane";
+import { useDriveViewMode } from "@/hooks/useDriveViewMode";
 import { useInfiniteDriveList, useInfiniteDriveSearch } from "@/hooks";
 import { usePrefetchDriveFolder } from "@/hooks/usePrefetchDriveFolder";
 import type { DriveItem } from "@/types/api.types";
-import type { DriveSortState, DriveViewMode } from "@/types/drive.type";
+import type { DriveSortState } from "@/types/drive.type";
 import { createDriveSortSearch, readDriveSortParams, writeDriveSortParams } from "@/utils/drive-sort-params";
 import classes from "./index.module.css";
 export default function MyDrivePage() {
@@ -26,8 +27,8 @@ export default function MyDrivePage() {
   const prefetchFolder = usePrefetchDriveFolder();
   const { selectedIds, clearSelection } = useDriveSelection();
   const { previewPaneOpen, setPreviewPaneOpen } = useDrivePreviewPane();
+  const { viewMode, setViewMode } = useDriveViewMode();
 
-  const [viewMode, setViewMode] = useState<DriveViewMode>("list");
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
@@ -147,28 +148,28 @@ export default function MyDrivePage() {
     : `${driveItems.length} ${driveItems.length === 1 ? "item" : "items"}`;
 
   return (
-    <DrivePageShell
-      header={
-        <DriveSubHeader
-          title={isSearchMode ? "Search results" : "My Drive"}
-          description={headerDescription}
-          icon={isSearchMode ? Search : Folder}
-          actions={
-            <DriveViewModeToggle
-              value={viewMode}
-              onChange={setViewMode}
-              previewOpen={previewPaneOpen}
-              onPreviewOpenChange={setPreviewPaneOpen}
-            />
-          }
-        />
-      }
+    <DrivePreviewLayout
+      open={previewPaneOpen}
+      item={selectedItem}
+      selectedCount={selectedItems.length}
+      onClose={() => setPreviewPaneOpen(false)}
     >
-      <DrivePreviewLayout
-        open={previewPaneOpen}
-        item={selectedItem}
-        selectedCount={selectedItems.length}
-        onClose={() => setPreviewPaneOpen(false)}
+      <DrivePageShell
+        header={
+          <DriveSubHeader
+            title={isSearchMode ? "Search results" : "My Drive"}
+            description={headerDescription}
+            icon={isSearchMode ? Search : Folder}
+            actions={
+              <DriveViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                previewOpen={previewPaneOpen}
+                onPreviewOpenChange={setPreviewPaneOpen}
+              />
+            }
+          />
+        }
       >
         <div className={classes.browser}>
           <DriveToolbar
@@ -216,7 +217,7 @@ export default function MyDrivePage() {
             </div>
           )}
         </div>
-      </DrivePreviewLayout>
-    </DrivePageShell>
+      </DrivePageShell>
+    </DrivePreviewLayout>
   );
 }

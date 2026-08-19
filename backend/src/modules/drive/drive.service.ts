@@ -15,6 +15,7 @@ import { MoveDto } from './dto/move.dto';
 import { RenameDto } from './dto/rename.dto';
 import { DriveItemSortBy, DriveItemSortDirection } from '../drive-items/domain/enums/drive-item.enum';
 import { BulkMoveDto } from './dto/bulk-move.dto';
+import { SetDriveItemStarredCommand } from '../drive-items/application/commands/items/set-drive-item-starred.command';
 
 @Injectable()
 export class DriveService {
@@ -29,6 +30,7 @@ export class DriveService {
     private readonly trashCommand: TrashDriveItemCommand,
     private readonly trashItemsCommand: TrashDriveItemsCommand,
     private readonly permissions: PermissionsService,
+    private readonly setStarredCommand: SetDriveItemStarredCommand,
   ) {}
 
   async list(
@@ -44,6 +46,41 @@ export class DriveService {
 
   async search(userId: string, query: string, type: 'file' | 'folder' | undefined, cursor: string | undefined, limit: number) {
     return this.searchItems.execute({ ownerId: userId, query, type, cursor, limit });
+  }
+
+  async recent(
+    userId: string,
+    cursor: string | undefined,
+    limit: number,
+    sort: DriveItemSortBy,
+    direction: DriveItemSortDirection,
+  ) {
+    return this.listItems.execute({ ownerId: userId, cursor, limit, sort, direction });
+  }
+
+  async starred(
+    userId: string,
+    cursor: string | undefined,
+    limit: number,
+    sort: DriveItemSortBy,
+    direction: DriveItemSortDirection,
+  ) {
+    return this.listItems.execute({
+      ownerId: userId,
+      starredOnly: true,
+      cursor,
+      limit,
+      sort,
+      direction,
+    });
+  }
+
+  async setStarred(userId: string, itemIdValue: string, isStarred: boolean) {
+    return this.setStarredCommand.execute({
+      ownerId: new Types.ObjectId(userId),
+      itemId: new Types.ObjectId(itemIdValue),
+      isStarred,
+    });
   }
 
   async getById(userId: string, userEmail: string | undefined, itemIdValue: string) {

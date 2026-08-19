@@ -7,41 +7,53 @@ import EmptyFolderState from "@/components/EmptyFolderState";
 import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import FileActions from "@/pages/Dashboard/MyDrive/FileActions";
-import type { DriveItem } from "@/types/api.types";
+import type { DriveItem, DriveItemKind } from "@/types/api.types";
 import type { DriveSortField, DriveSortState } from "@/types/drive.type";
 
 import { DriveListHeader } from "./DriveListHeader";
 import { DriveItemNameCell, DriveListActions, DriveListTable } from "./DriveListTable";
 import { DriveListRow } from "./DriveListRow";
 import { DriveListRowContext, type DriveListRowContextValue } from "./DriveListRowContext";
+import { DriveStarButton } from "./DriveStarButton";
 
 import classes from "./DriveListView.module.css";
 
 type DriveListBreakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 
-export interface DriveListMetadataColumn {
+/** Maps any page-specific record to the fields needed by the shared list behavior. */
+export interface DriveListItemAdapter<T extends object> {
+  getId: (item: T) => string;
+  getName: (item: T) => string;
+  getType: (item: T) => DriveItemKind;
+  getDriveItem?: (item: T) => DriveItem;
+}
+
+export interface DriveListMetadataColumn<T extends object = DriveItem> {
   key: string;
   title: ReactNode;
   field?: DriveSortField;
   width?: number;
   responsive?: DriveListBreakpoint[];
-  render: (item: DriveItem) => ReactNode;
+  render: (item: T) => ReactNode;
 }
 
-interface DriveListViewProps {
-  items: DriveItem[];
+interface DriveListViewBaseProps<T extends object> {
+  items: T[];
   loading?: boolean;
   sort?: DriveSortState;
   sortDisabled?: boolean;
   onSortChange?: (sort: DriveSortState) => void;
-  onOpenItem?: (item: DriveItem) => void;
-  onPreviewItem?: (item: DriveItem) => void;
-  onPrefetchItem?: (item: DriveItem) => void;
+  onOpenItem?: (item: T) => void;
+  onPreviewItem?: (item: T) => void;
+  onPrefetchItem?: (item: T) => void;
   selectable?: boolean;
   reserveSelectionSpace?: boolean;
-  metadataColumns?: DriveListMetadataColumn[];
-  renderNameDetails?: (item: DriveItem) => ReactNode;
-  renderActions?: (item: DriveItem) => ReactNode;
+  nameColumnTitle?: ReactNode;
+  nameColumnWidth?: number;
+  metadataColumns?: DriveListMetadataColumn<T>[];
+  renderName?: (item: T, details: ReactNode) => ReactNode;
+  renderNameDetails?: (item: T) => ReactNode;
+  renderActions?: (item: T) => ReactNode;
   actionsAlwaysVisible?: boolean;
   actionsWidth?: number;
   emptyState?: ReactNode;
@@ -49,6 +61,11 @@ interface DriveListViewProps {
   loadingAriaLabel?: string;
   scrollX?: number;
 }
+
+export type DriveListViewProps<T extends object = DriveItem> = DriveListViewBaseProps<T> &
+  (T extends DriveItem
+    ? { itemAdapter?: DriveListItemAdapter<T> }
+    : { itemAdapter: DriveListItemAdapter<T> });
 
 interface DriveListSkeletonRow {
   id: string;
@@ -58,8 +75,16 @@ const DRIVE_LIST_SKELETON_ROWS: DriveListSkeletonRow[] = Array.from({ length: 8 
   id: `drive-list-skeleton-${index}`,
 }));
 
-export function DriveListView({
+const DRIVE_ITEM_ADAPTER: DriveListItemAdapter<DriveItem> = {
+  getId: (item) => item.id,
+  getName: (item) => item.name,
+  getType: (item) => item.type,
+  getDriveItem: (item) => item,
+};
+
+export function DriveListView<T extends object = DriveItem>({
   items,
+  itemAdapter,
   loading = false,
   sort,
   sortDisabled = false,
@@ -69,16 +94,21 @@ export function DriveListView({
   onPrefetchItem,
   selectable = true,
   reserveSelectionSpace = true,
+  nameColumnTitle = "Name",
+  nameColumnWidth,
   metadataColumns,
+  renderName,
   renderNameDetails,
   renderActions,
   actionsAlwaysVisible = false,
-  actionsWidth = 56,
+  actionsWidth,
   emptyState,
   ariaLabel = "Drive files",
   loadingAriaLabel = "Loading Drive files",
   scrollX = 744,
-}: DriveListViewProps) {
+}: DriveListViewProps<T>) {
+  const adapter = (itemAdapter ?? DRIVE_ITEM_ADAPTER) as DriveListItemAdapter<T>;
+  const getDriveItem = adapter.getDriveItem;
   const {
     selectionMode,
     selectedCount,
@@ -91,11 +121,12 @@ export function DriveListView({
   const [previewItemId, setPreviewItemId] = useState<string | null>(null);
 
   const handleActivateItem = useCallback(
-    (item: DriveItem) => {
-      if (item.type === "folder") {
+    (item: T) => {
+      if (adapter.getType(item) === "folder") {
         if (selectable) {
           clearSelection();
         }
+
         onOpenItem?.(item);
         return;
       }
@@ -106,14 +137,15 @@ export function DriveListView({
       }
 
       if (selectable) {
-        selectOnly(item.id);
-        setPreviewItemId(item.id);
+        const itemId = adapter.getId(item);
+        selectOnly(itemId);
+        setPreviewItemId(itemId);
       }
     },
-    [clearSelection, onOpenItem, onPreviewItem, selectOnly, selectable],
+    [adapter, clearSelection, onOpenItem, onPreviewItem, selectOnly, selectable],
   );
 
-  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, item: DriveItem) => {
+  const handleRowClick = (event: MouseEvent<HTMLTableRowElement>, item: T) => {
     if (!selectable) {
       handleActivateItem(item);
       return;
@@ -123,25 +155,29 @@ export function DriveListView({
       return;
     }
 
+    const itemId = adapter.getId(item);
+
     if (selectionMode) {
-      toggleItem(item.id);
+      toggleItem(itemId);
       return;
     }
 
-    selectOnly(item.id);
+    selectOnly(itemId);
   };
 
-  const handleContextSelect = (item: DriveItem) => {
-    if (isSelected(item.id)) {
+  const handleContextSelect = (item: T) => {
+    const itemId = adapter.getId(item);
+
+    if (isSelected(itemId)) {
       return;
     }
 
     if (selectionMode) {
-      toggleItem(item.id);
+      toggleItem(itemId);
       return;
     }
 
-    selectOnly(item.id);
+    selectOnly(itemId);
   };
 
   const headerCellProps = (field: DriveSortField) => {
@@ -175,54 +211,68 @@ export function DriveListView({
     );
   };
 
-  const resolvedMetadataColumns: DriveListMetadataColumn[] = metadataColumns ?? [
-    {
-      key: "modified",
-      title: "Last modified",
-      field: "modified",
-      width: 170,
-      render: (item) => (
-        <span className={classes.metadata}>{formatModifiedDate(item.lastModifiedAt)}</span>
-      ),
-    },
-    {
-      key: "type",
-      title: "Type",
-      field: "type",
-      width: 110,
-      render: (item) => (
-        <span className={classes.metadata}>{item.type === "folder" ? "Folder" : "File"}</span>
-      ),
-    },
-    {
-      key: "size",
-      title: "File size",
-      field: "size",
-      width: 120,
-      render: (item) => (
-        <span className={classes.metadata}>
-          {item.type === "folder" ? "—" : formatDriveFileSize(item)}
-        </span>
-      ),
-    },
-  ];
-  const showSelectionColumn = selectable || reserveSelectionSpace;
-  const hasActions = selectable || Boolean(renderActions);
+  const resolvedMetadataColumns: DriveListMetadataColumn<T>[] =
+    metadataColumns ??
+    (getDriveItem
+      ? [
+          {
+            key: "modified",
+            title: "Last modified",
+            field: "modified",
+            width: 170,
+            render: (item) => (
+              <span className={classes.metadata}>
+                {formatModifiedDate(getDriveItem(item).lastModifiedAt)}
+              </span>
+            ),
+          },
+          {
+            key: "type",
+            title: "Type",
+            field: "type",
+            width: 110,
+            render: (item) => (
+              <span className={classes.metadata}>
+                {adapter.getType(item) === "folder" ? "Folder" : "File"}
+              </span>
+            ),
+          },
+          {
+            key: "size",
+            title: "File size",
+            field: "size",
+            width: 120,
+            render: (item) => {
+              const driveItem = getDriveItem(item);
 
-  const columns: TableColumnsType<DriveItem> = [
+              return (
+                <span className={classes.metadata}>
+                  {driveItem.type === "folder" ? "—" : formatDriveFileSize(driveItem)}
+                </span>
+              );
+            },
+          },
+        ]
+      : []);
+  const showSelectionColumn = selectable || reserveSelectionSpace;
+  const hasDefaultActions = selectable && Boolean(getDriveItem);
+  const hasActions = hasDefaultActions || Boolean(renderActions);
+  const resolvedActionsWidth = actionsWidth ?? (hasDefaultActions ? 180 : 56);
+
+  const columns: TableColumnsType<T> = [
     ...(showSelectionColumn
       ? [
           {
             key: "selection",
             width: 48,
             className: classes.selectionCell,
-            render: (_: unknown, item: DriveItem) =>
+            render: (_: unknown, item: T) =>
               selectable && selectionMode ? (
                 <Checkbox
-                  checked={isSelected(item.id)}
-                  aria-label={`Select ${item.name}`}
+                  checked={isSelected(adapter.getId(item))}
+                  aria-label={`Select ${adapter.getName(item)}`}
                   onClick={(event) => event.stopPropagation()}
-                  onChange={() => toggleItem(item.id)}
+                  onChange={() => toggleItem(adapter.getId(item))}
                 />
               ) : null,
           },
@@ -230,11 +280,27 @@ export function DriveListView({
       : []),
     {
       key: "name",
-      title: sortableTitle("Name", "name"),
+      title: sortableTitle(nameColumnTitle, "name"),
+      width: nameColumnWidth,
       onHeaderCell: () => headerCellProps("name"),
-      render: (_, item) => (
-        <DriveItemNameCell item={item} details={renderNameDetails?.(item)} />
-      ),
+      render: (_, item) => {
+        const details = renderNameDetails?.(item);
+
+        if (renderName) {
+          return renderName(item, details);
+        }
+
+        const driveItem = getDriveItem?.(item);
+
+        return driveItem ? (
+          <DriveItemNameCell item={driveItem} details={details} />
+        ) : (
+          <div className={classes.nameContent}>
+            <span className={classes.fileName}>{adapter.getName(item)}</span>
+            {details && <div className={classes.nameDetails}>{details}</div>}
+          </div>
+        );
+      },
     },
     ...resolvedMetadataColumns.map((column) => ({
       key: column.key,
@@ -242,17 +308,17 @@ export function DriveListView({
       width: column.width,
       responsive: column.responsive,
       onHeaderCell: column.field ? () => headerCellProps(column.field!) : undefined,
-      render: (_: unknown, item: DriveItem) => column.render(item),
+      render: (_: unknown, item: T) => column.render(item),
     })),
     ...(hasActions
       ? [
           {
             key: "actions",
             title: <span className={classes.visuallyHidden}>Actions</span>,
-            width: actionsWidth,
+            width: resolvedActionsWidth,
             align: "right" as const,
             className: classes.actionsCell,
-            render: (_: unknown, item: DriveItem) => {
+            render: (_: unknown, item: T) => {
               if (renderActions) {
                 return (
                   <DriveListActions visible={actionsAlwaysVisible}>
@@ -261,16 +327,33 @@ export function DriveListView({
                 );
               }
 
-              const previewOpen = previewItemId === item.id;
+              const driveItem = getDriveItem?.(item);
+
+              if (!driveItem) {
+                return null;
+              }
+
+              const itemId = adapter.getId(item);
+              const previewOpen = previewItemId === itemId;
+
               return (
-                <DriveListActions visible={previewOpen}>
+                <div
+                  className={classes.defaultActions}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  onDoubleClick={(event) => event.stopPropagation()}
+                  onContextMenu={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
                   <FileActions
-                    item={item}
+                    item={driveItem}
                     isPreview={previewOpen}
-                    onPreviewChange={(open) => setPreviewItemId(open ? item.id : null)}
+                    showQuickActions
+                    quickActionExtra={<DriveStarButton item={driveItem} />}
+                    onPreviewChange={(open) => setPreviewItemId(open ? itemId : null)}
                     onOpenItem={() => handleActivateItem(item)}
                   />
-                </DriveListActions>
+                </div>
               );
             },
           },
@@ -290,7 +373,8 @@ export function DriveListView({
       : []),
     {
       key: "name",
-      title: sortableTitle("Name", "name"),
+      title: sortableTitle(nameColumnTitle, "name"),
+      width: nameColumnWidth,
       onHeaderCell: () => headerCellProps("name"),
       render: () => (
         <div className={classes.nameCell}>
@@ -316,17 +400,20 @@ export function DriveListView({
           {
             key: "actions",
             title: <span className={classes.visuallyHidden}>Actions</span>,
-            width: actionsWidth,
+            width: resolvedActionsWidth,
             align: "right" as const,
             className: classes.actionsCell,
             render: () => (
               <div className={classes.skeletonActionCell}>
-                <Skeleton.Button
-                  active
-                  shape="circle"
-                  size="small"
-                  className={classes.skeletonAction}
-                />
+                {Array.from({ length: hasDefaultActions ? 5 : 1 }, (_, index) => (
+                  <Skeleton.Button
+                    key={index}
+                    active
+                    shape="circle"
+                    size="small"
+                    className={classes.skeletonAction}
+                  />
+                ))}
               </div>
             ),
           },
@@ -334,17 +421,36 @@ export function DriveListView({
       : []),
   ];
 
-  const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
+  const itemByRowKey = useMemo(
+    () =>
+      new Map(
+        items.map((item) => [
+          adapter.getId(item),
+          { selectionId: adapter.getId(item), type: adapter.getType(item) },
+        ]),
+      ),
+    [adapter, items],
+  );
+  const recordByRowKey = useMemo(
+    () => new Map(items.map((item) => [adapter.getId(item), item])),
+    [adapter, items],
+  );
 
   const rowContext = useMemo<DriveListRowContextValue>(
     () => ({
-      itemById,
+      itemByRowKey,
       selectionMode,
       selectedCount,
       isSelected,
-      onOpen: handleActivateItem,
+      onOpen: (rowKey) => {
+        const item = recordByRowKey.get(rowKey);
+
+        if (item) {
+          handleActivateItem(item);
+        }
+      },
     }),
-    [handleActivateItem, itemById, isSelected, selectedCount, selectionMode],
+    [handleActivateItem, isSelected, itemByRowKey, recordByRowKey, selectedCount, selectionMode],
   );
 
   if (items.length === 0 && loading) {
@@ -367,9 +473,9 @@ export function DriveListView({
 
   const interactive = selectable || Boolean(onOpenItem || onPreviewItem);
   const table = (
-    <DriveListTable<DriveItem>
+    <DriveListTable<T>
       ariaLabel={ariaLabel}
-      rowKey="id"
+      rowKey={(item) => adapter.getId(item)}
       columns={columns}
       dataSource={items}
       loading={loading}
@@ -377,7 +483,9 @@ export function DriveListView({
       components={selectable ? { body: { row: DriveListRow } } : undefined}
       scrollX={scrollX}
       interactive={interactive}
-      rowClassName={(item) => cn(selectable && isSelected(item.id) && classes.selectedRow)}
+      rowClassName={(item) =>
+        cn(selectable && isSelected(adapter.getId(item)) && classes.selectedRow)
+      }
       onBackgroundClick={
         selectable
           ? (event) => {
@@ -391,7 +499,7 @@ export function DriveListView({
         interactive
           ? (item) => ({
               tabIndex: 0,
-              ...(selectable ? { "aria-selected": isSelected(item.id) } : {}),
+              ...(selectable ? { "aria-selected": isSelected(adapter.getId(item)) } : {}),
               onClick: (event) => handleRowClick(event, item),
               onDoubleClick: selectable
                 ? (event) => {
@@ -409,11 +517,11 @@ export function DriveListView({
                 handleActivateItem(item);
               },
               onPointerEnter:
-                item.type === "folder" && onPrefetchItem
+                adapter.getType(item) === "folder" && onPrefetchItem
                   ? () => onPrefetchItem(item)
                   : undefined,
               onFocus:
-                item.type === "folder" && onPrefetchItem
+                adapter.getType(item) === "folder" && onPrefetchItem
                   ? () => onPrefetchItem(item)
                   : undefined,
             })

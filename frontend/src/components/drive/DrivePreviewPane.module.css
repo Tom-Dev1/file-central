@@ -1,12 +1,14 @@
 .pane {
   display: flex;
+  box-sizing: border-box;
   width: clamp(320px, 29vw, 420px);
   min-width: 300px;
   min-height: 0;
   flex-shrink: 0;
   flex-direction: column;
   overflow: hidden;
-  border-left: 1px solid var(--outline-subtle);
+  border: 1px solid var(--outline-subtle);
+  border-radius: 1rem;
   background: var(--content-background);
 }
 
@@ -153,13 +155,19 @@
 
 @media (max-width: 900px) {
   .pane {
-    position: absolute;
-    z-index: 20;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(380px, 88vw);
+    width: 100%;
+    height: clamp(280px, 45%, 420px);
     min-width: 0;
-    box-shadow: -8px 0 24px rgb(60 64 67 / 20%);
+    flex-shrink: 1;
+  }
+
+  .content {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .previewStage {
+    min-height: 180px;
+    flex: none;
   }
 }

@@ -3,12 +3,14 @@
   DeletedIdsResponse,
   MovedIdsResponse,
   BulkTrashRequest,
+  DriveCollectionParams,
   DriveItem,
   ListDriveParams,
   MoveRequest,
   CursorPage,
   RenameRequest,
   SearchDriveParams,
+  SetStarredRequest,
 } from "@/types/api.types";
 import { api } from "../lib/axios";
 import type { FolderBreadcrumbItem } from "@/types/drive.type";
@@ -20,6 +22,12 @@ export const driveApi = {
   search: (params: SearchDriveParams = {}, signal?: AbortSignal) =>
     api.get<CursorPage<DriveItem>>("/drive/search", { params, signal }).then((res) => res.data),
 
+  recent: (params: DriveCollectionParams = {}, signal?: AbortSignal) =>
+    api.get<CursorPage<DriveItem>>("/drive/recent", { params, signal }).then((res) => res.data),
+
+  starred: (params: DriveCollectionParams = {}, signal?: AbortSignal) =>
+    api.get<CursorPage<DriveItem>>("/drive/starred", { params, signal }).then((res) => res.data),
+
   getById: (id: string, signal?: AbortSignal) =>
     api.get<DriveItem>(`/drive/${id}`, { signal }).then((res) => res.data),
 
@@ -30,6 +38,9 @@ export const driveApi = {
 
   moveMany: (body: BulkMoveRequest) =>
     api.patch<MovedIdsResponse>("/drive/bulk/move", body).then((res) => res.data),
+
+  setStarred: (id: string, body: SetStarredRequest) =>
+    api.patch<DriveItem>(`/drive/${id}/starred`, body).then((res) => res.data),
 
   remove: (id: string) => api.delete<DeletedIdsResponse>(`/drive/${id}`).then((res) => res.data),
 

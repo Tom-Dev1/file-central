@@ -43,14 +43,19 @@ export class RefreshTokenService {
    */
   async validateAndRotate(rawToken: string): Promise<{ userId: string; newRawToken: string }> {
     const tokenHash = this.hash(rawToken);
-    const record = await this.refreshTokenModel.findOne({ tokenHash });
+    const record = await this.refreshTokenModel.findOneAndUpdate(
+      {
+        tokenHash,
+        isRevoked: false,
+        expiresAt: { $gt: new Date() },
+      },
+      { $set: { isRevoked: true } },
+      { returnDocument: "before" },
+    );
 
-    if (!record || record.isRevoked || record.expiresAt < new Date()) {
+    if (!record) {
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
-
-    record.isRevoked = true;
-    await record.save();
 
     const newRawToken = await this.issue(record.userId.toString());
     return { userId: record.userId.toString(), newRawToken };

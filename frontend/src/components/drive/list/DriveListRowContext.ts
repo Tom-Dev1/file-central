@@ -1,13 +1,18 @@
 import { createContext } from "react";
 
-import type { DriveItem } from "@/types/api.types";
+import type { DriveItemKind } from "@/types/api.types";
+
+export interface DriveListRowItem {
+  selectionId: string;
+  type: DriveItemKind;
+}
 
 export interface DriveListRowContextValue {
-  itemById: ReadonlyMap<string, DriveItem>;
+  itemByRowKey: ReadonlyMap<string, DriveListRowItem>;
   selectionMode: boolean;
   selectedCount: number;
   isSelected: (itemId: string) => boolean;
-  onOpen: (item: DriveItem) => void;
+  onOpen: (rowKey: string) => void;
 }
 
 export const DriveListRowContext = createContext<DriveListRowContextValue | null>(null);

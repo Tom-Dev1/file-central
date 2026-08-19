@@ -41,6 +41,16 @@ export class AuthService {
     return { accessToken, refreshToken: newRawToken };
   }
 
+  async logout(rawRefreshToken: string) {
+    await this.refreshTokenService.revoke(rawRefreshToken);
+    return { loggedOut: true as const };
+  }
+
+  async logoutAll(userId: string) {
+    await this.refreshTokenService.revokeAllForUser(userId);
+    return { loggedOutAllDevices: true as const };
+  }
+
   private signAccessToken(userId: string, email: string): string {
     return this.jwtService.sign({ sub: userId, email });
   }

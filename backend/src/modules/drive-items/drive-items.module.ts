@@ -10,6 +10,7 @@ import { CreateFolderCommand } from './application/commands/folders/create-folde
 import { MoveDriveItemCommand } from './application/commands/items/move-drive-item.command';
 import { MoveDriveItemsCommand } from './application/commands/items/move-drive-items.command';
 import { RenameDriveItemCommand } from './application/commands/items/rename-drive-item.command';
+import { SetDriveItemStarredCommand } from './application/commands/items/set-drive-item-starred.command';
 import { FinalizeHardDeleteCommand } from './application/commands/trash/finalize-hard-delete.command';
 import { RestoreDriveItemCommand } from './application/commands/trash/restore-drive-item.command';
 import { TrashDriveItemCommand } from './application/commands/trash/trash-drive-item.command';
@@ -44,6 +45,7 @@ const publicApplicationApi = [
   RenameDriveItemCommand,
   MoveDriveItemCommand,
   MoveDriveItemsCommand,
+  SetDriveItemStarredCommand,
   CreateFilePlaceholderCommand,
   ActivateFileCommand,
   RollbackFileActivationCommand,

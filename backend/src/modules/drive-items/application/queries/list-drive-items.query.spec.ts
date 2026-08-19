@@ -78,10 +78,45 @@ describe("ListDriveItemsQuery", () => {
     expect(result.items).toHaveLength(2);
     expect(JSON.parse(Buffer.from(result.nextCursor!, "base64url").toString("utf8"))).toEqual({
       version: 1,
+      context: "folder:root",
       sort: DriveItemSortBy.NAME,
       direction: DriveItemSortDirection.ASC,
       id: fileId.toString(),
       normalizedName: "beta.txt",
+    });
+  });
+
+  it("lists starred items across all folders", async () => {
+    const { findMany, query } = createQuery();
+
+    await query.execute({
+      ownerId,
+      starredOnly: true,
+      limit: 20,
+      sort: DriveItemSortBy.NAME,
+      direction: DriveItemSortDirection.ASC,
+    });
+
+    expect(findMany.mock.calls[0][0]).toEqual({
+      ownerId: new Types.ObjectId(ownerId),
+      isTrashed: false,
+      isStarred: true,
+    });
+  });
+
+  it("lists recent items across all folders", async () => {
+    const { findMany, query } = createQuery();
+
+    await query.execute({
+      ownerId,
+      limit: 20,
+      sort: DriveItemSortBy.MODIFIED,
+      direction: DriveItemSortDirection.DESC,
+    });
+
+    expect(findMany.mock.calls[0][0]).toEqual({
+      ownerId: new Types.ObjectId(ownerId),
+      isTrashed: false,
     });
   });
 
@@ -97,6 +132,7 @@ describe("ListDriveItemsQuery", () => {
       direction: DriveItemSortDirection.DESC,
       cursor: encode({
         version: 1,
+        context: "folder:root",
         sort: DriveItemSortBy.MODIFIED,
         direction: DriveItemSortDirection.DESC,
         lastModifiedAt: "2026-08-13T10:00:00.000Z",
@@ -126,6 +162,7 @@ describe("ListDriveItemsQuery", () => {
       direction: DriveItemSortDirection.DESC,
       cursor: encode({
         version: 1,
+        context: "folder:root",
         sort: DriveItemSortBy.TYPE,
         direction: DriveItemSortDirection.DESC,
         type: DriveItemType.FILE,
@@ -158,6 +195,7 @@ describe("ListDriveItemsQuery", () => {
     const { query } = createQuery();
     const cursor = encode({
       version: 1,
+      context: "folder:root",
       sort: DriveItemSortBy.NAME,
       direction: DriveItemSortDirection.ASC,
       normalizedName: "report.pdf",
@@ -176,6 +214,28 @@ describe("ListDriveItemsQuery", () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it("rejects a cursor created for another Drive collection", async () => {
+    const { query } = createQuery();
+    const cursor = encode({
+      version: 1,
+      context: "starred",
+      sort: DriveItemSortBy.NAME,
+      direction: DriveItemSortDirection.ASC,
+      normalizedName: "report.pdf",
+      id: new Types.ObjectId().toString(),
+    });
+
+    await expect(
+      query.execute({
+        ownerId,
+        cursor,
+        limit: 50,
+        sort: DriveItemSortBy.NAME,
+        direction: DriveItemSortDirection.ASC,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
   it("sorts size descending and continues into null folder sizes", async () => {
     const itemId = new Types.ObjectId();
     const { findMany, query } = createQuery();
@@ -188,6 +248,7 @@ describe("ListDriveItemsQuery", () => {
       direction: DriveItemSortDirection.DESC,
       cursor: encode({
         version: 1,
+        context: "folder:root",
         sort: DriveItemSortBy.SIZE,
         direction: DriveItemSortDirection.DESC,
         sizeBytes: "1024",

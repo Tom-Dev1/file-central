@@ -28,6 +28,7 @@ function createService(overrides?: {
     {} as never,
     trashItemsCommand as never,
     permissions as never,
+    {} as never,
   );
 
   return { service, moveItemsCommand, trashItemsCommand, permissions };

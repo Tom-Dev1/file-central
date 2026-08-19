@@ -20,17 +20,15 @@ import type { DriveSortState } from "@/types/drive.type";
 import { DrivePreviewLayout } from "@/components/drive/DrivePreviewLayout";
 import { useDriveSelection } from "@/contexts/driveSelectionContext";
 import { useDrivePreviewPane } from "@/hooks/useDrivePreviewPane";
+import { useDriveViewMode } from "@/hooks/useDriveViewMode";
 import { DriveContentSkeleton } from "@/components/DriveContentSkeleton";
 import { createDriveSortSearch, readDriveSortParams, writeDriveSortParams } from "@/utils/drive-sort-params";
-
-type ViewMode = "grid" | "list";
 
 export default function FolderPage() {
   const { folderId } = useParams<{ folderId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { message } = App.useApp();
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const searchParams = new URLSearchParams(location.search);
   const sort = readDriveSortParams(searchParams);
@@ -38,6 +36,7 @@ export default function FolderPage() {
   const prefetchFolder = usePrefetchDriveFolder();
   const { selectedIds, clearSelection } = useDriveSelection();
   const { previewPaneOpen, setPreviewPaneOpen } = useDrivePreviewPane();
+  const { viewMode, setViewMode } = useDriveViewMode();
   const listParams = useMemo(
     () => ({
       parentId: folderId,
@@ -149,32 +148,32 @@ export default function FolderPage() {
   };
 
   return (
-    <DrivePageShell
-      header={
-        <DriveSubHeader
-          folderBreadcrumbs={<FolderBreadcrumbs folderId={folderId} />}
-          title="My Drive"
-          description={`${itemsDrive.length} ${itemsDrive.length === 1 ? "item" : "items"} loaded · ${
-            hasNextPage ? "more available" : "all loaded"
-          }`}
-          icon={Folder}
-          titleHref={`/dashboard?${sortSearch}`}
-          actions={
-            <DriveViewModeToggle
-              value={viewMode}
-              onChange={setViewMode}
-              previewOpen={previewPaneOpen}
-              onPreviewOpenChange={setPreviewPaneOpen}
-            />
-          }
-        />
-      }
+    <DrivePreviewLayout
+      open={previewPaneOpen}
+      item={selectedItem}
+      selectedCount={selectedItems.length}
+      onClose={() => setPreviewPaneOpen(false)}
     >
-      <DrivePreviewLayout
-        open={previewPaneOpen}
-        item={selectedItem}
-        selectedCount={selectedItems.length}
-        onClose={() => setPreviewPaneOpen(false)}
+      <DrivePageShell
+        header={
+          <DriveSubHeader
+            folderBreadcrumbs={<FolderBreadcrumbs folderId={folderId} />}
+            title="My Drive"
+            description={`${itemsDrive.length} ${itemsDrive.length === 1 ? "item" : "items"} loaded · ${
+              hasNextPage ? "more available" : "all loaded"
+            }`}
+            icon={Folder}
+            titleHref={`/dashboard?${sortSearch}`}
+            actions={
+              <DriveViewModeToggle
+                value={viewMode}
+                onChange={setViewMode}
+                previewOpen={previewPaneOpen}
+                onPreviewOpenChange={setPreviewPaneOpen}
+              />
+            }
+          />
+        }
       >
         <div className={classes.div}>
           <DriveToolbar
@@ -219,7 +218,7 @@ export default function FolderPage() {
             </div>
           )}
         </div>
-      </DrivePreviewLayout>
-    </DrivePageShell>
+      </DrivePageShell>
+    </DrivePreviewLayout>
   );
 }

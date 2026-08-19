@@ -47,6 +47,9 @@ export class DriveItem {
   @Prop({ type: Boolean, required: true, default: false })
   isTrashed!: boolean;
 
+  @Prop({ type: Boolean, required: true, default: false })
+  isStarred!: boolean;
+
   @Prop({ type: Date, default: null })
   trashedAt!: Date | null;
 
@@ -75,4 +78,14 @@ DriveItemSchema.index(
 );
 DriveItemSchema.index({ ownerId: 1, ancestorIds: 1, isTrashed: 1 });
 DriveItemSchema.index({ ownerId: 1, isTrashed: 1, trashedAt: -1, _id: -1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, lastModifiedAt: -1, _id: -1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, type: 1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, type: -1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, sizeBytes: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, isStarred: 1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, isStarred: 1, lastModifiedAt: -1, _id: -1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, isStarred: 1, type: 1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, isStarred: 1, type: -1, normalizedName: 1, _id: 1 });
+DriveItemSchema.index({ ownerId: 1, isTrashed: 1, isStarred: 1, sizeBytes: 1, _id: 1 });
 DriveItemSchema.index({ ownerId: 1, fileStatus: 1, createdAt: 1 });

@@ -1,6 +1,6 @@
 import { LoginOutlined, UserOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Checkbox, Form, Input, Space, Typography, theme } from "antd";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { useLogin } from "@/hooks/useAuth";
 import { describeAuthError } from "./authError";
@@ -13,8 +13,10 @@ interface LoginFormValues {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const login = useLogin();
   const { token } = theme.useToken();
+  const sessionExpired = searchParams.get("reason") === "session-expired";
 
   const handleSubmit = (values: LoginFormValues) => {
     login.reset();
@@ -34,7 +36,7 @@ function LoginPage() {
 
   return (
     <Card
-      bordered
+      variant="outlined"
       style={{ borderColor: token.colorBorderSecondary, boxShadow: token.boxShadowTertiary }}
       styles={{ body: { padding: "clamp(24px, 5vw, 38px)" } }}
     >
@@ -71,14 +73,23 @@ function LoginPage() {
         initialValues={{ remember: true }}
         onFinish={handleSubmit}
       >
+        {sessionExpired && !login.isError && (
+          <Alert
+            showIcon
+            type="warning"
+            title="Your session has expired"
+            description="Please log in again to continue."
+            style={{ marginBottom: 22 }}
+          />
+        )}
+
         {login.isError && !login.isPending && (
           <Alert
             showIcon
-            closable
+            closable={{ onClose: () => login.reset() }}
             type="error"
-            message="Login unsuccessful"
+            title="Login unsuccessful"
             description={describeAuthError(login.error, "login")}
-            onClose={() => login.reset()}
             style={{ marginBottom: 22 }}
           />
         )}
@@ -111,7 +122,7 @@ function LoginPage() {
         </Button>
       </Form>
 
-      <Space direction="vertical" size={10} style={{ display: "flex", marginTop: 22, textAlign: "center" }}>
+      <Space orientation="vertical" size={10} style={{ display: "flex", marginTop: 22, textAlign: "center" }}>
         <Typography.Text type="secondary" style={{ fontSize: 13 }}>
           Need password help? Contact your workspace administrator.
         </Typography.Text>

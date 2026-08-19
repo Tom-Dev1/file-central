@@ -7,7 +7,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ModeToggle } from "@/components/theme/ModeToggle";
 import { useLogout } from "@/hooks/useAuth";
 import { authUserStorage, type StoredUser } from "@/lib/authUserStorage";
-import { tokenStorage } from "@/lib/token-storage";
 
 import classes from "./DashboardHeader.module.css";
 
@@ -81,16 +80,14 @@ function DashboardHeader({ onToggleSidebar, sidebarCollapsed }: DashboardHeaderP
 
   const handleLogout = async () => {
     try {
-      tokenStorage.clear();
-      authUserStorage.clearUser();
-
+      await logout.mutateAsync();
+    } catch {
+      void message.warning("The server could not revoke this session. You were signed out locally.");
+    } finally {
       setCurrentUser(null);
-
       navigate("/auth/login", {
         replace: true,
       });
-    } catch {
-      void message.error("Unable to sign out. Please try again.");
     }
   };
 

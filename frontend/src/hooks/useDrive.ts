@@ -1,7 +1,16 @@
 ﻿import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { keepPreviousData } from "@tanstack/react-query";
 import { driveKeys, trashKeys } from "@/lib/query-keys";
-import type { BulkMoveRequest, BulkTrashRequest, ListDriveParams, MoveRequest, RenameRequest, SearchDriveParams } from "@/types/api.types";
+import type {
+  BulkMoveRequest,
+  BulkTrashRequest,
+  DriveCollection,
+  DriveCollectionParams,
+  ListDriveParams,
+  MoveRequest,
+  RenameRequest,
+  SearchDriveParams,
+} from "@/types/api.types";
 import { driveApi } from "@/apis/drive.api";
 import { driveListQueryOptions } from "./queries/drive-query-options";
 import { folderBreadcrumbQueryOptions } from "./queries/folder-query-options";
@@ -51,6 +60,33 @@ export function useInfiniteDriveSearch(params: SearchDriveParams) {
     getNextPageParam: (page) => page.nextCursor ?? undefined,
     enabled: Boolean(query.q?.trim()),
     meta: { suppressGlobalProgress: true },
+  });
+}
+
+export function useInfiniteDriveCollection(
+  collection: DriveCollection,
+  params: DriveCollectionParams = {},
+) {
+  const query = withoutCursor(params);
+
+  return useInfiniteQuery({
+    queryKey: driveKeys.collection(collection, query),
+    initialPageParam: null as string | null,
+    queryFn: ({ pageParam, signal }) =>
+      driveApi[collection]({ ...query, cursor: pageParam ?? undefined }, signal),
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    placeholderData: keepPreviousData,
+    meta: { suppressGlobalProgress: true },
+  });
+}
+
+export function useSetDriveItemStarred() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, starred }: { id: string; starred: boolean }) =>
+      driveApi.setStarred(id, { starred }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: driveKeys.all }),
   });
 }
 

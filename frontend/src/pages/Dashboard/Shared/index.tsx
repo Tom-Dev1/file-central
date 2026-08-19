@@ -1,12 +1,17 @@
 import { DeleteOutlined, DownloadOutlined, EyeOutlined, FolderOpenOutlined, ReloadOutlined } from "@ant-design/icons";
-import { App, Button, Empty, Popconfirm, Result, Skeleton, Space, Tabs, Tag, Typography, type TableColumnsType } from "antd";
+import { App, Button, Empty, Popconfirm, Result, Space, Tabs, Tag, Typography } from "antd";
 import { Share2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DrivePageShell } from "@/components/drive/DrivePageShell";
 import { DriveSubHeader } from "@/components/drive/DriveSubHeader";
-import { DriveListMetadataCell, DriveListTable, DriveListView, type DriveListMetadataColumn } from "@/components/drive/list";
+import {
+  DriveListMetadataCell,
+  DriveListView,
+  type DriveListItemAdapter,
+  type DriveListMetadataColumn,
+} from "@/components/drive/list";
 import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
 import { formatDriveFileSize, formatModifiedDate } from "@/constants/file-constants";
 import { useDownloadFile, useMyShares, useRevokeShare, useSharedWithMe } from "@/hooks";
@@ -20,6 +25,19 @@ const permissionLabels: Record<SharePermission, string> = {
   edit: "Can edit",
 };
 
+const sharedWithMeAdapter: DriveListItemAdapter<SharedWithMeRow> = {
+  getId: (row) => row.item.id,
+  getName: (row) => row.item.name,
+  getType: (row) => row.item.type,
+  getDriveItem: (row) => row.item,
+};
+
+const myShareAdapter: DriveListItemAdapter<Share> = {
+  getId: (share) => share.id,
+  getName: (share) => share.itemId,
+  getType: (share) => share.itemType,
+};
+
 export default function SharedPage() {
   const navigate = useNavigate();
   const { message } = App.useApp();
@@ -31,8 +49,6 @@ export default function SharedPage() {
   const [activeTab, setActiveTab] = useState<"shared" | "mine">("shared");
   const rows = sharedQuery.data ?? [];
   const myShares = mySharesQuery.data ?? [];
-  const sharedItems = rows.map((row) => row.item);
-  const sharedRowByItemId = new Map(rows.map((row) => [row.item.id, row]));
 
   const openItem = (row: SharedWithMeRow) => {
     if (row.item.type === "folder") {
@@ -58,57 +74,43 @@ export default function SharedPage() {
     });
   };
 
-  const sharedColumns: DriveListMetadataColumn[] = [
+  const sharedColumns: DriveListMetadataColumn<SharedWithMeRow>[] = [
     {
       key: "shared",
       title: "Shared",
       width: 170,
       responsive: ["md"],
-      render: (item) => {
-        const row = sharedRowByItemId.get(item.id);
-        return row ? <DriveListMetadataCell>{formatModifiedDate(row.share.createdAt)}</DriveListMetadataCell> : null;
-      },
+      render: (row) => (
+        <DriveListMetadataCell>{formatModifiedDate(row.share.createdAt)}</DriveListMetadataCell>
+      ),
     },
     {
       key: "permission",
       title: "Permission",
       width: 150,
       responsive: ["lg"],
-      render: (item) => {
-        const row = sharedRowByItemId.get(item.id);
-        return row ? <Tag color="blue">{permissionLabels[row.share.permission]}</Tag> : null;
-      },
+      render: (row) => <Tag color="blue">{permissionLabels[row.share.permission]}</Tag>,
     },
     {
       key: "size",
       title: "File size",
       width: 120,
       responsive: ["xl"],
-      render: (item) => <DriveListMetadataCell>{item.type === "folder" ? "—" : formatDriveFileSize(item)}</DriveListMetadataCell>,
+      render: (row) => (
+        <DriveListMetadataCell>
+          {row.item.type === "folder" ? "—" : formatDriveFileSize(row.item)}
+        </DriveListMetadataCell>
+      ),
     },
   ];
 
-  const myShareColumns: TableColumnsType<Share> = [
-    {
-      key: "item",
-      title: "Item",
-      render: (_, share) => (
-        <div className={classes.div}>
-          <Typography.Text strong className={classes.text} copyable={{ text: share.itemId }}>
-            {share.itemType === "folder" ? "Folder" : "File"}
-          </Typography.Text>
-          <Typography.Text type="secondary" ellipsis={{ tooltip: share.itemId }} className={classes.text3}>
-            {share.itemId}
-          </Typography.Text>
-        </div>
-      ),
-    },
+  const myShareColumns: DriveListMetadataColumn<Share>[] = [
     {
       key: "recipient",
       title: "Shared with",
       width: 220,
       responsive: ["md"],
-      render: (_, share) => (
+      render: (share) => (
         <Typography.Text ellipsis={{ tooltip: share.sharedWithEmail ?? share.sharedWithUserId ?? "Public link" }}>
           {share.shareType === "public_link" ? "Public link" : share.sharedWithEmail ?? share.sharedWithUserId ?? "User"}
         </Typography.Text>
@@ -119,38 +121,15 @@ export default function SharedPage() {
       title: "Permission",
       width: 140,
       responsive: ["sm"],
-      render: (_, share) => <Tag color="blue">{permissionLabels[share.permission]}</Tag>,
+      render: (share) => <Tag color="blue">{permissionLabels[share.permission]}</Tag>,
     },
     {
       key: "created",
       title: "Created",
       width: 160,
       responsive: ["lg"],
-      render: (_, share) => <Typography.Text type="secondary">{formatModifiedDate(share.createdAt)}</Typography.Text>,
-    },
-    {
-      key: "actions",
-      title: <span className={classes.visuallyHidden}>Actions</span>,
-      width: 64,
-      align: "right",
-      render: (_, share) => (
-        <Popconfirm
-          title="Revoke this share?"
-          description="The recipient or public link will lose access."
-          okText="Revoke"
-          okButtonProps={{ danger: true }}
-          onConfirm={() => revoke(share)}
-        >
-          <Button
-            type="text"
-            danger
-            shape="circle"
-            aria-label={`Revoke share ${share.id}`}
-            icon={<DeleteOutlined />}
-            disabled={share.isRevoked}
-            loading={revokeShare.isPending && revokeShare.variables === share.id}
-          />
-        </Popconfirm>
+      render: (share) => (
+        <Typography.Text type="secondary">{formatModifiedDate(share.createdAt)}</Typography.Text>
       ),
     },
   ];
@@ -190,54 +169,45 @@ export default function SharedPage() {
                 extra={<Button icon={<ReloadOutlined />} onClick={() => void sharedQuery.refetch()}>Try again</Button>}
               />
             ) : (
-              <DriveListView
-                items={sharedItems}
+              <DriveListView<SharedWithMeRow>
+                items={rows}
+                itemAdapter={sharedWithMeAdapter}
                 loading={sharedQuery.isLoading}
                 selectable={false}
                 metadataColumns={sharedColumns}
-                renderNameDetails={(item) => {
-                  const row = sharedRowByItemId.get(item.id);
-                  return row ? (
-                    <div className={classes.row2}>
-                      <Tag color="blue" className={classes.tag}>{permissionLabels[row.share.permission]}</Tag>
-                      <Typography.Text type="secondary" className={classes.text2}>{formatModifiedDate(row.share.createdAt)}</Typography.Text>
-                    </div>
-                  ) : null;
-                }}
-                renderActions={(item) => {
-                  const row = sharedRowByItemId.get(item.id);
-                  if (!row) return null;
-
-                  return (
-                    <Space size={2}>
+                renderNameDetails={(row) => (
+                  <div className={classes.row2}>
+                    <Tag color="blue" className={classes.tag}>
+                      {permissionLabels[row.share.permission]}
+                    </Tag>
+                    <Typography.Text type="secondary" className={classes.text2}>
+                      {formatModifiedDate(row.share.createdAt)}
+                    </Typography.Text>
+                  </div>
+                )}
+                renderActions={(row) => (
+                  <Space size={2}>
+                    <Button
+                      type="text"
+                      shape="circle"
+                      aria-label={`${row.item.type === "folder" ? "Open" : "Preview"} ${row.item.name}`}
+                      icon={row.item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />}
+                      onClick={() => openItem(row)}
+                    />
+                    {row.item.type === "file" && row.share.permission !== "view" && (
                       <Button
                         type="text"
                         shape="circle"
-                        aria-label={`${item.type === "folder" ? "Open" : "Preview"} ${item.name}`}
-                        icon={item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />}
-                        onClick={() => openItem(row)}
+                        aria-label={`Download ${row.item.name}`}
+                        icon={<DownloadOutlined />}
+                        loading={downloadFile.isPending && downloadFile.variables?.fileId === row.item.id}
+                        onClick={() => download(row.item)}
                       />
-                      {item.type === "file" && row.share.permission !== "view" && (
-                        <Button
-                          type="text"
-                          shape="circle"
-                          aria-label={`Download ${item.name}`}
-                          icon={<DownloadOutlined />}
-                          loading={downloadFile.isPending && downloadFile.variables?.fileId === item.id}
-                          onClick={() => download(item)}
-                        />
-                      )}
-                    </Space>
-                  );
-                }}
-                onOpenItem={(item) => {
-                  const row = sharedRowByItemId.get(item.id);
-                  if (row) openItem(row);
-                }}
-                onPreviewItem={(item) => {
-                  const row = sharedRowByItemId.get(item.id);
-                  if (row) openItem(row);
-                }}
+                    )}
+                  </Space>
+                )}
+                onOpenItem={openItem}
+                onPreviewItem={openItem}
                 ariaLabel="Items shared with me"
                 loadingAriaLabel="Loading items shared with me"
                 emptyState={
@@ -249,24 +219,66 @@ export default function SharedPage() {
                 scrollX={720}
               />
             )
-          ) : mySharesQuery.isLoading ? (
-            <Skeleton active paragraph={{ rows: 7 }} />
           ) : mySharesQuery.isError ? (
             <Result
               status="error"
               title="Unable to load your shares"
               extra={<Button icon={<ReloadOutlined />} onClick={() => void mySharesQuery.refetch()}>Try again</Button>}
             />
-          ) : myShares.length === 0 ? (
-            <div className={classes.centeredRow}>
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="You have not shared any items yet" />
-            </div>
           ) : (
-            <DriveListTable<Share>
+            <DriveListView<Share>
+              items={myShares}
+              itemAdapter={myShareAdapter}
+              loading={mySharesQuery.isLoading}
+              selectable={false}
+              reserveSelectionSpace={false}
+              nameColumnTitle="Item"
+              metadataColumns={myShareColumns}
+              renderName={(share) => (
+                <div className={classes.div}>
+                  <Typography.Text strong className={classes.text} copyable={{ text: share.itemId }}>
+                    {share.itemType === "folder" ? "Folder" : "File"}
+                  </Typography.Text>
+                  <Typography.Text
+                    type="secondary"
+                    ellipsis={{ tooltip: share.itemId }}
+                    className={classes.text3}
+                  >
+                    {share.itemId}
+                  </Typography.Text>
+                </div>
+              )}
+              renderActions={(share) => (
+                <Popconfirm
+                  title="Revoke this share?"
+                  description="The recipient or public link will lose access."
+                  okText="Revoke"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => revoke(share)}
+                >
+                  <Button
+                    type="text"
+                    danger
+                    shape="circle"
+                    aria-label={`Revoke share ${share.id}`}
+                    icon={<DeleteOutlined />}
+                    disabled={share.isRevoked}
+                    loading={revokeShare.isPending && revokeShare.variables === share.id}
+                  />
+                </Popconfirm>
+              )}
+              actionsAlwaysVisible
+              actionsWidth={64}
               ariaLabel="Items I have shared"
-              rowKey="id"
-              columns={myShareColumns}
-              dataSource={myShares}
+              loadingAriaLabel="Loading items I have shared"
+              emptyState={
+                <div className={classes.centeredRow}>
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description="You have not shared any items yet"
+                  />
+                </div>
+              }
               scrollX={784}
             />
           )}

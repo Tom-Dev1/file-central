@@ -17,6 +17,7 @@ import { SharePermission } from "../shares/schemas/share.schema";
 import { MinioService } from "../storage/minio.service";
 import { FileMetadataResolverService } from "./file-metadata-resolver.service";
 import { StorageObjectsService } from "../storage/storage-objects.services";
+import { resolvePreviewMimeType } from "./previewkind";
 
 @Injectable()
 export class FilesService {
@@ -117,6 +118,7 @@ export class FilesService {
     return this.storageObjects.getPresignedPreviewUrl(
       item.storageObjectId!,
       item.ownerId,
+      resolvePreviewMimeType(item.mimeType ?? undefined, item.name),
     );
   }
 

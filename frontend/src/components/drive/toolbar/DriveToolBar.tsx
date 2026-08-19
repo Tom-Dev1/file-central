@@ -15,26 +15,30 @@ import {
   SortAscendingOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
-
 import { App, Button, Dropdown, Flex, Tooltip, Typography, type MenuProps } from "antd";
 
-import { DriveSelectAll } from "@/components/drive/selection/DriveSelectAll";
+import PopoverUpload from "@/components/PopoverUpload";
 import { MoveItemsModal } from "@/components/drive/actions/MoveItemsModal";
-
+import { DriveSelectAll } from "@/components/drive/selection/DriveSelectAll";
+import { useDriveSelection } from "@/contexts/driveSelectionContext";
+import { useDeleteItems } from "@/hooks";
 import type { DriveItem } from "@/types/api.types";
 import type { DriveSortField, DriveSortState } from "@/types/drive.type";
 
 import classes from "./DriveToolBar.module.css";
-import PopoverUpload from "@/components/PopoverUpload";
-import { useDriveSelection } from "@/contexts/driveSelectionContext";
-import { useDeleteItems } from "@/hooks";
-import { MODIFIED_FILTER_ITEMS, SORT_ITEMS, SORT_LABELS, TYPE_FILTER_ITEMS } from "./toolbar-constant";
+import {
+  MODIFIED_FILTER_ITEMS,
+  SORT_ITEMS,
+  SORT_LABELS,
+  TYPE_FILTER_ITEMS,
+} from "./toolbar-constant";
 
 interface DriveToolbarProps {
   parentId?: string | null;
   items: DriveItem[];
   sort: DriveSortState;
   sortDisabled?: boolean;
+  hideBrowseToolbar?: boolean;
   isFetching?: boolean;
   onSortChange: (sort: DriveSortState) => void;
   onRefresh: () => void;
@@ -45,12 +49,19 @@ export function DriveToolbar({
   items,
   sort,
   sortDisabled = false,
+  hideBrowseToolbar = false,
   isFetching = false,
   onSortChange,
   onRefresh,
 }: DriveToolbarProps) {
-  const { selectedIds, selectedCount, selectionMode, clearSelection, enableSelectionMode, disableSelectionMode } =
-    useDriveSelection();
+  const {
+    selectedIds,
+    selectedCount,
+    selectionMode,
+    clearSelection,
+    enableSelectionMode,
+    disableSelectionMode,
+  } = useDriveSelection();
   const itemIds = items.map((item) => item.id);
   const selectedItems = items.filter((item) => selectedIds.has(item.id));
 
@@ -67,6 +78,10 @@ export function DriveToolbar({
         onDisableSelection={disableSelectionMode}
       />
     );
+  }
+
+  if (hideBrowseToolbar) {
+    return null;
   }
 
   return (
@@ -102,8 +117,7 @@ function DriveBrowseToolbar({
     const field = key as DriveSortField;
     onSortChange({
       field,
-      direction:
-        sort.field === field && sort.direction === "asc" ? "desc" : "asc",
+      direction: sort.field === field && sort.direction === "asc" ? "desc" : "asc",
     });
   };
 
@@ -111,7 +125,6 @@ function DriveBrowseToolbar({
     <div className={classes.toolbar}>
       <Flex align="center" gap={8} className={classes.toolbarLeft}>
         <ToolbarDropdown label="Type" items={TYPE_FILTER_ITEMS} disabled />
-
         <ToolbarDropdown label="Modified" items={MODIFIED_FILTER_ITEMS} disabled />
 
         <Dropdown
@@ -158,7 +171,7 @@ function DriveBrowseToolbar({
     </div>
   );
 }
-////DriveActionToolbar
+
 interface DriveActionToolbarProps {
   itemIds: string[];
   selectedItemIds: string[];
@@ -198,9 +211,13 @@ function DriveActionToolbar({
         try {
           await deleteItems.mutateAsync({ itemIds: selectedItemIds });
           onClear();
-          void message.success(`${selectedCount} ${selectedCount === 1 ? "item" : "items"} moved to trash`);
+          void message.success(
+            `${selectedCount} ${selectedCount === 1 ? "item" : "items"} moved to trash`,
+          );
         } catch (error) {
-          void message.error(error instanceof Error ? error.message : "Unable to move selected items to trash.");
+          void message.error(
+            error instanceof Error ? error.message : "Unable to move selected items to trash.",
+          );
           throw error;
         }
       },
@@ -209,8 +226,40 @@ function DriveActionToolbar({
 
   return (
     <>
-      <div className={classes.toolbar}>
-        <Flex align="center" gap={4} className={classes.toolbarLeft}>
+      <div
+        className={`${classes.toolbar} ${classes.actionToolbar}`}
+        role="toolbar"
+        aria-label="Selected item actions"
+      >
+        <Tooltip title="Clear selection">
+          <Button
+            variant="text"
+            shape="circle"
+            aria-label="Clear selection"
+            icon={<CloseOutlined />}
+            className={classes.iconButton}
+            onClick={onClear}
+          />
+        </Tooltip>
+
+        <Typography.Text className={classes.selectionCount}>
+          {selectedCount} {selectedCount === 1 ? "item selected" : "items selected"}
+        </Typography.Text>
+
+        <Button
+          variant={selectionMode ? "filled" : "outlined"}
+          icon={<CheckSquareOutlined />}
+          className={classes.selectButton}
+          onClick={selectionMode ? onDisableSelection : onEnableSelection}
+        >
+          {selectionMode ? "Done" : "Select"}
+        </Button>
+
+        {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel />}
+
+        <span className={classes.actionDivider} aria-hidden="true" />
+
+        <div className={classes.actionGroup}>
           <ToolbarAction label="Share" icon={<ShareAltOutlined />} />
 
           {singleSelection && <ToolbarAction label="Copy link" icon={<LinkOutlined />} />}
@@ -233,35 +282,7 @@ function DriveActionToolbar({
           />
 
           <ToolbarAction label="More actions" icon={<MoreOutlined />} />
-        </Flex>
-
-        <Flex align="center" gap={8} className={classes.toolbarRight}>
-          <Tooltip title="Clear selection">
-            <Button
-              variant="text"
-              shape="circle"
-              aria-label="Clear selection"
-              icon={<CloseOutlined />}
-              className={classes.iconButton}
-              onClick={onClear}
-            />
-          </Tooltip>
-
-          <Typography.Text className={classes.selectionCount}>
-            {selectedCount} {selectedCount === 1 ? "item selected" : "items selected"}
-          </Typography.Text>
-
-          <Button
-            variant={selectionMode ? "filled" : "outlined"}
-            icon={<CheckSquareOutlined />}
-            className={classes.selectButton}
-            onClick={selectionMode ? onDisableSelection : onEnableSelection}
-          >
-            {selectionMode ? "Done" : "Select"}
-          </Button>
-
-          {selectionMode && <DriveSelectAll itemIds={itemIds} showLabel />}
-        </Flex>
+        </div>
       </div>
 
       {moveModalOpen && (
@@ -287,7 +308,6 @@ function ToolbarDropdown({ label, items, disabled = false }: ToolbarDropdownProp
     <Dropdown trigger={["click"]} placement="bottomLeft" menu={{ items }} disabled={disabled}>
       <Button variant="outlined" className={classes.toolbarButton} disabled={disabled}>
         {label}
-
         <DownOutlined className={classes.dropdownIcon} />
       </Button>
     </Dropdown>

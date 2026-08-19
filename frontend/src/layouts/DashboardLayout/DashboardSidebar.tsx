@@ -29,13 +29,13 @@ const navigationItems: NavigationItem[] = [
     title: "Recent",
     path: "/dashboard/recent",
     icon: Clock3,
-    available: false,
+    available: true,
   },
   {
     title: "Starred",
     path: "/dashboard/starred",
     icon: Star,
-    available: false,
+    available: true,
   },
   {
     title: "Trash",

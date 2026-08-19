@@ -1,5 +1,17 @@
 ﻿export { useRegister, useLogin, useLogout } from "../hooks/useAuth";
-export { useDriveList, useInfiniteDriveList, useDriveSearch, useInfiniteDriveSearch, useRenameItem, useMoveItem, useMoveItems, useDeleteItem, useDeleteItems } from "./useDrive";
+export {
+  useDeleteItem,
+  useDeleteItems,
+  useDriveList,
+  useDriveSearch,
+  useInfiniteDriveCollection,
+  useInfiniteDriveList,
+  useInfiniteDriveSearch,
+  useMoveItem,
+  useMoveItems,
+  useRenameItem,
+  useSetDriveItemStarred,
+} from "./useDrive";
 export { useCreateFolder } from "./useFolders";
 export { useUploadFile, useDownloadFile, useFilePreviewLink } from "./useFiles";
 export { useTrashList, useRestoreItem, usePurgeItem, usePurgeAllTrash } from "./useTrash";

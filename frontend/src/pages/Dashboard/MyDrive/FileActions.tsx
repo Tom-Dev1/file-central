@@ -6,16 +6,18 @@ import {
   FolderOpenOutlined,
   MoreOutlined,
   ShareAltOutlined,
+  StarFilled,
+  StarOutlined,
   SwapOutlined,
 } from "@ant-design/icons";
 import { App, Button, Dropdown, type MenuProps } from "antd";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { MoveItemModal } from "@/components/drive/actions/MoveItemModal";
 import { RenameItemModal } from "@/components/drive/actions/RenameItemModal";
 import { ShareItemModal } from "@/components/drive/actions/ShareItemModal";
 import { FilePreviewDialog } from "@/components/file-preview/FilePreviewDialog";
-import { useDeleteItem, useDownloadFile } from "@/hooks";
+import { useDeleteItem, useDownloadFile, useSetDriveItemStarred } from "@/hooks";
 import type { DriveItem } from "@/types/api.types";
 import classes from "./FileActions.module.css";
 
@@ -23,18 +25,28 @@ import classes from "./FileActions.module.css";
 interface FileActionsProps {
   item: DriveItem;
   isPreview?: boolean;
+  showQuickActions?: boolean;
+  quickActionExtra?: ReactNode;
   onPreviewChange?: (open: boolean) => void;
   onOpenItem?: () => void;
 }
 
 type ActionModal = "rename" | "move" | "share" | null;
 
-export default function FileActions({ item, isPreview, onPreviewChange, onOpenItem }: FileActionsProps) {
+export default function FileActions({
+  item,
+  isPreview,
+  showQuickActions = false,
+  quickActionExtra,
+  onPreviewChange,
+  onOpenItem,
+}: FileActionsProps) {
   const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<ActionModal>(null);
   const { message, modal } = App.useApp();
   const downloadFile = useDownloadFile();
   const deleteItem = useDeleteItem();
+  const setStarred = useSetDriveItemStarred();
   const isControlled = isPreview !== undefined;
   const previewOpen = isControlled ? isPreview : internalPreviewOpen;
 
@@ -77,13 +89,33 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
     });
   };
 
+  const handleSetStarred = () => {
+    const starred = !item.isStarred;
+
+    setStarred.mutate(
+      { id: item.id, starred },
+      {
+        onSuccess: () => void message.success(starred ? "Added to Starred" : "Removed from Starred"),
+        onError: (error) =>
+          void message.error(error instanceof Error ? error.message : "Unable to update Starred."),
+      },
+    );
+  };
+
   const menuItems: MenuProps["items"] = [
     {
       key: "open",
       icon: item.type === "folder" ? <FolderOpenOutlined /> : <EyeOutlined />,
       label: item.type === "folder" ? "Open" : "Preview",
     },
-    ...(item.type === "file" ? [{ key: "download", icon: <DownloadOutlined />, label: "Download" }] : []),
+    ...(item.type === "file"
+      ? [{ key: "download", icon: <DownloadOutlined />, label: "Download" }]
+      : []),
+    {
+      key: "starred",
+      icon: item.isStarred ? <StarFilled /> : <StarOutlined />,
+      label: item.isStarred ? "Remove from Starred" : "Add to Starred",
+    },
     { key: "share", icon: <ShareAltOutlined />, label: "Share" },
     { key: "rename", icon: <EditOutlined />, label: "Rename" },
     { key: "move", icon: <SwapOutlined />, label: "Move" },
@@ -95,6 +127,7 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
     domEvent.stopPropagation();
     if (key === "open") handleOpen();
     if (key === "download") handleDownload();
+    if (key === "starred") handleSetStarred();
     if (key === "share" || key === "rename" || key === "move") setActiveModal(key);
     if (key === "delete") confirmDelete();
   };
@@ -103,7 +136,48 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
 
   return (
     <>
-      <div onPointerDown={stopPropagation} onClick={stopPropagation} onKeyDown={stopPropagation}>
+      <div
+        className={classes.actionBar}
+        onPointerDown={stopPropagation}
+        onClick={stopPropagation}
+        onKeyDown={stopPropagation}
+      >
+        {showQuickActions && (
+          <>
+            <Button
+              type="text"
+              shape="circle"
+              className={classes.button}
+              aria-label={`Share ${item.name}`}
+              title="Share"
+              icon={<ShareAltOutlined />}
+              onClick={() => setActiveModal("share")}
+            />
+            {item.type === "file" && (
+              <Button
+                type="text"
+                shape="circle"
+                className={classes.button}
+                aria-label={`Download ${item.name}`}
+                title="Download"
+                icon={<DownloadOutlined />}
+                loading={downloadFile.isPending}
+                onClick={handleDownload}
+              />
+            )}
+            <Button
+              type="text"
+              shape="circle"
+              className={classes.button}
+              aria-label={`Rename ${item.name}`}
+              title="Rename"
+              icon={<EditOutlined />}
+              onClick={() => setActiveModal("rename")}
+            />
+            {quickActionExtra}
+          </>
+        )}
+
         <Dropdown
           trigger={["click"]}
           placement="bottomRight"
@@ -115,7 +189,7 @@ export default function FileActions({ item, isPreview, onPreviewChange, onOpenIt
             className={classes.button}
             aria-label={`Open actions for ${item.name}`}
             icon={<MoreOutlined />}
-            loading={downloadFile.isPending || deleteItem.isPending}
+            loading={downloadFile.isPending || deleteItem.isPending || setStarred.isPending}
             onClick={stopPropagation}
           />
         </Dropdown>

@@ -1,5 +1,5 @@
-import { ExportOutlined, FileUnknownOutlined } from "@ant-design/icons";
-import { Button, Typography } from "antd";
+import { FileUnknownOutlined } from "@ant-design/icons";
+import { Typography } from "antd";
 
 import type { PreviewLinkResponse } from "@/types/file-preview.types";
 import { resolvePreviewKind } from "@/utils/resolve-preview-kind";
@@ -59,12 +59,6 @@ export function FilePreviewContent({
             <Typography.Paragraph type="secondary">
               This file type cannot be previewed in the browser.
             </Typography.Paragraph>
-            <Button
-              icon={<ExportOutlined />}
-              onClick={() => window.open(preview.url, "_blank", "noopener,noreferrer")}
-            >
-              Open file
-            </Button>
           </div>
         </div>
       );

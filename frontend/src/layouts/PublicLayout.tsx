@@ -68,11 +68,12 @@ function PublicLayout() {
   const handleSignOut = async () => {
     try {
       await logout.mutateAsync();
+    } catch {
+      void message.warning("The server could not revoke this session. You were signed out locally.");
+    } finally {
       setCurrentUser(null);
       setMobileMenuOpen(false);
       navigate("/auth/login", { replace: true });
-    } catch {
-      void message.error("Unable to sign out. Please try again.");
     }
   };
 
@@ -142,7 +143,7 @@ function PublicLayout() {
       <Drawer
         title={<Brand />}
         placement="right"
-        width="min(360px, calc(100vw - 24px))"
+        size="min(360px, calc(100vw - 24px))"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         styles={{ body: { display: "flex", flexDirection: "column", padding: 16 } }}
@@ -154,7 +155,7 @@ function PublicLayout() {
           onClick={handleNavigation}
           className={classes.menu}
         />
-        <Space direction="vertical" size={10} className={classes.fullWidth}>
+        <Space orientation="vertical" size={10} className={classes.fullWidth}>
           {isAuthenticated ? (
             <>
               <Button block icon={<DashboardOutlined />} onClick={() => navigateTo("/dashboard")}>
@@ -256,7 +257,7 @@ function PublicFooter({ authenticated, onNavigate, onSignOut }: { authenticated:
         <FooterGroup title="Product" links={[{ label: "Features", target: "/#features" }, { label: "Security", target: "/#security" }]} onNavigate={onNavigate} />
         <div>
           <Typography.Text strong>Account</Typography.Text>
-          <Space direction="vertical" size={10} className={classes.row2}>
+          <Space orientation="vertical" size={10} className={classes.row2}>
             {authenticated ? (
               <>
                 <Button type="link" className={classes.button3} onClick={() => onNavigate("/dashboard")}>Dashboard</Button>
@@ -285,7 +286,7 @@ function FooterGroup({ title, links, onNavigate }: { title: string; links: Array
   return (
     <div>
       <Typography.Text strong>{title}</Typography.Text>
-      <Space direction="vertical" size={10} className={classes.row2}>
+      <Space orientation="vertical" size={10} className={classes.row2}>
         {links.map((link) => (
           <Button key={link.target} type="link" className={classes.button3} onClick={() => onNavigate(link.target)}>{link.label}</Button>
         ))}

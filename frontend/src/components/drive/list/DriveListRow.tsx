@@ -25,13 +25,14 @@ type DriveListRowProps = HTMLAttributes<HTMLTableRowElement> & {
  */
 export function DriveListRow(rowProps: DriveListRowProps) {
   const context = useContext(DriveListRowContext);
-  const item = context?.itemById.get(String(rowProps["data-row-key"]));
+  const rowKey = String(rowProps["data-row-key"]);
+  const item = context?.itemByRowKey.get(rowKey);
 
   if (!context || !item) {
     return <tr {...rowProps} />;
   }
 
-  const selected = context.isSelected(item.id);
+  const selected = context.isSelected(item.selectionId);
   const contextSelectionCount = selected
     ? context.selectedCount
     : context.selectionMode
@@ -99,7 +100,7 @@ export function DriveListRow(rowProps: DriveListRowProps) {
     domEvent.stopPropagation();
 
     if (key === "open") {
-      context.onOpen(item);
+      context.onOpen(rowKey);
     }
   };
 

@@ -97,14 +97,15 @@ export class StorageObjectsService {
 
   async getPresignedPreviewUrl(
     storageObjectId: Types.ObjectId,
-    ownerId: Types.ObjectId
+    ownerId: Types.ObjectId,
+    responseContentType?: string,
   ): Promise<{ url: string; expiresInSeconds: number }> {
     const obj = await this.getActiveOwnedOrThrow(storageObjectId, ownerId);
     this.assertScanAllows(obj);
 
     const url = await this.storage.getPresignedGetUrl(obj.objectKey, {
       expiresIn: this.downloadUrlTtlSeconds,
-      responseContentType: obj.mimeType,
+      responseContentType: responseContentType ?? obj.mimeType,
       responseContentDisposition: "inline",
     });
     return { url, expiresInSeconds: this.downloadUrlTtlSeconds };

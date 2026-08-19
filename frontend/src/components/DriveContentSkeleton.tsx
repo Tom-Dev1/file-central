@@ -49,31 +49,37 @@ export function DriveContentSkeleton({ viewMode }: DriveContentSkeletonProps) {
   }
 
   return (
-    <div aria-label="Refreshing Drive items" aria-busy="true" className={classes.grid}>
-      {Array.from({ length: SKELETON_ITEM_COUNT }, (_, index) => (
-        <Card key={index} className={classes.gridCard} styles={{ body: { padding: 16 } }}>
-          <div className={classes.cardTop}>
-            <span aria-hidden="true" />
-            <Skeleton.Button active shape="circle" size="small" className={classes.cardAction} />
-          </div>
-
-          <div className={classes.cardHero}>
-            <div className={classes.cardIconSurface}>
-              <Skeleton.Avatar active shape="square" size={48} />
+    <div aria-label="Refreshing Drive items" aria-busy="true" className={classes.gridViewport}>
+      <div className={classes.grid}>
+        {Array.from({ length: SKELETON_ITEM_COUNT }, (_, index) => (
+          <Card
+            key={index}
+            variant="outlined"
+            classNames={{ root: classes.gridCard, body: classes.gridCardBody }}
+          >
+            <div className={classes.cardTop}>
+              <span aria-hidden="true" />
+              <Skeleton.Button active shape="circle" size="small" className={classes.cardAction} />
             </div>
-          </div>
 
-          <div className={classes.cardName}>
-            <Skeleton.Avatar active shape="square" size={20} />
-            <Skeleton.Input active size="small" className={classes.cardNameLine} />
-          </div>
+            <div className={classes.cardHero}>
+              <div className={classes.cardIconSurface}>
+                <Skeleton.Avatar active shape="square" size={48} />
+              </div>
+            </div>
 
-          <div className={classes.cardMetadata}>
-            <Skeleton.Input active size="small" className={classes.cardDateLine} />
-            <Skeleton.Input active size="small" className={classes.cardTypeLine} />
-          </div>
-        </Card>
-      ))}
+            <div className={classes.cardName}>
+              <Skeleton.Avatar active shape="square" size={20} />
+              <Skeleton.Input active size="small" className={classes.cardNameLine} />
+            </div>
+
+            <div className={classes.cardMetadata}>
+              <Skeleton.Input active size="small" className={classes.cardDateLine} />
+              <Skeleton.Input active size="small" className={classes.cardTypeLine} />
+            </div>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }

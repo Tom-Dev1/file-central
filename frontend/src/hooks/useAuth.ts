@@ -37,7 +37,7 @@ export function useLogout() {
       if (!refreshToken) return Promise.resolve({ loggedOut: true as const });
       return authApi.logout(refreshToken);
     },
-    onSuccess: () => {
+    onSettled: () => {
       tokenStorage.clear();
       authUserStorage.clearUser();
       queryClient.clear();

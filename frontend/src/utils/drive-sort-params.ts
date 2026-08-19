@@ -9,16 +9,19 @@ export const DEFAULT_DRIVE_SORT: DriveSortState = {
   direction: "asc",
 };
 
-export function readDriveSortParams(searchParams: URLSearchParams): DriveSortState {
+export function readDriveSortParams(
+  searchParams: URLSearchParams,
+  fallback: DriveSortState = DEFAULT_DRIVE_SORT,
+): DriveSortState {
   const fieldParam = searchParams.get("sort");
   const directionParam = searchParams.get("direction");
 
   const field = SORT_FIELDS.includes(fieldParam as DriveSortField)
     ? (fieldParam as DriveSortField)
-    : DEFAULT_DRIVE_SORT.field;
+    : fallback.field;
   const direction = SORT_DIRECTIONS.includes(directionParam as DriveSortDirection)
     ? (directionParam as DriveSortDirection)
-    : DEFAULT_DRIVE_SORT.direction;
+    : fallback.direction;
 
   return { field, direction };
 }

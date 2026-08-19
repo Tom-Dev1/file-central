@@ -5,6 +5,17 @@ let accessTokenCache: string | null = null;
 let refreshTokenCache: string | null = null;
 let persistentCache: boolean | null = null;
 let hydrated = false;
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  for (const listener of listeners) {
+    try {
+      listener();
+    } catch {
+      // A session listener must never break token persistence.
+    }
+  }
+}
 
 function hasWebStorage(): boolean {
   try {
@@ -70,6 +81,8 @@ export const tokenStorage = {
       targetStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
       targetStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     }
+
+    notifyListeners();
   },
 
   clear() {
@@ -83,8 +96,25 @@ export const tokenStorage = {
       window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
       window.sessionStorage.removeItem(REFRESH_TOKEN_KEY);
     }
+
+    notifyListeners();
   },
   hasAccessToken() {
     return Boolean(this.getAccessToken());
   },
+  subscribe(listener: () => void) {
+    hydrate();
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
 };
+
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (event) => {
+    if (event.key !== ACCESS_TOKEN_KEY && event.key !== REFRESH_TOKEN_KEY) return;
+
+    hydrated = false;
+    hydrate();
+    notifyListeners();
+  });
+}

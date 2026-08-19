@@ -23,21 +23,9 @@ export function useDownloadFile() {
 }
 
 export function useFilePreviewLink() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationKey: fileKeys.preview,
 
     mutationFn: (fileId: string) => filesApi.getPreviewObjectUrl(fileId),
-
-    onSuccess: () => {
-      /*
-       * Preview updates lastOpenedAt, so cached drive lists
-       * may need to be refreshed later.
-       */
-      void queryClient.invalidateQueries({
-        queryKey: driveKeys.all,
-      });
-    },
   });
 }

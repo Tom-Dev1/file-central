@@ -14,7 +14,7 @@ import TrashPage from "@/pages/Dashboard/Trash";
 import SharedPage from "@/pages/Dashboard/Shared";
 import SharedFolderPage from "@/pages/Dashboard/Shared/SharedFolderPage";
 import PublicSharePage from "@/pages/PublicShare";
-import { MyDrivePage, PublicLayout } from "./lazy-components";
+import { MyDrivePage, PublicLayout, RecentPage, StarredPage } from "./lazy-components";
 
 export const router = createBrowserRouter([
   {
@@ -79,6 +79,14 @@ export const router = createBrowserRouter([
       {
         path: "shared/folders/:folderId",
         Component: SharedFolderPage,
+      },
+      {
+        path: "recent",
+        Component: RecentPage,
+      },
+      {
+        path: "starred",
+        Component: StarredPage,
       },
       {
         path: "trash",
